@@ -1,0 +1,7 @@
+# x = this is a comment, there is no x value
+foo = [foo's value]
+bar = baz
+multi = [a
+b
+c]
+file = ArgsTest.test2

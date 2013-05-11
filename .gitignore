@@ -1,0 +1,14 @@
+bin/
+target/
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Eclipse files
+.classpath
+.project
+.settings/
+
