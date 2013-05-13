@@ -57,6 +57,16 @@ public class ArgsTest {
 	}
 	
 	@Test
+	public void testMissing() {
+		try {
+			assertEquals(null, args.get("foo"));
+			fail("expected an exception");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith(U.U00103));
+		}
+	}
+	
+	@Test
 	public void testMissingDefault() {
 		try {
 			args.define("foo");
@@ -265,7 +275,7 @@ public class ArgsTest {
 			args.parse("file = " + file2 + " file = " + file3);
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00209));
+			assertTrue(e.getCause().getMessage().startsWith(U.U00209));
 		}
 	}
 

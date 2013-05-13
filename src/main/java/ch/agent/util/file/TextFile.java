@@ -19,7 +19,7 @@ import ch.agent.util.UtilMsg;
 import ch.agent.util.UtilMsg.U;
 
 /**
- * TextFile provides support for reading and writing text files.
+ * Support for reading and writing text files.
  * 
  * @author Jean-Paul Vetterli
  * 
@@ -35,7 +35,8 @@ public class TextFile {
 	public interface Visitor {
 		
 		/**
-		 * Take one line of text. Returns true to skip remaining lines.
+		 * Take one line of text. Returns true to signal intention of skipping 
+		 * all remaining lines. Can throw a checked exception.
 		 * 
 		 * @param lineNr
 		 *            the line number
@@ -106,8 +107,8 @@ public class TextFile {
 	/**
 	 * Set duplicate detection mode. When the mode is active, an exception is
 	 * thrown when attempting to read a file more than once. This allows to
-	 * detect cycles. Setting the mode on or off resets the detector to its
-	 * initial state.
+	 * detect cycles in some applications. Setting the mode on or off resets the
+	 * detector to its initial state.
 	 * <p>
 	 * A new <code>TextFile</code> object has duplicate detection mode on.
 	 * 
@@ -127,15 +128,16 @@ public class TextFile {
 	/**
 	 * Read a series of lines from a file. Lines are passed to the caller via a
 	 * callback mechanism. The file can reside in the file system or as a
-	 * resource on the classpath. An exception is thrown if the file cannot be
-	 * read or if the visitor throws an exception.
+	 * resource on the class path. An <code>IOException</code> is thrown if the
+	 * file cannot be read or if the visitor throws an exception.
 	 * 
 	 * @param fileName
 	 *            the name of the file
 	 * @param visitor
 	 *            a visitor taking lines of text
+	 * @throws IOException
 	 */
-	public void read(String fileName, Visitor visitor) {
+	public void read(String fileName, Visitor visitor) throws IOException {
 		int lineNr = 0;
 		String line = null;
 		Input fh = openInput(fileName);
@@ -155,29 +157,33 @@ public class TextFile {
 			r.close();
 		} catch (Exception e) {
 			if (lineNr > 0)
-				throw new UtilMsg(U.U00202, fh.getName(), lineNr).runtimeException(e);
+				throw new IOException(UtilMsg.msg(U.U00202, fh.getName(), lineNr), e);
 			else
-				throw new UtilMsg(U.U00201, fh.getName(), lineNr).runtimeException(e);
+				throw new IOException(UtilMsg.msg(U.U00201, fh.getName()), e);
+		} finally {
+			fh.stream.close();
 		}
 	}
 
 	/**
 	 * Write a series of lines to a file. The file is created if it does not
 	 * exist, as is the file's directory (but not the directory's directory).
-	 * Lines are terminated by the platform's line separator. An exception is
-	 * thrown if the file cannot be written.
+	 * Lines are terminated by the platform's line separator. An
+	 * <code>IOException</code> is thrown if the file cannot be written.
 	 * 
 	 * @param fileName
 	 *            the name of the file
-	 * @param append if true append to existing file, else overwrite 
+	 * @param append
+	 *            if true append to existing file, else overwrite
 	 * @param lines
 	 *            an iterator supplying lines of text
+	 * @throws IOException
 	 */
-	public void write(String fileName, boolean append, Iterator<String> lines) {
+	public void write(String fileName, boolean append, Iterator<String> lines) throws IOException {
 		Output out = openOutput(fileName, append);
-		OutputStreamWriter w = new OutputStreamWriter(out.getStream(), charset);
 		int lineNr = 0;
 		try {
+			OutputStreamWriter w = new OutputStreamWriter(out.getStream(), charset);
 			String sep = System.getProperty("line.separator");
 			while(lines.hasNext()) {
 				lineNr++;
@@ -186,19 +192,24 @@ public class TextFile {
 			}
 			w.close();
 		} catch (IOException e) {
-			throw new UtilMsg(U.U00207, out.getName(), lineNr).runtimeException(e);
+			throw new IOException(UtilMsg.msg(U.U00207, out.getName(), lineNr), e);
+		} finally {
+			out.stream.close();
 		}
 	}
 
 	/**
 	 * Prepares an input object. If found neither in the file system nor on the
-	 * classpath an exception is thrown. If duplicate detection mode is active and
-	 * the file has already been seen an exception is thrown.
+	 * class path a <code>FileNotFoundException</code> is thrown. If duplicate
+	 * detection mode is active and the file has already been seen a
+	 * <code>FileNotFoundException</code> is thrown.
 	 * 
-	 * @param fileName the name of the file
+	 * @param fileName
+	 *            the name of the file
 	 * @return an input object
+	 * @throws FileNotFoundException
 	 */
-	private Input openInput(String fileName) {
+	private Input openInput(String fileName) throws FileNotFoundException {
 		Input in = null;
 		File file = new File(fileName);
 		try {
@@ -209,19 +220,22 @@ public class TextFile {
 			if (is != null)
 				in = new Input(fileName, is);
 			else
-				throw new UtilMsg(U.U00208, file.getAbsolutePath()).runtimeException(e);
+				throw new FileNotFoundException(UtilMsg.msg(U.U00208, file.getAbsolutePath()));
 		}
 		if (duplicates != null) {
 			if (!duplicates.add(in.getName()))
-				throw new UtilMsg(U.U00209, in.getName()).runtimeException();
+				throw new FileNotFoundException(UtilMsg.msg(U.U00209, in.getName()));
 		}
 		return in;
 	}
 	
 	/**
-	 * Prepares an output object. If the file does not exist, it is
-	 * created. If the directory does not exist, it is created (but not the
-	 * directory's directory.)
+	 * Prepares an output object. If the file does not exist, it is created. If
+	 * the directory does not exist, it is created. A
+	 * <code>FileNotFoundException</code> is thrown when the file cannot be
+	 * created.
+	 * <p>
+	 * The method will not open a file specified with a relative path. 
 	 * <p>
 	 * 
 	 * @param fileName
@@ -229,21 +243,17 @@ public class TextFile {
 	 * @param append
 	 *            if true, the stream is opened in append mode
 	 * @return an output object
+	 * @throws FileNotFoundException
 	 */
-	private Output openOutput(String fileName, boolean append) {
+	private Output openOutput(String fileName, boolean append) throws FileNotFoundException {
 		File file = new File(fileName);
+		if (!file.isAbsolute()) {
+			throw new FileNotFoundException(UtilMsg.msg(U.U00205, fileName));
+		}
 		File dir = file.getParentFile();
-		if (dir == null) {
-			throw new UtilMsg(U.U00205, file.getAbsolutePath()).runtimeException();
-		}
-		dir.mkdir();
-		FileOutputStream fos;
-		try {
-			fos = new FileOutputStream(file.getAbsolutePath(), append);
-		} catch (FileNotFoundException e) {
-			throw new UtilMsg(U.U00206, file.getAbsolutePath()).runtimeException(e);
-		}
-		return new Output(file.getAbsolutePath(), fos);
+		dir.mkdirs();
+		return new Output(file.getAbsolutePath(), 
+				new FileOutputStream(file.getAbsolutePath(), append));
 	}
 
 }

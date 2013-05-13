@@ -1,4 +1,4 @@
-package ch.agent.util.err;
+package ch.agent.util.res;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -7,7 +7,7 @@ import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
 
-import ch.agent.util.err.TestMessage.M;
+import ch.agent.util.res.TestMessage.M;
 
 public class LazyMessageTest {
 
@@ -38,7 +38,7 @@ public class LazyMessageTest {
 			new TestMessage(null).toString();
 			fail("exception expected");
 		} catch (Exception e) {
-			assertEquals("key=null bundle=ch.agent.util.err.TestMessage", e.getMessage());
+			assertEquals("key=null bundle=ch.agent.util.res.TestMessage", e.getMessage());
 		}
 	}
 	
@@ -48,14 +48,14 @@ public class LazyMessageTest {
 			new TestMessage("KEY42").toString();
 			fail("exception expected");
 		} catch (Exception e) {
-			assertEquals("key=KEY42 bundle=ch.agent.util.err.TestMessage", e.getMessage());
+			assertEquals("key=KEY42 bundle=ch.agent.util.res.TestMessage", e.getMessage());
 		}
 	}
 
 	@Test
 	public void testException() {
 		try {
-			throw new TestMessage(M.M1).exception();
+			throw new Exception(TestMessage.msg(M.M1));
 		} catch (Exception e) {
 			assertTrue(e.getMessage().startsWith(M.M1));
 		}
@@ -64,7 +64,7 @@ public class LazyMessageTest {
 	@Test
 	public void testRuntimeException() {
 		try {
-			throw new TestMessage(M.M1).exception(new IllegalArgumentException("foo"));
+			throw new RuntimeException(TestMessage.msg(M.M1), new IllegalArgumentException("foo"));
 		} catch (Exception e) {
 			assertTrue(e.getMessage().startsWith(M.M1));
 			assertEquals("foo", e.getCause().getMessage());

@@ -2,15 +2,16 @@ package ch.agent.util;
 
 import java.util.ResourceBundle;
 
-import ch.agent.util.err.LazyMessage;
+import ch.agent.util.res.LazyMessage;
 
 /**
- * UtilMsg provides messages for the package's exceptions.
+ * Error messages for base utilities.
  */
 public class UtilMsg extends LazyMessage {
 
 	/**
-	 * Message symbols.
+	 * Message symbols. The symbols correspond to keys in the
+	 * {@link ResourceBundle} with base name <code>ch.agent.util.UtilMsg</code>.
 	 */
 	public class U {
 		public static final String U00101 = "U00101";
@@ -20,22 +21,40 @@ public class UtilMsg extends LazyMessage {
 		public static final String U00105 = "U00105";
 		public static final String U00106 = "U00106";
 		public static final String U00107 = "U00107";
+		public static final String U00108 = "U00108";
 		public static final String U00111 = "U00111";
 		public static final String U00112 = "U00112";
 		public static final String U00201 = "U00201";
 		public static final String U00202 = "U00202";
 		public static final String U00205 = "U00205";
-		public static final String U00206 = "U00206";
 		public static final String U00207 = "U00207";
 		public static final String U00208 = "U00208";
 		public static final String U00209 = "U00209";
 	}
-	
+
 	private static final String BUNDLE_NAME = ch.agent.util.UtilMsg.class.getName();
 	private static final ResourceBundle BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
 
+	/**
+	 * Construct a lazy message.
+	 * 
+	 * @param key message key
+	 * @param args message arguments
+	 */
 	public UtilMsg(String key, Object... args) {
 		super(key, BUNDLE_NAME, BUNDLE, args);
+	}
+	
+	/**
+	 * Short hand for 
+	 * <pre><code>new UtilMsg(key, args).toString()</code></pre>
+	 * 
+	 * @param key message key
+	 * @param args message arguments
+	 * @return the message resolved to a string
+	 */
+	public static String msg(String key, Object... args) {
+		return new UtilMsg(key, args).toString();
 	}
 
 }

@@ -1,5 +1,6 @@
 package ch.agent.util.args;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -11,41 +12,42 @@ import ch.agent.util.UtilMsg.U;
 import ch.agent.util.file.TextFile;
 
 /**
- * Args provides support for parameter lists and parameter files. A parameter
- * list is a sequence of name-value pairs separated by white space, with names
- * and values separated by an equal sign (which can be surrounded by white
- * space). If a name or a value includes white space or an equal sign it must be
- * enclosed in square brackets. To include a closing bracket it must be escaped
- * with a backslash. Here is an example:
+ * Support for parameter lists and parameter files. A parameter list is a
+ * sequence of name-value pairs separated by white space, with names and values
+ * separated by an equal sign (which can be surrounded by white space). If a
+ * name or a value includes white space or an equal sign it must be enclosed in
+ * square brackets. To include a closing bracket it must be escaped with a
+ * backslash. Here is an example:
  * 
  * <pre><code>
  * foo = bar [qu ux]=[[what = ever\]] foo = [2nd val]
  * </code></pre>
  * 
- * In the example, 
- * parameter "foo" has two values: "bar" and "2nd val" while parameter "qu ux" has
- * one value, "[what = ever]".
+ * In the example, parameter "foo" has two values: "bar" and "2nd val" while
+ * parameter "qu ux" has one value, "[what = ever]".
  * <p>
  * When a name is repeated the previous value is lost unless the parameter was
- * defined as a list parameter, like "foo" in the example.
+ * defined as a list parameter, like presumably "foo" in the example.
  * <p>
  * Parameters can be specified in files, which are themselves specified using
- * parameters, using the notation <code>file=file-spec</code>.
- * Files can reside in the file system or on the classpath. There can be
- * multiple files and files can be nested. In parameter files, lines starting
- * with a hash sign are skipped, even inside brackets. Since line terminators are
- * handled as white space, values can be continued on multiple lines by having
- * opening and closing square brackets on multiple lines. File parameters are
- * processed immediately in the order in which they appear. The file name can be
- * followed with a semi-colon and one or more mappings. Here is an example:
+ * parameters, using the notation <code>file=file-spec</code>. Files can reside
+ * in the file system or on the class path. There can be multiple files and
+ * files can be nested. In parameter files, lines starting with a hash sign are
+ * skipped, even inside brackets. Since line terminators are handled as white
+ * space, values can be continued on multiple lines by having opening and
+ * closing square brackets on multiple lines (line terminators are replaced with
+ * spaces). File parameters are processed immediately in the order in which they
+ * appear. The file name can be followed with a semi-colon and one or more
+ * mappings. Here is an example:
  * 
  * <pre><code>
  * file = [/home/someone/parms.txt; foo=bar quux=flix]
  * </code></pre>
  * <p>
- * When mappings are present, only parameters named in the mappings ("foo" and
- * "quux" in the example) will be considered. If they are found in the file the
- * corresponding values will be assigned to parameters using names bar and flix.
+ * When mappings are present, only parameters named in the mappings (<q>foo</q> and
+ * <q>quux</q> in the example) will be considered. If they are found in the file the
+ * corresponding values will be assigned to parameters using the mapping values
+ * (<q>bar</q> and <q>flix</q> in the example).
  * This trick is useful when extracting specific parameters from existing
  * configuration files where names are defined by someone else.
  * 
@@ -61,11 +63,11 @@ public class Args {
 		public abstract void set(String value);
 
 		public String getValue(String name) {
-			throw new UtilMsg(U.U00101, name).runtimeException();
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00101, name));
 		}
 
 		public List<String> getValues(String name) {
-			throw new UtilMsg(U.U00102, name).runtimeException();
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00102, name));
 		}
 	}
 
@@ -80,7 +82,7 @@ public class Args {
 		@Override
 		public String getValue(String name) {
 			if (value == null)
-				throw new UtilMsg(U.U00105, name).runtimeException();
+				throw new IllegalArgumentException(UtilMsg.msg(U.U00105, name));
 			return value;
 		}
 
@@ -183,10 +185,12 @@ public class Args {
 	/**
 	 * Convenience method to parse parameters specified in an array. Elements
 	 * are joined using a space separator into a single string and passed to
-	 * {@link #parse(String)}. An exception is thrown when parsing fails.
+	 * {@link #parse(String)}. An <code>IllegalArgumentException</code> is 
+	 * thrown when parsing fails.
 	 * 
 	 * @param args
 	 *            an array of strings
+	 * @throws IllegalArgumentException
 	 */
 	public void parse(String[] args) {
 		parse(join(SEPARATOR, args));
@@ -197,11 +201,12 @@ public class Args {
 	 * naming the file, like this:
 	 * <pre><code>
 	 * file = /some/where/config.txt
-	 * </code><pre>
-	 * An exception is thrown when parsing fails.
+	 * </code></pre>
+	 * An <code>IllegalArgumentException</code> is thrown when parsing fails.
 	 * 
 	 * @param string
 	 *            a string containing a list of name-value pairs
+	 * @throws IllegalArgumentException
 	 */
 	public void parse(String string) {
 		parse(new ArgsScanner().asPairs(string));
@@ -223,8 +228,9 @@ public class Args {
 
 	/**
 	 * Define a scalar parameter and its default value. If the default value is
-	 * null the parameter will be interpreted as mandatory. An exception is
-	 * thrown if there is already a parameter with the same name.
+	 * null the parameter will be interpreted as mandatory. An
+	 * <code>IllegalArgumentException</code> is thrown if there is already a
+	 * parameter with the same name.
 	 * 
 	 * @param name
 	 *            the name of the parameter
@@ -236,11 +242,13 @@ public class Args {
 	}
 
 	/**
-	 * Define a mandatory scalar parameter. An exception is thrown if there is
-	 * already a parameter with the same name.
+	 * Define a mandatory scalar parameter. An
+	 * <code>IllegalArgumentException</code> is thrown if there is already a
+	 * parameter with the same name.
 	 * 
 	 * @param name
 	 *            the name of the parameter
+	 * @throws IllegalArgumentException
 	 */
 	public void define(String name) {
 		define(name, null);
@@ -248,25 +256,28 @@ public class Args {
 
 	/**
 	 * Define a list parameter. A list parameter can have zero or more values.
-	 * An exception is thrown if there is already a parameter with the same
-	 * name.
+	 * An <code>IllegalArgumentException</code> is thrown if there is already a
+	 * parameter with the same name.
 	 * 
 	 * @param name
 	 *            the name of the parameter
+	 * @throws IllegalArgumentException
 	 */
 	public void defineList(String name) {
 		putValue(name, new ListValue());
 	}
 
 	/**
-	 * Put a value for the named parameter. An exception is thrown if there is
-	 * no parameter with this name. If the parameter is a list parameter and the
-	 * value is null, all values are cleared.
+	 * Put a value for the named parameter. An
+	 * <code>IllegalArgumentException</code> is thrown if there is no parameter
+	 * with this name. If the parameter is a list parameter and the value is
+	 * null, all values are cleared.
 	 * 
 	 * @param name
 	 *            the name of the parameter
 	 * @param value
 	 *            the value of the parameter
+	 * @throws IllegalArgumentException
 	 */
 	public void put(String name, String value) {
 		getValue(name).set(value);
@@ -275,12 +286,14 @@ public class Args {
 	/**
 	 * Return the value for the named parameter. If the parameter was not
 	 * specified, the default value is returned, but if the default value is
-	 * null an exception is thrown. An exception is also thrown when attempting
-	 * to get the value of a list parameter with this method.
+	 * null an <code>IllegalArgumentException</code> is thrown. Such an
+	 * exception is also thrown when attempting to get the value of a list
+	 * parameter with this method.
 	 * 
 	 * @param name
 	 *            the name of the parameter
 	 * @return the value specified for the parameter
+	 * @throws IllegalArgumentException
 	 */
 	public String get(String name) {
 		return getValue(name).getValue(name);
@@ -288,49 +301,53 @@ public class Args {
 	
 	/**
 	 * Return the value of the named parameter converted to an integer. An
-	 * exception is thrown if the conversion fails.
+	 * <code>IllegalArgumentException</code> is thrown if the conversion fails.
 	 * 
 	 * @param name
 	 *            the name of the parameter
 	 * 
 	 * @return an integer
 	 * @see #get(String)
+	 * @throws IllegalArgumentException
 	 */
 	public int getInt(String name) {
 		try {
 			return Integer.parseInt(get(name));
 		} catch (NumberFormatException e) {
-			throw new UtilMsg(U.U00111, name, get(name)).runtimeException(e);
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00111, name, get(name)));
 		}
 	}
 	
 	/**
 	 * Return the value of the named parameter converted to a boolean. An
-	 * exception is thrown if the conversion fails. Valid boolean values are
-	 * <code>true</code> and <code>false</code>. These values are
-	 * case-insensitive.
+	 * <code>IllegalArgumentException</code> is thrown if the conversion fails.
+	 * Valid boolean values are <code>true</code> and <code>false</code>. These
+	 * values are case-insensitive.
 	 * 
 	 * @param name
 	 *            the name of the parameter
 	 * 
 	 * @return a boolean
 	 * @see #get(String)
+	 * @throws IllegalArgumentException
 	 */
 	public boolean getBoolean(String name) {
 		String value = get(name).toLowerCase();
 		boolean result = value.equals("true");
 		if (!result && ! value.equals("false"))
-			throw new UtilMsg(U.U00112, name, get(name)).runtimeException();
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00112, name, get(name)));
 		return result;
 	}
 
 	/**
-	 * Return the list of values for the named parameter. An exception is thrown
-	 * when attempting to get the value of a scalar parameter with this method.
+	 * Return the list of values for the named parameter. An
+	 * <code>IllegalArgumentException</code> is thrown when attempting to get
+	 * the value of a scalar parameter with this method.
 	 * 
 	 * @param name
 	 *            the name of the parameter
 	 * @return a list of values
+	 * @throws IllegalArgumentException
 	 */
 	public List<String> getList(String name) {
 		return getValue(name).getValues(name);
@@ -339,14 +356,14 @@ public class Args {
 	private Value getValue(String name) {
 		Value v = args.get(name);
 		if (v == null)
-			throw new UtilMsg(U.U00105, name).runtimeException();
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00103, name));
 		return v;
 	}
 
 	private void putValue(String name, Value value) {
 		Value v = args.get(name);
 		if (v != null)
-			throw new UtilMsg(U.U00104, name).runtimeException();
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00104, name));
 		args.put(name, value);
 	}
 
@@ -370,26 +387,34 @@ public class Args {
 	 * which are simply name-value pairs. When such mappings are present, only
 	 * the names found in the mapping will be extracted from the file and the
 	 * corresponding values will be used to rename the pairs.
+	 * An <code>IllegalArgumentException</code> will be thrown if anything 
+	 * goes wrong while parsing the file specification. Some of these exceptions
+	 * are wrapped <code>IOException</code>s.
 	 * 
 	 * @param fileSpec
 	 *            a file name possibly followed by mappings
 	 * @return a list of arrays of length 2 (name and value)
+	 * @throws IllegalArgumentException
 	 */
 	private List<String[]> parseFileAndMapping(String fileSpec) {
 		String[] fm = fileSpec.split(mappingSeparator, 2);
-		if (fm.length > 1)
-			return parseFile(fm[0], fm[1]);
-		else
-			return parseFile(fm[0]);
+		try {
+			if (fm.length > 1)
+				return parseFile(fm[0], fm[1]);
+			else
+				return parseFile(fm[0]);
+		} catch (Exception e) {
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00108, fileParameterName,fileSpec), e);
+		}
 	}
 	
-	private List<String[]> parseFile(String fileName) {
+	private List<String[]> parseFile(String fileName) throws IOException {
 		ArgsFileVisitor visitor = new ArgsFileVisitor(SEPARATOR);
 		textFile.read(fileName, visitor);
 		return new ArgsScanner().asPairs(visitor.getContent());
 	}
 	
-	private List<String[]> parseFile(String fileName, String mappings) {
+	private List<String[]> parseFile(String fileName, String mappings) throws IOException {
 		List<String[]> pairs = parseFile(fileName);
 		Map<String, String> map = asMap(new ArgsScanner().asPairs(mappings));
 		Iterator<String[]> it = pairs.iterator();

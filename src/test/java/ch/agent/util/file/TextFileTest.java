@@ -5,6 +5,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,13 +20,15 @@ public class TextFileTest {
 
 	private TextFile textFile;
 	private String fileName;
+	private String dirName;
 	private String classPathFileName;
 	private List<String> text;
 	
 	@Before
 	public void setUp() throws Exception {
 		textFile = new TextFile();
-		fileName = File.createTempFile("test", ".txt").getAbsolutePath();
+		fileName = tmpFile().getAbsolutePath();
+		dirName = tmpDir().getAbsolutePath();
 		classPathFileName = "TextFileTest.test";
 		text = new ArrayList<String>();
 		text.add("line 1");
@@ -32,9 +36,46 @@ public class TextFileTest {
 		text.add("line 3");
 	}
 
+	private File tmpFile() throws IOException {
+		File f = File.createTempFile("testf-", ".txt");
+		return f;
+	}
+	
+	private File tmpDir() throws IOException {
+		File tmpdir = new File(System.getProperty("java.io.tmpdir"));
+		int i = 0;
+		File tempDir = null;
+		while (true) {
+			i++;
+			Double ran = Math.random() * 1000000;
+			String dir = "testd-" + ran.intValue();
+			tempDir = new File(tmpdir, dir);
+			if (tempDir.mkdir())
+				break;
+			else {
+				if (i > 1000) 
+					throw new RuntimeException(
+						String.format("Can't create directory %s in %s (%d attempts)", 
+						dir, tmpdir, i));
+			}
+		}
+		return tempDir;
+	}
+	
+	// verbatim from http://stackoverflow.com/questions/779519/delete-files-recursively-in-java
+	private void delete(File f) throws IOException {
+		if (f.isDirectory()) {
+			for (File c : f.listFiles())
+				delete(c);
+		}
+		if (!f.delete())
+			throw new FileNotFoundException("Failed to delete file: " + f);
+	}
+		
 	@After
 	public void tearDown() throws Exception {
 		new File(fileName).delete();
+		delete(new File(dirName));
 	}
 	
 	@Test
@@ -119,5 +160,57 @@ public class TextFileTest {
 		}
 	}
 	
+	@Test
+	public void testRelativeOutputFile() {
+		try {
+			textFile.write("a.txt", false, text.iterator());
+			fail("expected an exception");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith(U.U00205));
+		}
+	}
+	
+	@Test
+	public void testRelativeOutputFile2() {
+		try {
+			textFile.write("b/a.txt", false, text.iterator());
+			fail("expected an exception");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith(U.U00205));
+		}
+	}
+	
+	@Test
+	public void testOutputFileCreateDirectory() {
+		try {
+			textFile.write(dirName + "/a.txt", false, text.iterator());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testOutputFileCreateDirectory2() {
+		try {
+			textFile.write(dirName + "/a/b/c/d/e.txt", false, text.iterator());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testOutputFileInRoot() {
+		try {
+			textFile.write("/a.txt", false, text.iterator());
+			fail("expected an exception");
+		} catch (FileNotFoundException e) {
+			assertTrue(e.getMessage().equals("/a.txt (Permission denied)"));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
 
 }

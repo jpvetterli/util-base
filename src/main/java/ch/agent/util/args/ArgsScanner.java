@@ -8,7 +8,7 @@ import ch.agent.util.UtilMsg;
 import ch.agent.util.UtilMsg.U;
 
 /**
- * ArgsScanner provides scanning support to {@link Args}. The scanner turns a
+ * Scanning support for {@link Args}. The scanner turns a
  * string into a list of tokens, which are actually just strings. It is used to
  * parse lists of name-value pairs with support for embedded white space. To
  * include white space in a string, the string can be put in brackets.
@@ -68,8 +68,9 @@ public class ArgsScanner {
 	}
 
 	/**
-	 * Extract list of tokens from a string. Tokens are string with all
-	 * white-space, brackets, and escapes removed.
+	 * Extract list of tokens from a string. Tokens are strings with surrounding
+	 * white-space and enclosing brackets removed. Escapes are also removed, but
+	 * only when followed by a closing bracket.
 	 * 
 	 * @param string
 	 *            a string
@@ -91,12 +92,15 @@ public class ArgsScanner {
 	}
 	
 	/**
-	 * Turn a string into a list of name-value pairs.
+	 * Turn a string into a list of name-value pairs. An
+	 * <code>IllegalArgumentException</code> is thrown when parsing becomes
+	 * impossible because of a badly formed input.
 	 * 
 	 * @param string
 	 *            a string interpreted as a sequence of names, equals, and
 	 *            values
 	 * @return a list of 2-elements array representing name-value pairs
+	 * @throws IllegalArgumentException
 	 */
 	public List<String[]> asPairs(String string) {
 		tokenize(string);
@@ -113,9 +117,9 @@ public class ArgsScanner {
 			if (nv[1] == null) {
 				if (pairs.size() > 0) {
 					String[] pair = pairs.get(pairs.size() - 1);
-					throw new UtilMsg(U.U00107, nv[0], pair[0], pair[1]).runtimeException();
+					throw new IllegalArgumentException(UtilMsg.msg(U.U00107, nv[0], pair[0], pair[1]));
 				} else
-					throw new UtilMsg(U.U00106, nv[0]).runtimeException();
+					throw new IllegalArgumentException(UtilMsg.msg(U.U00106, nv[0]));
 			}
 			pairs.add(nv);
 		}
