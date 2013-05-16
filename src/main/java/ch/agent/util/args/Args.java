@@ -50,11 +50,14 @@ import ch.agent.util.file.TextFile;
  * (<q>bar</q> and <q>flix</q> in the example).
  * This trick is useful when extracting specific parameters from existing
  * configuration files where names are defined by someone else.
- * 
+ * <p>
+ * Except in <em>loose mode</em> parameter names must have been defined before
+ * parsing.
+ *  
  * @author Jean-Paul Vetterli
  * 
  */
-public class Args {
+public class Args implements Iterable<String> {
 
 	private abstract class Value {
 		public Value() {
@@ -155,31 +158,50 @@ public class Args {
 	private String fileParameterName;
 	private String mappingSeparator;
 	private Map<String, Value> args;
+	private boolean strictMode;
 	private TextFile textFile; // use only one for duplicate detection to work
 
 	/**
 	 * Construct a custom <code>Args</code> object. Nulls are valid arguments
-	 * and will be replaced with default values.
+	 * and will be replaced with default values. <code>Args</code> is either in
+	 * <em>strict mode</em> or in <em>loose mode</em>. In strict mode,
+	 * a parameter must be defined before use. In loose mode, this is not 
+	 * required. 
 	 * 
 	 * @param name
 	 *            the name of the file parameter, or null
 	 * @param sep
 	 *            a regular expression used as the mapping separator, or null
+	 * @param strictMode if true run in <em>strict mode<em>
 	 */
-	public Args(String name, String sep) {
+	public Args(String name, String sep, boolean strictMode) {
 		this.fileParameterName = (name == null ? FILE : name);
 		this.mappingSeparator = (sep == null ? MAPPING_SEPARATOR : sep);
 		args = new HashMap<String, Args.Value>();
 		textFile = new TextFile();
+		this.strictMode = strictMode;
 	}
 
 	/**
 	 * Construct an Args object using defaults.
 	 * The default values for the name of the file parameter and the mapping 
 	 * separator are taken from {@link #FILE} and {@link #MAPPING_SEPARATOR}.
+	 * The default mode is <em>strict mode</em>.
 	 */
 	public Args() {
-		this(null, null);
+		this(null, null, true);
+	}
+	
+	/**
+	 * Return an iterator over all parameter names.
+	 * Parameter names are not returned in any predictable order.
+	 * 
+	 * <p>
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Iterator<String> iterator() {
+		return args.keySet().iterator();
 	}
 
 	/**
@@ -268,7 +290,7 @@ public class Args {
 	}
 
 	/**
-	 * Put a value for the named parameter. An
+	 * Put a value for the named parameter. Except in <em>loose mode</em> an
 	 * <code>IllegalArgumentException</code> is thrown if there is no parameter
 	 * with this name. If the parameter is a list parameter and the value is
 	 * null, all values are cleared.
@@ -280,7 +302,14 @@ public class Args {
 	 * @throws IllegalArgumentException
 	 */
 	public void put(String name, String value) {
-		getValue(name).set(value);
+		Value v = args.get(name);
+		if (v == null) {
+			if (strictMode)
+				throw new IllegalArgumentException(UtilMsg.msg(U.U00103, name));
+			else
+				define(name, value);
+		} else
+			v.set(value);
 	}
 
 	/**

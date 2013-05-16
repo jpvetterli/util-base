@@ -278,5 +278,20 @@ public class ArgsTest {
 			assertTrue(e.getCause().getMessage().startsWith(U.U00209));
 		}
 	}
+	
+	@Test
+	public void testLooseMode() {
+		try {
+			Args looseArgs = new Args(null, null, false);
+			looseArgs.parse("a=1 b=2 c=3");
+			int total = 0;
+			for (String arg : looseArgs) {
+				total += looseArgs.getInt(arg);
+			}
+			assertEquals(6, total);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
 
 }
