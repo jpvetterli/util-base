@@ -11,8 +11,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import ch.agent.util.UtilMsg;
@@ -86,6 +88,27 @@ public class TextFile {
 		}
 	}
 
+	private class SimpleVisitor implements Visitor {
+
+		private List<String> lines;
+		
+		public SimpleVisitor() {
+			super();
+			lines = new ArrayList<String>();
+		}
+
+		@Override
+		public boolean visit(int lineNr, String line) throws Exception {
+			lines.add(line);
+			return false;
+		}
+		
+		public List<String> getLines() {
+			return lines;
+		}
+	}
+
+	
 	/**
 	 * Construct a <code>TextFile</code> using a specific character set.
 	 * 
@@ -165,6 +188,24 @@ public class TextFile {
 		}
 	}
 
+	/**
+	 * Read a series of lines from a file. Lines are returned to the caller as a
+	 * list containing of lines of text from the file. Line terminators are
+	 * removed. The file can reside in the file system or as a resource on the
+	 * class path. An <code>IOException</code> is thrown if the file cannot be
+	 * read.
+	 * 
+	 * @param fileName
+	 *            the name of the file
+	 * @return all lines of text from the file as a list
+	 * @throws IOException
+	 */
+	public List<String> read(String fileName) throws IOException {
+		SimpleVisitor v = new SimpleVisitor();
+		read(fileName, v);
+		return v.getLines();
+	}
+	
 	/**
 	 * Write a series of lines to a file. The file is created if it does not
 	 * exist, as is the file's directory (but not the directory's directory).
