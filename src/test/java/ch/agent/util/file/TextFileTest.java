@@ -109,6 +109,20 @@ public class TextFileTest {
 	}
 	
 	@Test
+	public void testWriteRead2() {
+		try {
+			textFile.write(fileName, false, text.iterator());
+			List<String> text2 = textFile.read(fileName);
+			assertEquals(text.size(), text2.size());
+			assertEquals(text.get(0), text2.get(0));
+			assertEquals(text.get(1), text2.get(1));
+			assertEquals(text.get(2), text2.get(2));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
 	public void testFileNotFound() {
 		try {
 			textFile.read("/foo/bar", new TextFile.Visitor() {

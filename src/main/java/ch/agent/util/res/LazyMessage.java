@@ -4,9 +4,10 @@ import java.text.MessageFormat;
 import java.util.ResourceBundle;
 
 /**
- * A lazy message is a text with parameters which delays work. Parameters
- * are resolved and the text formatted only when actually needed. Subclasses
- * manage a resource bundle, which can be kept hidden from client code.
+ * A lazy message is a text with optional parameters. Parameters follow
+ * {@link MessageFormat} conventions. They are resolved and the text is
+ * formatted only when actually needed. Subclasses manage a resource bundle,
+ * which can be kept hidden from client code.
  * 
  * 
  * <p>
@@ -73,60 +74,90 @@ import java.util.ResourceBundle;
  * @author Jean-Paul Vetterli
  * 
  */
-public abstract class LazyMessage {
+public class LazyMessage {
 
-	private static final String FORMAT = "%s - %s";
-
+	private static String DEFAULT_PATTERN = "%s - %s"; 
+	
 	private ResourceBundle bundle;
 	private String bundleName;
 	private String key;
 	private Object[] args;
-	private String message;
+	private String pattern;
+	private String text;
 
 	/**
 	 * Construct a lazy message. The actual message text is only created if and
-	 * when needed.
+	 * when needed. Depending on the pattern specified, the message key can be
+	 * included in the message text. By default, key and message body are joined
+	 * with a hyphen. Here is an example with key <q>M042</q>:
 	 * 
+	 * <pre>
+	 * <code>
+	 * M042 - This is message forty-two.
+	 * </code>
+	 * </pre>
+	 * <p>
+	 * The behavior is specified using the <code>pattern</code> parameter.
+	 * The pattern is simply a format specification as in {@link String#format}.
+	 * When null, the key is not inserted. When the pattern is empty,
+	 * <q>%s&nbsp;-&nbsp;%s</q> is used as the built-in default.
+	 * <p>
+	 * When the <code>bundle</code> parameter is null, the <code>key</code>
+	 * parameter is interpreted as the message text.
+	 *  
 	 * @param key
-	 *            a String identifying the text
+	 *            a String identifying the message
 	 * @param bundleName
-	 *            the name of the bundle, used in meta exception message
-	 * 
+	 *            the name of the bundle (used in meta exception messages)
 	 * @param bundle
 	 *            a {@link ResourceBundle} containing the wanted text
+	 * @param pattern
+	 *            if true the message will be prefixed with the key
 	 * @param args
 	 *            zero of more arguments
 	 */
 	public LazyMessage(String key, String bundleName, ResourceBundle bundle,
-			Object... args) {
+			String pattern, Object... args) {
 		this.bundle = bundle;
 		this.bundleName = bundleName;
 		this.key = key;
 		this.args = args;
+		this.pattern = (pattern != null && pattern.length() == 0) 
+				? DEFAULT_PATTERN : pattern;
+	}
+	
+	/**
+	 * Construct a lazy message. The actual message text is only created if and
+	 * when needed.
+	 *  
+	 * @param message
+	 *            the message text
+	 * @param args
+	 *            zero of more arguments
+	 */
+	public LazyMessage(String message, Object... args) {
+		this(message, null, null, null, args);
 	}
 
-	private String findMessage(ResourceBundle bundle, String key, Object[] args) {
-		return formatMessage(bundle.getString(String.valueOf(key)), args);
-	}
-
-	private String formatMessage(String rawMessage, Object... args) {
+	private String format(String rawMessage, Object... args) {
 		if (args.length == 0)
 			return rawMessage;
-		// MessageFormat.format() does ugly Double.NaNs so use toString()
-		String[] s = new String[args.length];
+		// MessageFormat.format() does not handle Double.NaNs
 		for (int i = 0; i < args.length; i++) {
-			if (args[i] == null)
-				s[i] = "null";
-			else
-				s[i] = args[i].toString();
+			if (args[i] instanceof Double)
+				args[i] = args[i].toString();
 		}
-		return new MessageFormat(rawMessage).format(s);
+		return new MessageFormat(rawMessage).format(args);
 	}
 
+	private String getText() {
+		return bundle == null ? key : bundle.getString(key);
+	}
+	
 	/**
 	 * Resolve and format the message into a string. The method retrieves the
 	 * text from the resource bundle using the key, formats and replaces
-	 * arguments, and prefixes the result with the message key. Null arguments
+	 * arguments, and inserts the key into the message if requested. Null arguments
 	 * are supported. If anything gets in the way, making it impossible to
 	 * prepare the message, a runtime exception is thrown with the relevant
 	 * cause and with a message displaying the key and the base name of the
@@ -138,16 +169,17 @@ public abstract class LazyMessage {
 	 */
 	@Override
 	public String toString() {
-		if (message == null) {
+		if (text == null) {
 			try {
-				message = String.format(FORMAT, key,
-						findMessage(bundle, key, args));
+				text = format(getText(), args);
+				if (pattern != null)
+					text = String.format(pattern, key, text);
 			} catch (Exception e) {
-				throw new RuntimeException(String.format("key=%s bundle=%s",
-						key, bundleName), e);
+				throw new RuntimeException(
+						String.format("key=%s bundle=%s", key, bundleName), e);
 			}
 		}
-		return message;
+		return text;
 	}
 
 }

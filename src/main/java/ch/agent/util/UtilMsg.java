@@ -42,7 +42,7 @@ public class UtilMsg extends LazyMessage {
 	 * @param args message arguments
 	 */
 	public UtilMsg(String key, Object... args) {
-		super(key, BUNDLE_NAME, BUNDLE, args);
+		super(key, BUNDLE_NAME, BUNDLE, "", args);
 	}
 	
 	/**
