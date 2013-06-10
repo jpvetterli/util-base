@@ -22,7 +22,7 @@ public class LoggerTest {
 	
 	private class TestMessage extends LazyMessage {
 		public TestMessage(String message, Object... args) {
-			super(message, args);
+			super(message, null, null, null, args);
 		}
 		@Override
 		public String toString() {

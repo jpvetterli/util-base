@@ -9,11 +9,10 @@ import java.util.ResourceBundle;
  * formatted only when actually needed. Subclasses manage a resource bundle,
  * which can be kept hidden from client code.
  * 
- * 
  * <p>
  * The following example shows a way to use <code>LazyMessage</code>.
  * <p>
- * This is a Java class FooMsg:
+ * This is in Java class FooMsg:
  * 
  * <pre>
  * <code>
@@ -33,7 +32,7 @@ import java.util.ResourceBundle;
  * 	private static final ResourceBundle BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
  * 
  * 	public FooMsg(String key, Object... args) {
- * 		super(key, BUNDLE_NAME, BUNDLE, args);
+ * 		super(key, BUNDLE_NAME, BUNDLE, "", args);
  * 	}
  * 	
  * 	// short-hand for new FooMsg(...).toString()
@@ -47,7 +46,7 @@ import java.util.ResourceBundle;
  * This is properties file FooMsg.properties:
  * 
  * <pre>
- * <code> M00101=This is a message.
+ * <code>M00101=This is a message.
  * M00102=This is a message with two parameters: {0} and {1}.
  * </code>
  * </pre>
@@ -63,6 +62,11 @@ import java.util.ResourceBundle;
  * ...
  * </code>
  * </pre>
+ * The exception message reads: 
+ * <pre>
+ * <code>M00102 - This is a message with two parameters: xyzzy and 42.
+ * </code>
+ * </pre>
  * 
  * To Eclipse users:
  * <p>
@@ -76,18 +80,18 @@ import java.util.ResourceBundle;
  */
 public class LazyMessage {
 
-	private static String DEFAULT_PATTERN = "%s - %s"; 
+	private static String DEFAULT_KEY_BODY_FORMAT = "%s - %s"; 
 	
 	private ResourceBundle bundle;
 	private String bundleName;
 	private String key;
 	private Object[] args;
-	private String pattern;
+	private String keyBodyFormat;
 	private String text;
 
 	/**
 	 * Construct a lazy message. The actual message text is only created if and
-	 * when needed. Depending on the pattern specified, the message key can be
+	 * when needed. Depending on the specification, the message key will be
 	 * included in the message text. By default, key and message body are joined
 	 * with a hyphen. Here is an example with key <q>M042</q>:
 	 * 
@@ -97,46 +101,45 @@ public class LazyMessage {
 	 * </code>
 	 * </pre>
 	 * <p>
-	 * The behavior is specified using the <code>pattern</code> parameter.
-	 * The pattern is simply a format specification as in {@link String#format}.
-	 * When null, the key is not inserted. When the pattern is empty,
-	 * <q>%s&nbsp;-&nbsp;%s</q> is used as the built-in default.
+	 * The behavior is specified using the <code>keyBodyFormat</code> parameter,
+	 * with a value in {@link java.util.Formatter} syntax. When the parameter is
+	 * null, the key is not inserted. When the parameter is empty,
+	 * <q>%s&nbsp;-&nbsp;%s</q> is used as default.
 	 * <p>
 	 * When the <code>bundle</code> parameter is null, the <code>key</code>
 	 * parameter is interpreted as the message text.
-	 *  
+	 * 
 	 * @param key
 	 *            a String identifying the message
 	 * @param bundleName
 	 *            the name of the bundle (used in meta exception messages)
 	 * @param bundle
 	 *            a {@link ResourceBundle} containing the wanted text
-	 * @param pattern
-	 *            if true the message will be prefixed with the key
+	 * @param keyBodyFormat
+	 *            a format, an empty string, or null
 	 * @param args
 	 *            zero of more arguments
 	 */
 	public LazyMessage(String key, String bundleName, ResourceBundle bundle,
-			String pattern, Object... args) {
+			String keyBodyFormat, Object... args) {
 		this.bundle = bundle;
 		this.bundleName = bundleName;
 		this.key = key;
 		this.args = args;
-		this.pattern = (pattern != null && pattern.length() == 0) 
-				? DEFAULT_PATTERN : pattern;
+		this.keyBodyFormat = (keyBodyFormat != null && keyBodyFormat.length() == 0) 
+				? DEFAULT_KEY_BODY_FORMAT : keyBodyFormat;
 	}
 	
 	/**
-	 * Construct a lazy message. The actual message text is only created if and
-	 * when needed.
-	 *  
-	 * @param message
-	 *            the message text
-	 * @param args
-	 *            zero of more arguments
+	 * Short hand for 
+	 * <pre><code>new LazyMessage(key, args).toString()</code></pre>
+	 * 
+	 * @param text the message text
+	 * @param args message arguments
+	 * @return the message formatted using the arguments
 	 */
-	public LazyMessage(String message, Object... args) {
-		this(message, null, null, null, args);
+	public static String msg(String text, Object... args) {
+		return new LazyMessage(text, null, null, null, args).toString();
 	}
 
 	private String format(String rawMessage, Object... args) {
@@ -172,8 +175,8 @@ public class LazyMessage {
 		if (text == null) {
 			try {
 				text = format(getText(), args);
-				if (pattern != null)
-					text = String.format(pattern, key, text);
+				if (keyBodyFormat != null)
+					text = String.format(keyBodyFormat, key, text);
 			} catch (Exception e) {
 				throw new RuntimeException(
 						String.format("key=%s bundle=%s", key, bundleName), e);
