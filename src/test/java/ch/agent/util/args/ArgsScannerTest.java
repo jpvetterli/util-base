@@ -22,42 +22,42 @@ public class ArgsScannerTest {
 
 	@Test
 	public void testOneString() {
-		assertEquals("foo", scanner.tokenize("foo").get(0));
+		assertEquals("foo", scanner.asValuesAndPairs("foo").get(0)[0]);
 	}
 	
 	@Test
 	public void testOneString2() {
-		assertEquals("foo", scanner.tokenize("foo ").get(0));
+		assertEquals("foo", scanner.asValuesAndPairs("foo ").get(0)[0]);
 	}
 	
 	@Test
 	public void testTwoStrings() {
-		List<String> result = scanner.tokenize("foo bar");
-		assertEquals("foo", result.get(0));
-		assertEquals("bar", result.get(1));
+		List<String[]> result = scanner.asValuesAndPairs("foo bar");
+		assertEquals("foo", result.get(0)[0]);
+		assertEquals("bar", result.get(1)[0]);
 	}
 	
 	@Test
 	public void testTwoStrings2() {
-		List<String> result = scanner.tokenize("	foo 	 bar");
-		assertEquals("foo", result.get(0));
-		assertEquals("bar", result.get(1));
+		List<String[]> result = scanner.asValuesAndPairs("	foo 	 bar");
+		assertEquals("foo", result.get(0)[0]);
+		assertEquals("bar", result.get(1)[0]);
 	}
 	
 	@Test
 	public void testEmptyString() {
-		assertEquals(0, scanner.tokenize("").size());
+		assertEquals(0, scanner.asValuesAndPairs("").size());
 	}
 	
 	@Test
 	public void testEmptyString2() {
-		assertEquals(0, scanner.tokenize("   	").size());
+		assertEquals(0, scanner.asValuesAndPairs("   	").size());
 	}
 
 	@Test
 	public void testNullString() {
 		try {
-			assertEquals(0, scanner.tokenize(null).size());
+			assertEquals(0, scanner.asValuesAndPairs(null).size());
 			fail("expected an exception");
 		} catch (Exception e) {
 			assertEquals(IllegalArgumentException.class, e.getClass());
@@ -170,7 +170,7 @@ public class ArgsScannerTest {
 	public void testNameValuePair8() {
 		try {
 			scanner.asPairs("[f =[o\\] o] = b\\ar [w h a t] b\\ar");
-			fail("expected en exception");
+			fail("expected an exception");
 		} catch (Exception e) {
 			assertTrue(e.getMessage().startsWith(U.U00107));
 		}
@@ -180,9 +180,9 @@ public class ArgsScannerTest {
 	public void testNameValuePair9() {
 		try {
 			scanner.asPairs("[f =[o\\] o] = b\\ar [w h a t] =");
-			fail("expected en exception");
+			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00107));
+			assertTrue(e.getMessage().startsWith(U.U00109));
 		}
 	}
 	
@@ -190,9 +190,181 @@ public class ArgsScannerTest {
 	public void testNameValuePair10() {
 		try {
 			scanner.asPairs("[f =[o\\] o] = b\\ar [w h a t]");
-			fail("expected en exception");
+			fail("expected an exception");
 		} catch (Exception e) {
 			assertTrue(e.getMessage().startsWith(U.U00107));
+		}
+	}
+	
+	@Test
+	public void testValuePairsMixed1() {
+		List<String[]> result = scanner.asValuesAndPairs("x foo=bar hop = la", false);
+		assertEquals("x", result.get(0)[0]);
+		assertEquals("la", result.get(2)[1]);
+	}
+	@Test
+	public void testNameValuePairsMixed2() {
+		List<String[]> result = scanner.asValuesAndPairs("foo=[ bar ] x hop =la", false);
+		assertEquals(" bar ", result.get(0)[1]);
+		assertEquals("la", result.get(2)[1]);
+	}
+	@Test
+	public void testNameValuePairsMixed3() {
+		List<String[]> result = scanner.asValuesAndPairs(" foo [ = ] bar[hop]=la x", false);
+		assertEquals(" = ", result.get(1)[0]);
+		assertEquals("x", result.get(3)[0]);
+	}
+	@Test
+	public void testNameValuePairsMixed4() {
+		List<String[]> result = scanner.asValuesAndPairs(" foo = bar x hop=la y", false);
+		assertEquals("x", result.get(1)[0]);
+		assertEquals("y", result.get(3)[0]);
+	}
+	
+	@Test
+	public void testNameValuePairsMixed5() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("foo = bar x", true);
+			assertEquals("x", result.get(1)[0]);
+			fail("expected an exception");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith(U.U00107));
+		}
+	}
+	
+	@Test
+	public void testNameValuePairsMixed7() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("=abc foo = bar x", true);
+			assertEquals("x", result.get(1)[0]);
+			fail("expected an exception");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith(U.U00108));
+		}
+	}
+	
+	@Test
+	public void testMetaChars1() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("OOPS [f =[o\\] o] = [b\\ar [w h a t\\] b\\ar]");
+			assertEquals("f =[o] o", result.get(1)[0]);
+			assertEquals("b\\ar [w h a t] b\\ar", result.get(1)[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testMetaChars2() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("Tokenizer.MetaCharacters=():\\ OOPS (f =(o\\) o) : (b\\ar (w h a t\\) b\\ar)");
+			assertEquals("f =(o) o", result.get(1)[0]);
+			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testMetaChars3() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("Tokenizer.MetaCharacters=toolong OOPS (f =(o\\) o) : (b\\ar (w h a t\\) b\\ar)");
+			assertEquals("f =(o) o", result.get(1)[0]);
+			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
+			fail("expected an exception");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith(U.U00114));
+		}
+	}
+
+	@Test
+	public void testMetaChars4() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("Tokenizer.MetaCharacters=xxxx OOPS (f =(o\\) o) : (b\\ar (w h a t\\) b\\ar)");
+			assertEquals("f =(o) o", result.get(1)[0]);
+			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
+			fail("expected an exception");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith(U.U00113));
+		}
+	}
+	
+	@Test
+	public void testMetaChars5() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("Tokenizer.MetaCharacters='':\\ OOPS 'f =\\'o\\' o' : 'b\\ar \\'w h a t\\' b\\ar'");
+			assertEquals("f ='o' o", result.get(1)[0]);
+			assertEquals("b\\ar 'w h a t' b\\ar", result.get(1)[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testMetaChars6() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("Tokenizer.MetaCharacters='':! O\"OPS 'f =!'o!' o][' : 'b!ar !'w h a t!' b!ar' empty: ''");
+			assertEquals("f ='o' o][", result.get(1)[0]);
+			assertEquals("b!ar 'w h a t' b!ar", result.get(1)[1]);
+			assertEquals("empty", result.get(2)[0]);
+			assertEquals("", result.get(2)[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testMetaChars7() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("[[=\\]]\\");
+			assertEquals("[=]", result.get(0)[0]);
+			assertEquals("\\", result.get(1)[0]);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testMetaChars8() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("[[=\\\\]]");
+			assertEquals("[=\\", result.get(0)[0]);
+			assertEquals("]", result.get(1)[0]);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testMetaChars9() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("[[\\]=\\\\] a=b");
+			assertEquals("[]=\\", result.get(0)[0]); // instead: "[]=\\a\\] a=b"
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testMetaChars10() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("Tokenizer.MetaCharacters=[[\\]=\\\\] OOPS [f =[o\\] o] = [b\\ar [w h a t\\] b\\ar]");
+			assertEquals("f =[o] o", result.get(1)[0]);
+			assertEquals("b\\ar [w h a t] b\\ar", result.get(1)[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testMetaChars11() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("\\42[\\]42\\\\");
+			assertEquals("\\42[\\]42\\\\", result.get(0)[0]);
+		} catch (Exception e) {
+			fail("unexpected exception");
 		}
 	}
 

@@ -14,46 +14,68 @@ import ch.agent.util.file.TextFile;
 /**
  * Support for parameter lists and parameter files. A parameter list is a
  * sequence of name-value pairs separated by white space, with names and values
- * separated by an equal sign (which can be surrounded by white space). If a
- * name or a value includes white space or an equal sign it must be enclosed in
- * square brackets. To include a closing bracket it must be escaped with a
- * backslash. Here is an example:
+ * separated by an equal sign (which can be surrounded by white space). It is
+ * also possible to configure <code>Args</code> to have nameless values
+ * (sometimes known as positional parameters). If a name or a value includes
+ * white space or an equal sign it must be enclosed in square brackets. To
+ * include a closing bracket it must be escaped with a backslash. Here is an
+ * example:
  * 
- * <pre><code>
+ * <pre>
+ * <code>
  * foo = bar [qu ux]=[[what = ever\]] foo = [2nd val]
- * </code></pre>
+ * </code>
+ * </pre>
  * 
  * In the example, parameter "foo" has two values: "bar" and "2nd val" while
- * parameter "qu ux" has one value, "[what = ever]".
+ * parameter "qu ux" has one value, "[what = ever]". It is possible to change
+ * the meta characters dynamically at run time, like this:
+ * 
+ * <pre>
+ * <code>
+ * Tokenizer.MetaCharacters = '':\ foo: bar 'qu ux'='[what = ever]' foo: '2nd val'
+ * </code>
+ * </pre>
+ * 
+ * The special parameter <code>Tokenizer.MetaCharacters</code> takes a value
+ * with exactly four characters in predefined order: bracket open, bracket
+ * close, name-value separator, escape character. In the example, names and
+ * values are the same as previously but there is no need for escaping the "]"
+ * of "[what = ever]".
  * <p>
  * When a name is repeated the previous value is lost unless the parameter was
- * defined as a list parameter, like presumably "foo" in the example.
+ * defined as a list parameter, like "foo" in the example.
  * <p>
- * Parameters can be specified in files, which are themselves specified using
- * parameters, using the notation <code>file=file-spec</code>. Files can reside
- * in the file system or on the class path. There can be multiple files and
- * files can be nested. In parameter files, lines starting with a hash sign are
- * skipped, even inside brackets. Since line terminators are handled as white
- * space, values can be continued on multiple lines by having opening and
- * closing square brackets on multiple lines (line terminators are replaced with
- * spaces). File parameters are processed immediately in the order in which they
- * appear. The file name can be followed with a semi-colon and one or more
- * mappings. Here is an example:
+ * Name-value parameters can be specified in files, but nameless values are not
+ * allowed. Files are themselves specified using parameters, using the notation
+ * <code>file=file-spec</code>. Files can reside in the file system or on the
+ * class path. There can be multiple files and files can be nested. In parameter
+ * files, lines starting with a hash sign are skipped, even inside brackets.
+ * Since line terminators are handled as white space, values can be continued on
+ * multiple lines by having opening and closing square brackets on multiple
+ * lines (line terminators are replaced with spaces). File parameters are
+ * processed immediately in the order in which they appear. The file name can be
+ * followed with a semi-colon and one or more mappings. Here is an example:
  * 
- * <pre><code>
+ * <pre>
+ * <code>
  * file = [/home/someone/parms.txt; foo=bar quux=flix]
- * </code></pre>
+ * </code>
+ * </pre>
  * <p>
- * When mappings are present, only parameters named in the mappings (<q>foo</q> and
- * <q>quux</q> in the example) will be considered. If they are found in the file the
- * corresponding values will be assigned to parameters using the mapping values
- * (<q>bar</q> and <q>flix</q> in the example).
- * This trick is useful when extracting specific parameters from existing
- * configuration files where names are defined by someone else.
+ * When mappings are present, only parameters named in the mappings (
+ * <q>foo</q> and
+ * <q>quux</q> in the example) will be considered. If they are found in the file
+ * the corresponding values will be assigned to parameters using the mapping
+ * values (
+ * <q>bar</q> and
+ * <q>flix</q> in the example). This trick is useful when extracting specific
+ * parameters from existing configuration files where names are defined by
+ * someone else.
  * <p>
  * Except in <em>loose mode</em> parameter names must have been defined before
  * parsing.
- *  
+ * 
  * @author Jean-Paul Vetterli
  * 
  */
@@ -159,6 +181,7 @@ public class Args implements Iterable<String> {
 	private String mappingSeparator;
 	private Map<String, Value> args;
 	private boolean strictMode;
+	private boolean namelessAllowed;
 	private TextFile textFile; // use only one for duplicate detection to work
 
 	/**
@@ -231,7 +254,7 @@ public class Args implements Iterable<String> {
 	 * @throws IllegalArgumentException
 	 */
 	public void parse(String string) {
-		parse(new ArgsScanner().asPairs(string));
+		parse(new ArgsScanner().asValuesAndPairs(string, !namelessAllowed));
 	}
 	
 	/**
@@ -241,10 +264,19 @@ public class Args implements Iterable<String> {
 	 */
 	private void parse(List<String[]> pairs) {
 		for (String[] pair : pairs) {
-			if (pair[0].equals(fileParameterName))
-				parse(parseFileAndMapping(pair[1]));
-			else
-				put(pair[0], pair[1]);
+			switch (pair.length) {
+			case 1:
+				put("", pair[0]);
+				break;
+			case 2:
+				if (pair[0].equals(fileParameterName))
+					parse(parseFileAndMapping(pair[1]));
+				else
+					put(pair[0], pair[1]);
+				break;
+			default:
+				throw new RuntimeException("bug: " + pair.length);
+			}
 		}
 	}
 
@@ -280,13 +312,19 @@ public class Args implements Iterable<String> {
 	 * Define a list parameter. A list parameter can have zero or more values.
 	 * An <code>IllegalArgumentException</code> is thrown if there is already a
 	 * parameter with the same name.
+	 * <p>
+	 * With the name argument empty, the method configures the object to accept
+	 * nameless values, also known as
+	 * <q>positional parameters</q>.
 	 * 
 	 * @param name
-	 *            the name of the parameter
+	 *            the name of the parameter or an empty string to allow nameless
+	 *            values
 	 * @throws IllegalArgumentException
 	 */
 	public void defineList(String name) {
 		putValue(name, new ListValue());
+		namelessAllowed = name.length() == 0;
 	}
 
 	/**
@@ -302,6 +340,8 @@ public class Args implements Iterable<String> {
 	 * @throws IllegalArgumentException
 	 */
 	public void put(String name, String value) {
+		if (name == null)
+			throw new IllegalArgumentException("name null");
 		Value v = args.get(name);
 		if (v == null) {
 			if (strictMode)
@@ -390,6 +430,8 @@ public class Args implements Iterable<String> {
 	}
 
 	private void putValue(String name, Value value) {
+		if (name == null)
+			throw new IllegalArgumentException("name null");
 		Value v = args.get(name);
 		if (v != null)
 			throw new IllegalArgumentException(UtilMsg.msg(U.U00104, name));
@@ -433,7 +475,7 @@ public class Args implements Iterable<String> {
 			else
 				return parseFile(fm[0]);
 		} catch (Exception e) {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00108, fileParameterName,fileSpec), e);
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00110, fileParameterName, fileSpec), e);
 		}
 	}
 	

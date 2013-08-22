@@ -22,8 +22,12 @@ public class UtilMsg extends LazyMessage {
 		public static final String U00106 = "U00106";
 		public static final String U00107 = "U00107";
 		public static final String U00108 = "U00108";
+		public static final String U00109 = "U00109";
+		public static final String U00110 = "U00110";
 		public static final String U00111 = "U00111";
 		public static final String U00112 = "U00112";
+		public static final String U00113 = "U00113";
+		public static final String U00114 = "U00114";
 		public static final String U00201 = "U00201";
 		public static final String U00202 = "U00202";
 		public static final String U00205 = "U00205";

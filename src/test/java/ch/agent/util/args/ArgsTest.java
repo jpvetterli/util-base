@@ -220,6 +220,22 @@ public class ArgsTest {
 	}
 	
 	@Test
+	public void testNameless() {
+		try {
+			args.defineList("");
+			args.define("qu ux");
+			args.parse("bar [qu ux]=[[what = ever\\]] [2nd val]");
+			List<String> values = args.getList("");
+			assertEquals("[what = ever]", args.get("qu ux"));
+			assertEquals(2, values.size());
+			assertEquals("bar", values.get(0));
+			assertEquals("2nd val", values.get(1));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
 	public void testEmptyValue() {
 		try {
 			args.define("foo");
