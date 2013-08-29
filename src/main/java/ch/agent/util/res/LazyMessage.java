@@ -132,14 +132,17 @@ public class LazyMessage {
 	
 	/**
 	 * Short hand for 
-	 * <pre><code>new LazyMessage(key, args).toString()</code></pre>
+	 * <pre><code>new LazyMessage(key, null, null, null, args)</code></pre>
 	 * 
-	 * @param text the message text
+	 * The <code>text</code> parameter is a message text containing placeholders
+	 * for arguments following the {@link MessageFormat} conventions.
+	 * 
+	 * @param text the message text with zero or more placeholders 
 	 * @param args message arguments
-	 * @return the message formatted using the arguments
+	 * @return a message that will be formatted as a side-effect of {@link #toString()}
 	 */
-	public static String msg(String text, Object... args) {
-		return new LazyMessage(text, null, null, null, args).toString();
+	public static LazyMessage lazy(String text, Object... args) {
+		return new LazyMessage(text, null, null, null, args);
 	}
 
 	private String format(String rawMessage, Object... args) {

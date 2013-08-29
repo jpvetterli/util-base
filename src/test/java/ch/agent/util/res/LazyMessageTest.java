@@ -18,23 +18,28 @@ public class LazyMessageTest {
 
 	@Test
 	public void testDouble() {
-		assertEquals("1.52", LazyMessage.msg("1.52"));
+		assertEquals("1.52", LazyMessage.lazy("1.52").toString());
 	}
 	
 	@Test
 	public void testDouble2() {
-		assertEquals("1.52", LazyMessage.msg("{0}", 1.52));
+		assertEquals("1.52", LazyMessage.lazy("{0}", 1.52).toString());
 	}
 	
 	@Test
 	public void testDouble3() {
-		assertEquals("NaN", LazyMessage.msg("{0}", Double.NaN));
+		assertEquals("NaN", LazyMessage.lazy("{0}", Double.NaN).toString());
 	}
 	
 	@Test
+	public void testStringFormatter() {
+		assertEquals("%d", LazyMessage.lazy("%d", 42d).toString());
+	}
+
+	@Test
 	public void testNull() {
 		Object x = null;
-		assertEquals("null", LazyMessage.msg("{0}", x));
+		assertEquals("null", LazyMessage.lazy("{0}", x).toString());
 	}
 	
 	@Test
