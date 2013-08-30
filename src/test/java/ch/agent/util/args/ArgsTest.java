@@ -13,6 +13,10 @@ import ch.agent.util.UtilMsg.U;
 
 public class ArgsTest {
 
+	private static void assertMessage(Throwable e, String prefix) {
+		assertEquals(prefix, e.getMessage().substring(0, 6));
+	}
+
 	private Args args;
 	private String file1;
 	private String file2;
@@ -42,7 +46,7 @@ public class ArgsTest {
 			args.define("foo");
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00104));
+			assertMessage(e, U.U00104);
 		}
 	}
 	
@@ -62,7 +66,7 @@ public class ArgsTest {
 			assertEquals(null, args.get("foo"));
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00103));
+			assertMessage(e, U.U00103);
 		}
 	}
 	
@@ -73,7 +77,7 @@ public class ArgsTest {
 			assertEquals(null, args.get("foo"));
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00105));
+			assertMessage(e, U.U00105);
 		}
 	}
 
@@ -96,7 +100,7 @@ public class ArgsTest {
 			args.get("foo");
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00101));
+			assertMessage(e, U.U00101);
 		}
 	}
 	
@@ -107,7 +111,7 @@ public class ArgsTest {
 			args.getList("foo");
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00102));
+			assertMessage(e, U.U00102);
 		}
 	}
 	
@@ -128,7 +132,7 @@ public class ArgsTest {
 			assertEquals(42,  args.getInt("foo"));
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00111));
+			assertMessage(e, U.U00111);
 		}
 	}
 	
@@ -159,7 +163,7 @@ public class ArgsTest {
 			args.getBoolean("foo");
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00112));
+			assertMessage(e, U.U00112);
 		}
 	}
 	
@@ -220,7 +224,7 @@ public class ArgsTest {
 	}
 	
 	@Test
-	public void testNameless() {
+	public void testNameless1() {
 		try {
 			args.defineList("");
 			args.define("qu ux");
@@ -230,6 +234,25 @@ public class ArgsTest {
 			assertEquals(2, values.size());
 			assertEquals("bar", values.get(0));
 			assertEquals("2nd val", values.get(1));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testNameless2() {
+		try {
+			args.defineList("");
+			args.parse("bar baf");
+			List<String> values = args.getList("");
+			assertEquals(2, values.size());
+			args.parse("bar baf");
+			values = args.getList("");
+			assertEquals(4, values.size());
+			args.reset();
+			args.parse("bar baf");
+			values = args.getList("");
+			assertEquals(2, values.size());
 		} catch (Exception e) {
 			fail("unexpected exception");
 		}
@@ -261,6 +284,7 @@ public class ArgsTest {
 			assertEquals("val1", args.get("name1"));
 			assertEquals("val2B", args.get("name2"));
 		} catch (Exception e) {
+			e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -278,7 +302,7 @@ public class ArgsTest {
 			assertEquals("bar's value", args.get("bar"));
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00105));
+			assertMessage(e, U.U00105);
 		}
 	}
 	
@@ -291,7 +315,7 @@ public class ArgsTest {
 			args.parse("file = " + file2 + " file = " + file3);
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getCause().getMessage().startsWith(U.U00209));
+			assertMessage(e.getCause(), U.U00209);
 		}
 	}
 	
@@ -305,6 +329,71 @@ public class ArgsTest {
 				total += looseArgs.getInt(arg);
 			}
 			assertEquals(6, total);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testAlias1() {
+		try {
+			args.define("bar");
+			args.defineAlias("b", "bar");
+			args.define("name1");
+			args.define("name2");
+			args.parse("b= [this is bar's value]");
+			assertEquals("this is bar's value", args.get("b"));
+			assertEquals("this is bar's value", args.get("bar"));
+			assertTrue(args.get("b") == args.get("bar"));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testAlias2() {
+		try {
+			args.define("bar");
+			args.defineAlias("bar", "b");
+			fail("expected an exception");
+		} catch (Exception e) {
+			assertMessage(e, U.U00103);
+		}
+	}
+	
+	@Test
+	public void testAlias3() {
+		try {
+			args.define("bar");
+			args.define("b");
+			args.defineAlias("b", "bar");
+			fail("expected an exception");
+		} catch (Exception e) {
+			assertMessage(e, U.U00104);
+		}
+	}
+	
+	@Test
+	public void testAlias4() {
+		try {
+			args.define("bar", "this is bar's default value");
+			args.defineAlias("b", "bar");
+			assertEquals("this is bar's default value", args.get("b"));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testAlias5() {
+		try {
+			args.defineList("");
+			args.defineAlias("pos", "");
+			args.parse("foo bar baf");
+			assertEquals(3, args.getList("pos").size());
+			args.reset();
+			args.parse("pos=foo pos = bar baf");
+			assertEquals(3, args.getList("").size());
 		} catch (Exception e) {
 			fail("unexpected exception");
 		}

@@ -98,16 +98,20 @@ public class Args implements Iterable<String> {
 
 	private class ScalarValue extends Value {
 		private String value;
+		private String defaultValue;
 
 		public ScalarValue(String defaultValue) {
 			super();
-			this.value = defaultValue;
+			this.defaultValue = defaultValue;
 		}
 
 		@Override
 		public String getValue(String name) {
-			if (value == null)
-				throw new IllegalArgumentException(UtilMsg.msg(U.U00105, name));
+			if (value == null) {
+				if (defaultValue == null)
+					throw new IllegalArgumentException(UtilMsg.msg(U.U00105, name));
+				return defaultValue;
+			}
 			return value;
 		}
 
@@ -260,7 +264,8 @@ public class Args implements Iterable<String> {
 	/**
 	 * Parse <code>List</code> of name-value pairs.
 	 * 
-	 * @param pairs a list of arrays of length 2 (name and value)
+	 * @param pairs
+	 *            a list of arrays of length 2 (name and value)
 	 */
 	private void parse(List<String[]> pairs) {
 		for (String[] pair : pairs) {
@@ -327,6 +332,25 @@ public class Args implements Iterable<String> {
 		namelessAllowed = name.length() == 0;
 	}
 
+	/**
+	 * Define an alias for a name. An alias is an additional name for a
+	 * parameter, which can be accessed with any of its names. It is not
+	 * possible to tell which name is the original.
+	 * 
+	 * @param alias
+	 *            an alias name, which must be new
+	 * @param name
+	 *            an existing name
+	 */
+	public void defineAlias(String alias, String name) {
+		Value v = args.get(name);
+		if (v == null)
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00103, name));
+		if (args.get(alias) != null)
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00104, alias));
+		args.put(alias, v);
+	}
+	
 	/**
 	 * Put a value for the named parameter. Except in <em>loose mode</em> an
 	 * <code>IllegalArgumentException</code> is thrown if there is no parameter
@@ -506,6 +530,17 @@ public class Args implements Iterable<String> {
 			map.put(pair[0],  pair[1]);
 		}
 		return map;
+	}
+	
+	/**
+	 * Reset the state of the parser. This method must be called between calls
+	 * to {@link #parse(String)} or {@link #parse(String[])} unless parsing
+	 * multiple inputs incrementally.
+	 */
+	public void reset() {
+		for (Value v : args.values()) {
+			v.set(null);
+		}
 	}
 
 }
