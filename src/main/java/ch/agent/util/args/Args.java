@@ -329,7 +329,6 @@ public class Args implements Iterable<String> {
 	 */
 	public void defineList(String name) {
 		putValue(name, new ListValue());
-		namelessAllowed = name.length() == 0;
 	}
 
 	/**
@@ -348,7 +347,7 @@ public class Args implements Iterable<String> {
 			throw new IllegalArgumentException(UtilMsg.msg(U.U00103, name));
 		if (args.get(alias) != null)
 			throw new IllegalArgumentException(UtilMsg.msg(U.U00104, alias));
-		args.put(alias, v);
+		put(alias, v);
 	}
 	
 	/**
@@ -459,6 +458,12 @@ public class Args implements Iterable<String> {
 		Value v = args.get(name);
 		if (v != null)
 			throw new IllegalArgumentException(UtilMsg.msg(U.U00104, name));
+		put(name, value);
+	}
+	
+	private void put(String name, Value value) {
+		if (name.length() == 0)
+			namelessAllowed = true; // once set remains set forever
 		args.put(name, value);
 	}
 
