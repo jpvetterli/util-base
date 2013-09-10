@@ -94,7 +94,7 @@ public class ArgsScanner {
 		
 		private void checkMetaCharacters(char open, char close, char equals, char esc) {
 			if (open == equals || open == esc || close == equals || close == esc || equals == esc)
-				throw new IllegalArgumentException(UtilMsg.msg(U.U00113, open, close, equals, esc));
+				throw new IllegalArgumentException(UtilMsg.msg(U.U00163, open, close, equals, esc));
 		}
 		
 		/**
@@ -335,9 +335,9 @@ public class ArgsScanner {
 				} else {
 					if (token1.equals(eq)) {
 						if (results.size() == 0)
-							throw new IllegalArgumentException(UtilMsg.msg(U.U00108, eq, string));
+							throw new IllegalArgumentException(UtilMsg.msg(U.U00158, eq, string));
 						else
-							throw new IllegalArgumentException(UtilMsg.msg(U.U00106, eq, lastToken(results), string));
+							throw new IllegalArgumentException(UtilMsg.msg(U.U00156, eq, lastToken(results), string));
 					} else
 						state = NameValueState.NAME;
 				}
@@ -346,7 +346,7 @@ public class ArgsScanner {
 				token2 = tokenizer.token();
 				if (token2 == null) {
 					if (strict)
-						throw new IllegalArgumentException(UtilMsg.msg(U.U00107, eq, token1, string));
+						throw new IllegalArgumentException(UtilMsg.msg(U.U00157, eq, token1, string));
 					results.add(new String[]{token1});
 					state = NameValueState.END;
 				} else {
@@ -354,7 +354,7 @@ public class ArgsScanner {
 						state = NameValueState.VALUE;
 					else {
 						if (strict)
-							throw new IllegalArgumentException(UtilMsg.msg(U.U00107, eq, token1, string));
+							throw new IllegalArgumentException(UtilMsg.msg(U.U00157, eq, token1, string));
 						results.add(new String[]{token1});
 						token1 = token2;
 						state = NameValueState.NAME; // (no state transition)
@@ -364,7 +364,7 @@ public class ArgsScanner {
 			case VALUE:
 				token2 = tokenizer.token();
 				if (token2 == null) {
-					throw new IllegalArgumentException(UtilMsg.msg(U.U00109, eq, token1, string));
+					throw new IllegalArgumentException(UtilMsg.msg(U.U00159, eq, token1, string));
 				} else {
 					if (token1.equals(METACHAR))
 						setMetaCharacters(token2);
@@ -382,7 +382,7 @@ public class ArgsScanner {
 
 	private void setMetaCharacters(String spec) {
 		if (spec.length() != 4)
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00114, spec));
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00164, spec));
 		tokenizer.setMetaCharacters(spec.charAt(0), spec.charAt(1), 
 				spec.charAt(2), spec.charAt(3));
 		eq = String.valueOf(spec.charAt(2));

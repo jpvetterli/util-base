@@ -172,7 +172,7 @@ public class ArgsScannerTest {
 			scanner.asPairs("[f =[o\\] o] = b\\ar [w h a t] b\\ar");
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00107));
+			assertTrue(e.getMessage().startsWith(U.U00157));
 		}
 	}
 	
@@ -182,7 +182,7 @@ public class ArgsScannerTest {
 			scanner.asPairs("[f =[o\\] o] = b\\ar [w h a t] =");
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00109));
+			assertTrue(e.getMessage().startsWith(U.U00159));
 		}
 	}
 	
@@ -192,7 +192,7 @@ public class ArgsScannerTest {
 			scanner.asPairs("[f =[o\\] o] = b\\ar [w h a t]");
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00107));
+			assertTrue(e.getMessage().startsWith(U.U00157));
 		}
 	}
 	
@@ -228,7 +228,7 @@ public class ArgsScannerTest {
 			assertEquals("x", result.get(1)[0]);
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00107));
+			assertTrue(e.getMessage().startsWith(U.U00157));
 		}
 	}
 	
@@ -239,7 +239,7 @@ public class ArgsScannerTest {
 			assertEquals("x", result.get(1)[0]);
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00108));
+			assertTrue(e.getMessage().startsWith(U.U00158));
 		}
 	}
 	
@@ -272,7 +272,7 @@ public class ArgsScannerTest {
 			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00114));
+			assertTrue(e.getMessage().startsWith(U.U00164));
 		}
 	}
 
@@ -284,7 +284,7 @@ public class ArgsScannerTest {
 			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00113));
+			assertTrue(e.getMessage().startsWith(U.U00163));
 		}
 	}
 	
