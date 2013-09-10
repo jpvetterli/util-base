@@ -81,57 +81,308 @@ import ch.agent.util.file.TextFile;
  */
 public class Args implements Iterable<String> {
 
-	private abstract class Value {
-		public Value() {
+	/**
+	 * A definition object is used to write code in method chaining style.
+	 * For example, to define a parameter with two aliases and a default
+	 * value, one would write:
+	 * <pre><code>
+	 * args.def("foo").aka("f").aka("foooo").init("bar");
+	 * </code></pre>
+	 * When defining a parameter, it is mandatory to use {@link #def} first.
+	 */
+	public class Definition {
+		private Args args; 
+		private String name;
+		
+		private Definition(Args args, String name) {
+			if (args == null)
+				throw new IllegalArgumentException("args null");
+			if (name == null)
+				throw new IllegalArgumentException("name null");
+			this.args = args;
+			this.name = name;
+		}
+		
+		private Args args() {
+			return args;
+		}
+		
+		private String name() {
+			return name;
+		}
+		
+		/**
+		 * Set an alias. An exception is thrown if the alias is already 
+		 * in use for this parameter or an another one.
+		 * 
+		 * @param alias
+		 * @return this definition
+		 */
+		public Definition aka(String alias) {
+			Value v = args().internalGet(name());
+			if (v == null)
+				throw new IllegalArgumentException("bug: " + name());
+			if (args().internalGet(alias) != null)
+				throw new IllegalArgumentException(UtilMsg.msg(U.U00104, alias));
+			args().put(alias, v);
+			return this;
+		}
+
+		/**
+		 * Set a default value for the parameter. Only scalar parameters can
+		 * have default values. A parameter with a null default value is
+		 * mandatory.
+		 * 
+		 * @param value
+		 * @return this definition
+		 */
+		public Definition init(String value) {
+			Value v = args().internalGet(name());
+			if (v == null)
+				throw new IllegalArgumentException("bug: " + name());
+			v.setDefault(value);
+			return this;
+		}
+		
+	}
+	
+	public abstract class Value {
+		private String canonical;
+		
+		/**
+		 * Constructor.
+		 * 
+		 * @param canonical canonical name of parameter
+		 */
+		public Value(String canonical) {
+			this.canonical = canonical;
+		}
+		
+		protected String getName() {
+			return canonical;
 		}
 
 		public abstract void set(String value);
-
-		public String getValue(String name) {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00101, name));
+		
+		public void setDefault(String value) {
+			throw new IllegalStateException(UtilMsg.msg(U.U00106, canonical));
 		}
 
-		public List<String> getValues(String name) {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00102, name));
+		/**
+		 * Check the number of values. Throw an exception if the number of values does not match
+		 * the constraint.
+		 * 
+		 * @param size
+		 *            size constraint
+		 * 
+		 * @return this value
+		 */
+		public Value size(int size) {
+			return size(size, size);
 		}
+		
+		/**
+		 * Check the number of values. Throw an exception if the size does not match
+		 * the constraint.
+		 * 
+		 * @param minSize minimum size
+		 * @param maxSize maximum size
+		 * 
+		 * @return this value 
+		 */
+		public Value size(int minSize, int maxSize) { 
+			throw new IllegalStateException(UtilMsg.msg(U.U00107, canonical));
+		}
+		
+		/**
+		 * Check the number of values. Throw an exception if the size does not match
+		 * the constraint.
+		 * 
+		 * @param size maximum size
+		 * 
+		 * @return this value 
+		 */
+		public Value maxSize(int size) { 
+			throw new IllegalStateException(UtilMsg.msg(U.U00107, canonical));
+		}
+		
+		/**
+		 * Check the number of values. Throw an exception if the size does not match
+		 * the constraint.
+		 * 
+		 * @param size minimum size
+		 * 
+		 * @return this value 
+		 */
+		public Value minSize(int size) { 
+			throw new IllegalStateException(UtilMsg.msg(U.U00107, canonical));
+		}
+
+		/**
+		 * Return the value as a string. Throw an exception if the value is not
+		 * scalar.
+		 * 
+		 * @return a string
+		 */
+		public String stringValue() {
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00101, canonical));
+		}		
+		/**
+		 * Return the value as a string array. Throw an exception if the value is 
+		 * scalar. 
+		 * 
+		 * @return a string array
+		 */
+		public String[] stringArray() {
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00102, canonical));
+		}
+		/**
+		 * Return the value as a int. Throw an exception if the value is not
+		 * scalar or if the value cannot be converted.
+		 * 
+		 * @return an int
+		 */
+		public int intValue() {
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00101, canonical));
+		}		
+
+		/**
+		 * Return the value as an int array. Throw an exception if the value is 
+		 * scalar or if any element cannot be converted.
+		 * 
+		 * @return an int array
+		 */
+		public int[] intArray() {
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00102, canonical));
+		}		
+
+		/**
+		 * Return the value as a boolean. Throw an exception if the value is not
+		 * scalar or if the value cannot be converted.
+		 * 
+		 * @return a boolean
+		 */
+		public boolean booleanValue() {
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00101, canonical));
+		}		
+
+		/**
+		 * Return the value as a boolean array. Throw an exception if the value is 
+		 * scalar or if any element cannot be converted.
+		 * 
+		 * @return a boolean array
+		 */
+		public boolean[] booleanArray() {
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00103, canonical));
+		}		
+
+		/**
+		 * Return the value as a double. Throw an exception if the value is not
+		 * scalar or if the value cannot be converted.
+		 * 
+		 * @return a double
+		 */
+		public double doubleValue() {
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00101, canonical));
+		}		
+
+		/**
+		 * Return the value as a double array. Throw an exception if the value is 
+		 * scalar or if any element cannot be converted.
+		 * 
+		 * @return a double array
+		 */
+		public double[] doubleArray() {
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00102, canonical));
+		}		
+
+		protected boolean asBoolean(String value, int index) {
+			String orig = value;
+			value = value.toLowerCase();
+			boolean result = value.equals("true");
+			if (!result && !value.equals("false")) {
+				String name = index >= 0 ? String.format("%s[%d]", getName(), index) : getName();
+				throw new IllegalArgumentException(UtilMsg.msg(U.U00112, name, orig));
+			}
+			return result;
+		}
+		
+		protected int asInt(String value, int index) {
+			try {
+				return Integer.parseInt(value);
+			} catch (NumberFormatException e) {
+				String name = index >= 0 ? String.format("%s[%d]", getName(), index) : getName();
+				throw new IllegalArgumentException(UtilMsg.msg(U.U00114, name, value));
+			}
+		}
+		
+		protected double asDouble(String value, int index) {
+			try {
+				return Double.parseDouble(value);
+			} catch (NumberFormatException e) {
+				String name = index >= 0 ? String.format("%s[%d]", getName(), index) : getName();
+				throw new IllegalArgumentException(UtilMsg.msg(U.U00113, name, value));
+			}
+		}
+
 	}
 
 	private class ScalarValue extends Value {
 		private String value;
 		private String defaultValue;
 
-		public ScalarValue(String defaultValue) {
-			super();
-			this.defaultValue = defaultValue;
+		public ScalarValue(String canonical) {
+			super(canonical);
 		}
 
 		@Override
-		public String getValue(String name) {
-			if (value == null) {
-				if (defaultValue == null)
-					throw new IllegalArgumentException(UtilMsg.msg(U.U00105, name));
-				return defaultValue;
-			}
-			return value;
+		public void setDefault(String value) {
+			this.defaultValue = value;
 		}
 
 		@Override
 		public void set(String value) {
 			this.value = value;
 		}
+
+		@Override
+		public String stringValue() {
+			if (value == null) {
+				if (defaultValue == null)
+					throw new IllegalStateException(UtilMsg.msg(U.U00105, getName()));
+				return defaultValue;
+			}
+			return value;
+		}
+
+		@Override
+		public int intValue() {
+			return asInt(stringValue(), -1);
+		}
+
+		@Override
+		public boolean booleanValue() {
+			return asBoolean(stringValue(), -1);
+		}
+
+		@Override
+		public double doubleValue() {
+			return asDouble(stringValue(), -1);
+		}
+
+		@Override
+		public String toString() {
+			return stringValue();
+		}
+		
 	}
 
 	private class ListValue extends Value {
 		private List<String> values;
 
-		public ListValue() {
-			super();
+		public ListValue(String canonical) {
+			super(canonical);
 			this.values = new ArrayList<String>();
-		}
-
-		@Override
-		public List<String> getValues(String name) {
-			return values;
 		}
 
 		@Override
@@ -141,6 +392,75 @@ public class Args implements Iterable<String> {
 			else
 				this.values.add(value);
 		}
+
+		@Override
+		public Value size(int minSize, int maxSize) {
+			if (minSize < 0 || maxSize < 0)
+				throw new IllegalArgumentException("minSize < 0 or maxSize < 0");
+			if (minSize == maxSize) {
+				if (minSize > -1 && values.size() != minSize)
+					throw new IllegalStateException(UtilMsg.msg(U.U00108, getName(), 
+							values.size(), minSize));
+			} else {
+				if (values.size() < minSize || values.size() > maxSize)
+					throw new IllegalStateException(UtilMsg.msg(U.U00109, getName(), 
+							values.size(), minSize, maxSize));
+			}
+			return this;
+		}
+		
+		@Override
+		public Value minSize(int size) {
+			if (size < 0)
+				throw new IllegalArgumentException("size < 0");
+			if (values.size() < size)
+				throw new IllegalStateException(UtilMsg.msg(U.U00110, getName(), 
+						values.size(), size));
+			return this;
+		}
+		
+		@Override
+		public Value maxSize(int size) {
+			if (size < 0)
+				throw new IllegalArgumentException("size < 0");
+			if (values.size() > size)
+				throw new IllegalStateException(UtilMsg.msg(U.U00111, getName(), 
+						values.size(), size));
+			return this;
+		}
+
+		@Override
+		public String[] stringArray() {
+			return values.toArray(new String[values.size()]);
+		}
+
+		@Override
+		public int[] intArray() {
+			int[] result = new int[values.size()];
+			for (int i = 0; i < result.length; i++) {
+				result[i] = asInt(values.get(i), i);
+			}
+			return result;
+		}
+
+		@Override
+		public boolean[] booleanArray() {
+			boolean[] result = new boolean[values.size()];
+			for (int i = 0; i < result.length; i++) {
+				result[i] = asBoolean(values.get(i), i);
+			}
+			return result;
+		}
+
+		@Override
+		public double[] doubleArray() {
+			double[] result = new double[values.size()];
+			for (int i = 0; i < result.length; i++) {
+				result[i] = asDouble(values.get(i), i);
+			}
+			return result;
+		}
+		
 	}
 
 	private class ArgsFileVisitor implements TextFile.Visitor {
@@ -184,39 +504,33 @@ public class Args implements Iterable<String> {
 	private String fileParameterName;
 	private String mappingSeparator;
 	private Map<String, Value> args;
-	private boolean strictMode;
 	private boolean namelessAllowed;
 	private TextFile textFile; // use only one for duplicate detection to work
 
 	/**
 	 * Construct a custom <code>Args</code> object. Nulls are valid arguments
 	 * and will be replaced with default values. <code>Args</code> is either in
-	 * <em>strict mode</em> or in <em>loose mode</em>. In strict mode,
-	 * a parameter must be defined before use. In loose mode, this is not 
-	 * required. 
+	 * <em>strict mode</em> or in <em>loose mode</em>.
 	 * 
 	 * @param name
 	 *            the name of the file parameter, or null
 	 * @param sep
 	 *            a regular expression used as the mapping separator, or null
-	 * @param strictMode if true run in <em>strict mode<em>
 	 */
-	public Args(String name, String sep, boolean strictMode) {
+	public Args(String name, String sep) {
 		this.fileParameterName = (name == null ? FILE : name);
 		this.mappingSeparator = (sep == null ? MAPPING_SEPARATOR : sep);
 		args = new HashMap<String, Args.Value>();
 		textFile = new TextFile();
-		this.strictMode = strictMode;
 	}
 
 	/**
 	 * Construct an Args object using defaults.
 	 * The default values for the name of the file parameter and the mapping 
 	 * separator are taken from {@link #FILE} and {@link #MAPPING_SEPARATOR}.
-	 * The default mode is <em>strict mode</em>.
 	 */
 	public Args() {
-		this(null, null, true);
+		this(null, null);
 	}
 	
 	/**
@@ -286,70 +600,40 @@ public class Args implements Iterable<String> {
 	}
 
 	/**
-	 * Define a scalar parameter and its default value. If the default value is
-	 * null the parameter will be interpreted as mandatory. An
+	 * Define a scalar parameter. The name cannot be null but it can be empty,
+	 * in which case it is known as a <q>positional</q> parameter. When a scalar
+	 * parameter is repeated, the last value wins. An
 	 * <code>IllegalArgumentException</code> is thrown if there is already a
 	 * parameter with the same name.
 	 * 
 	 * @param name
 	 *            the name of the parameter
-	 * @param defaultValue
-	 *            the default value or null if the parameter is mandatory
-	 */
-	public void define(String name, String defaultValue) {
-		putValue(name, new ScalarValue(defaultValue));
-	}
-
-	/**
-	 * Define a mandatory scalar parameter. An
-	 * <code>IllegalArgumentException</code> is thrown if there is already a
-	 * parameter with the same name.
-	 * 
-	 * @param name
-	 *            the name of the parameter
+	 * @return a definition object which can be used to define aliases and set a
+	 *         default value
 	 * @throws IllegalArgumentException
 	 */
-	public void define(String name) {
-		define(name, null);
-	}
-
-	/**
-	 * Define a list parameter. A list parameter can have zero or more values.
-	 * An <code>IllegalArgumentException</code> is thrown if there is already a
-	 * parameter with the same name.
-	 * <p>
-	 * With the name argument empty, the method configures the object to accept
-	 * nameless values, also known as
-	 * <q>positional parameters</q>.
-	 * 
-	 * @param name
-	 *            the name of the parameter or an empty string to allow nameless
-	 *            values
-	 * @throws IllegalArgumentException
-	 */
-	public void defineList(String name) {
-		putValue(name, new ListValue());
-	}
-
-	/**
-	 * Define an alias for a name. An alias is an additional name for a
-	 * parameter, which can be accessed with any of its names. It is not
-	 * possible to tell which name is the original.
-	 * 
-	 * @param alias
-	 *            an alias name, which must be new
-	 * @param name
-	 *            an existing name
-	 */
-	public void defineAlias(String alias, String name) {
-		Value v = args.get(name);
-		if (v == null)
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00103, name));
-		if (args.get(alias) != null)
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00104, alias));
-		put(alias, v);
+	public Definition def(String name) {
+		putValue(name, new ScalarValue(name));
+		return new Definition(this, name);
 	}
 	
+	/**
+	 * Define a list parameter. The name cannot be null but it can be empty, in
+	 * which case it is known as a <q>positional</q> parameter. When a list
+	 * parameter is repeated all values are returned. An
+	 * <code>IllegalArgumentException</code> is thrown if there is already a
+	 * parameter with the same name.
+	 * 
+	 * @param name
+	 *            the name of the parameter
+	 * @return a definition object which can be used to define aliases
+	 * @throws IllegalArgumentException
+	 */
+	public Definition defList(String name) {
+		putValue(name, new ListValue(name));
+		return new Definition(this, name);
+	}
+
 	/**
 	 * Put a value for the named parameter. Except in <em>loose mode</em> an
 	 * <code>IllegalArgumentException</code> is thrown if there is no parameter
@@ -366,90 +650,39 @@ public class Args implements Iterable<String> {
 		if (name == null)
 			throw new IllegalArgumentException("name null");
 		Value v = args.get(name);
-		if (v == null) {
-			if (strictMode)
-				throw new IllegalArgumentException(UtilMsg.msg(U.U00103, name));
-			else
-				define(name, value);
-		} else
+		if (v == null)
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00103, name));
+		else
 			v.set(value);
 	}
 
 	/**
-	 * Return the value for the named parameter. If the parameter was not
-	 * specified, the default value is returned, but if the default value is
-	 * null an <code>IllegalArgumentException</code> is thrown. Such an
-	 * exception is also thrown when attempting to get the value of a list
-	 * parameter with this method.
+	 * Return the value object for the parameter specified. An exception is
+	 * thrown if the the name is unknown. For a nameless parameter, pass an
+	 * empty name.
 	 * 
 	 * @param name
 	 *            the name of the parameter
-	 * @return the value specified for the parameter
-	 * @throws IllegalArgumentException
+	 * @return the value object
 	 */
-	public String get(String name) {
-		return getValue(name).getValue(name);
-	}
-	
-	/**
-	 * Return the value of the named parameter converted to an integer. An
-	 * <code>IllegalArgumentException</code> is thrown if the conversion fails.
-	 * 
-	 * @param name
-	 *            the name of the parameter
-	 * 
-	 * @return an integer
-	 * @see #get(String)
-	 * @throws IllegalArgumentException
-	 */
-	public int getInt(String name) {
-		try {
-			return Integer.parseInt(get(name));
-		} catch (NumberFormatException e) {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00111, name, get(name)));
-		}
-	}
-	
-	/**
-	 * Return the value of the named parameter converted to a boolean. An
-	 * <code>IllegalArgumentException</code> is thrown if the conversion fails.
-	 * Valid boolean values are <code>true</code> and <code>false</code>. These
-	 * values are case-insensitive.
-	 * 
-	 * @param name
-	 *            the name of the parameter
-	 * 
-	 * @return a boolean
-	 * @see #get(String)
-	 * @throws IllegalArgumentException
-	 */
-	public boolean getBoolean(String name) {
-		String value = get(name).toLowerCase();
-		boolean result = value.equals("true");
-		if (!result && ! value.equals("false"))
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00112, name, get(name)));
-		return result;
-	}
-
-	/**
-	 * Return the list of values for the named parameter. An
-	 * <code>IllegalArgumentException</code> is thrown when attempting to get
-	 * the value of a scalar parameter with this method.
-	 * 
-	 * @param name
-	 *            the name of the parameter
-	 * @return a list of values
-	 * @throws IllegalArgumentException
-	 */
-	public List<String> getList(String name) {
-		return getValue(name).getValues(name);
-	}
-
-	private Value getValue(String name) {
+	public Value getVal(String name) {
 		Value v = args.get(name);
 		if (v == null)
 			throw new IllegalArgumentException(UtilMsg.msg(U.U00103, name));
 		return v;
+	}
+	
+	/**
+	 * Return value of scalar parameter as a string.
+	 * This is method is shorthand for 
+	 * <pre><code>
+	 * getVal(name).stringValue()
+	 * </code></pre>
+	 * @param name name of scalar parameter
+	 * @return the string value
+	 */
+	public String get(String name) {
+		return getVal(name).stringValue();
 	}
 
 	private void putValue(String name, Value value) {
@@ -467,6 +700,10 @@ public class Args implements Iterable<String> {
 		args.put(name, value);
 	}
 
+	private Value internalGet(String name) {
+		return args.get(name);
+	}
+	
 	private String join(String separator, String[] string) {
 		StringBuilder b = new StringBuilder();
 		for (int i = 0; i < string.length; i++) {
@@ -504,7 +741,7 @@ public class Args implements Iterable<String> {
 			else
 				return parseFile(fm[0]);
 		} catch (Exception e) {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00110, fileParameterName, fileSpec), e);
+			throw new IllegalArgumentException(UtilMsg.msg(U.U00130, fileParameterName, fileSpec), e);
 		}
 	}
 	
