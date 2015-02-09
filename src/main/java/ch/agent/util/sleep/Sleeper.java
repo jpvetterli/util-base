@@ -65,8 +65,8 @@ public class Sleeper {
 	
 	/**
 	 * Set the standard sleep unit. This is a range of milliseconds. The actual
-	 * sleep duration is picked at random within this range. BY default, a sleep
-	 * unit is 50-100ms.
+	 * sleep duration is picked at random within this range. By default, a sleep
+	 * unit is 50-150ms.
 	 * 
 	 * @param min
 	 *            the minimum number of milliseconds in a sleep unit
@@ -102,6 +102,8 @@ public class Sleeper {
 	
 	/**
 	 * Sleep a number of sleep units while checking on {@link SleeperClient}.
+	 * With the default sleep unit of 50-150ms, sleeping for 10 units will
+	 * result in a average duration of 1s.
 	 * 
 	 * @param units
 	 *            a number of units
