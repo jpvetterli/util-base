@@ -113,4 +113,21 @@ public class LazyMessageTest {
 		}
 	}
 
+	@Test
+	public void testTooLongArg() {
+		// LazyMessage truncates message arguments longer than 1000
+		String longArg100 = "";
+		String longArg1000 = "";
+		for (int i = 0; i < 10; i++)
+			longArg100 = longArg100 + "0123456789";
+		for (int i = 0; i < 10; i++)
+			longArg1000 = longArg1000 + longArg100;
+		assertEquals(1000, longArg1000.length());
+		String msg = LazyMessage.lazy("x{0}x", longArg1000).toString();
+		assertEquals(1002, msg.length());
+		msg = LazyMessage.lazy("x{0}x", longArg1000 + longArg100).toString();
+		assertEquals(1002, msg.length());
+		assertTrue(msg.endsWith("[...]x"));
+	}
+	
 }

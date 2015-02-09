@@ -152,6 +152,11 @@ public class LazyMessage {
 		for (int i = 0; i < args.length; i++) {
 			if (args[i] instanceof Double)
 				args[i] = args[i].toString();
+			else if (args[i] instanceof CharSequence) {
+				// take care of D.O.S.
+				if (((CharSequence) args[i]).length() > 1000)
+					args[i] = ((CharSequence) args[i]).subSequence(0, 995) + "[...]";
+			}
 		}
 		return new MessageFormat(rawMessage).format(args);
 	}
