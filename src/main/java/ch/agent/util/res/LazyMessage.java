@@ -148,11 +148,17 @@ public class LazyMessage {
 	private String format(String rawMessage, Object... args) {
 		if (args.length == 0)
 			return rawMessage;
-		// MessageFormat.format() does not handle Double.NaNs
 		for (int i = 0; i < args.length; i++) {
-			if (args[i] instanceof Double)
-				args[i] = args[i].toString();
-			else if (args[i] instanceof CharSequence) {
+			
+			/* I was previously trying to fix the display of Double.NaN but this
+			 breaks down in case a number format is used in the message.
+			 Should look into java.text.spi.DecimalFormatSymbolsProvider.
+			 
+			if (args[i] instanceof Double && Double.isNaN((Double)args[i]))
+				args[i] = "NaN";
+			else */
+			
+			if (args[i] instanceof CharSequence) {
 				// take care of D.O.S.
 				if (((CharSequence) args[i]).length() > 1000)
 					args[i] = ((CharSequence) args[i]).subSequence(0, 995) + "[...]";
