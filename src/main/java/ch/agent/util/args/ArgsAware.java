@@ -14,6 +14,7 @@ public interface ArgsAware {
 	public static final String ARG_TYPE_LIST = "list";
 	public static final String ARG_TYPE_INT = "integer";
 	public static final String ARG_TYPE_BOOLEAN = "boolean";
+	public static final String ARG_TYPE_DOUBLE = "double";
 	
 	/**
 	 * Define all parameters.

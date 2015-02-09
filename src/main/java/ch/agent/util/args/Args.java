@@ -248,7 +248,6 @@ public class Args implements Iterable<String> {
 		public int intValue() {
 			throw new IllegalArgumentException(msg(U.U00101, canonical));
 		}		
-
 		/**
 		 * Return the value as an int array. Throw an exception if the value is 
 		 * scalar or if any element cannot be converted.
@@ -258,7 +257,24 @@ public class Args implements Iterable<String> {
 		public int[] intArray() {
 			throw new IllegalArgumentException(msg(U.U00102, canonical));
 		}		
-
+		/**
+		 * Return the value as an Enum. Throw an exception if the value is not
+		 * scalar or if the value cannot be converted.
+		 * 
+		 * @return an Enum 
+		 */
+		public Enum<?> enumValue(Enum<?> example) {
+			throw new IllegalArgumentException(msg(U.U00101, canonical));
+		}		
+		/**
+		 * Return the value as an Enum array. Throw an exception if the value is 
+		 * scalar or if any element cannot be converted.
+		 * 
+		 * @return an Enum array
+		 */
+		public Enum<?>[] enumArray(Enum<?> example) {
+			throw new IllegalArgumentException(msg(U.U00102, canonical));
+		}		
 		/**
 		 * Return the value as a boolean. Throw an exception if the value is not
 		 * scalar or if the value cannot be converted.
@@ -327,6 +343,16 @@ public class Args implements Iterable<String> {
 				throw new IllegalArgumentException(msg(U.U00113, name, value));
 			}
 		}
+		
+		@SuppressWarnings("unchecked")
+		protected Enum<?> asEnum(Enum<?> example, String value, int index) {
+			try {
+				return Enum.valueOf(example.getClass(), value);
+			} catch (Exception e) {
+				String name = index >= 0 ? String.format("%s[%d]", getName(), index) : getName();
+				throw new IllegalArgumentException(msg(U.U00115, name, value, example.getClass().getSimpleName()));
+			}
+		}
 
 	}
 
@@ -371,6 +397,11 @@ public class Args implements Iterable<String> {
 		@Override
 		public double doubleValue() {
 			return asDouble(stringValue(), -1);
+		}
+
+		@Override
+		public Enum<?> enumValue(Enum<?> example) {
+			return asEnum(example, stringValue(), -1);
 		}
 
 		@Override
@@ -460,6 +491,15 @@ public class Args implements Iterable<String> {
 			double[] result = new double[values.size()];
 			for (int i = 0; i < result.length; i++) {
 				result[i] = asDouble(values.get(i), i);
+			}
+			return result;
+		}
+
+		@Override
+		public Enum<?>[] enumArray(Enum<?> example) {
+			Enum<?>[] result = new Enum<?>[values.size()];
+			for (int i = 0; i < result.length; i++) {
+				result[i] = asEnum(example, values.get(i), i);
 			}
 			return result;
 		}
@@ -683,7 +723,7 @@ public class Args implements Iterable<String> {
 					
 					String resolved = vars.get(nameRemainder[0]);
 					if (resolved == null)
-						throw new IllegalArgumentException(msg(U.U00116, value, nameRemainder[0]));
+						throw new IllegalArgumentException(msg(U.U00122, value, nameRemainder[0]));
 					else
 						s.append(resolved);
 					s.append(nameRemainder[1]);
@@ -736,7 +776,7 @@ public class Args implements Iterable<String> {
 			namelessAllowed = true; // once set remains set forever
 		else {
 			if (name.startsWith(VAR_PREFIX))
-				throw new IllegalArgumentException(msg(U.U00115, name, VAR_PREFIX));
+				throw new IllegalArgumentException(msg(U.U00121, name, VAR_PREFIX));
 		}
 		args.put(name, value);
 	}

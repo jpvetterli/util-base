@@ -1,6 +1,7 @@
 package ch.agent.util.args;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -536,7 +537,7 @@ public class ArgsTest {
 			args.def("$foo");
 			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith("U00115"));
+			assertTrue(e.getMessage().startsWith("U00121"));
 		}
 	}
 	@Test
@@ -546,8 +547,86 @@ public class ArgsTest {
 			args.put("foo", "${bar}");
 			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith("U00116"));
+			assertTrue(e.getMessage().startsWith("U00122"));
 		}
 	}
+	
+	public enum Good {
+		good1, good2
+	}
+	public enum Bad {
+		good1
+	}
+
+	@Test
+	public void testEnum1() {
+		try {
+			args.def("foo");
+			args.put("foo", "good2");
+			assertEquals(Good.good2, args.getVal("foo").enumValue(Good.good1));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testEnum2() {
+		try {
+			args.def("foo");
+			args.put("foo", "good3");
+			assertEquals(Good.good2, args.getVal("foo").enumValue(Good.good1));
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith("U00115"));
+		}
+	}
+	@Test
+	public void testEnum3() {
+		try {
+			args.defList("foo");
+			args.put("foo", "good1");
+			args.put("foo", "good2");
+			Enum<?>[] res = args.getVal("foo").enumArray(Good.good1);
+			assertEquals(Good.good1, res[0]);
+			assertEquals(Good.good2, res[1]);
+		} catch (Exception e) {
+			e.printStackTrace();
+			assertTrue(e.getMessage().startsWith("U00115"));
+		}
+	}
+	@Test
+	public void testEnum4() {
+		try {
+			args.defList("foo");
+			args.put("foo", "good2");
+			args.put("foo", "good3");
+			Enum<?>[] res = args.getVal("foo").enumArray(Good.good1);
+			assertEquals(Good.good1, res[0]);
+			assertEquals(Good.good2, res[1]);
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith("U00115"));
+		}
+	}
+	@Test
+	public void testEnum5() {
+		try {
+			args.def("foo");
+			args.put("foo", "good2");
+			assertEquals(Good.good2, args.getVal("foo").enumValue(Bad.good1));
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith("U00115"));
+		}
+	}
+	@Test
+	public void testEnum6() {
+		try {
+			args.def("foo");
+			args.put("foo", "good1");
+			assertNotEquals(Good.good1, args.getVal("foo").enumValue(Bad.good1));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
 
 }
