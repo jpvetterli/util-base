@@ -1,5 +1,7 @@
 package ch.agent.util.args;
 
+import static ch.agent.util.UtilMsg.msg;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,7 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import ch.agent.util.UtilMsg;
 import ch.agent.util.UtilMsg.U;
 import ch.agent.util.file.TextFile;
 
@@ -81,6 +82,8 @@ import ch.agent.util.file.TextFile;
  */
 public class Args implements Iterable<String> {
 
+	public final static String VAR_PREFIX = "$";
+	
 	/**
 	 * A definition object is used to write code in method chaining style.
 	 * For example, to define a parameter with two aliases and a default
@@ -123,7 +126,7 @@ public class Args implements Iterable<String> {
 			if (v == null)
 				throw new IllegalArgumentException("bug: " + name());
 			if (args().internalGet(alias) != null)
-				throw new IllegalArgumentException(UtilMsg.msg(U.U00104, alias));
+				throw new IllegalArgumentException(msg(U.U00104, alias));
 			args().put(alias, v);
 			return this;
 		}
@@ -165,7 +168,7 @@ public class Args implements Iterable<String> {
 		public abstract void set(String value);
 		
 		public void setDefault(String value) {
-			throw new IllegalStateException(UtilMsg.msg(U.U00106, canonical));
+			throw new IllegalStateException(msg(U.U00106, canonical));
 		}
 
 		/**
@@ -191,7 +194,7 @@ public class Args implements Iterable<String> {
 		 * @return this value 
 		 */
 		public Value size(int minSize, int maxSize) { 
-			throw new IllegalStateException(UtilMsg.msg(U.U00107, canonical));
+			throw new IllegalStateException(msg(U.U00107, canonical));
 		}
 		
 		/**
@@ -203,7 +206,7 @@ public class Args implements Iterable<String> {
 		 * @return this value 
 		 */
 		public Value maxSize(int size) { 
-			throw new IllegalStateException(UtilMsg.msg(U.U00107, canonical));
+			throw new IllegalStateException(msg(U.U00107, canonical));
 		}
 		
 		/**
@@ -215,7 +218,7 @@ public class Args implements Iterable<String> {
 		 * @return this value 
 		 */
 		public Value minSize(int size) { 
-			throw new IllegalStateException(UtilMsg.msg(U.U00107, canonical));
+			throw new IllegalStateException(msg(U.U00107, canonical));
 		}
 
 		/**
@@ -225,7 +228,7 @@ public class Args implements Iterable<String> {
 		 * @return a string
 		 */
 		public String stringValue() {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00101, canonical));
+			throw new IllegalArgumentException(msg(U.U00101, canonical));
 		}		
 		/**
 		 * Return the value as a string array. Throw an exception if the value is 
@@ -234,7 +237,7 @@ public class Args implements Iterable<String> {
 		 * @return a string array
 		 */
 		public String[] stringArray() {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00102, canonical));
+			throw new IllegalArgumentException(msg(U.U00102, canonical));
 		}
 		/**
 		 * Return the value as a int. Throw an exception if the value is not
@@ -243,7 +246,7 @@ public class Args implements Iterable<String> {
 		 * @return an int
 		 */
 		public int intValue() {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00101, canonical));
+			throw new IllegalArgumentException(msg(U.U00101, canonical));
 		}		
 
 		/**
@@ -253,7 +256,7 @@ public class Args implements Iterable<String> {
 		 * @return an int array
 		 */
 		public int[] intArray() {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00102, canonical));
+			throw new IllegalArgumentException(msg(U.U00102, canonical));
 		}		
 
 		/**
@@ -263,7 +266,7 @@ public class Args implements Iterable<String> {
 		 * @return a boolean
 		 */
 		public boolean booleanValue() {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00101, canonical));
+			throw new IllegalArgumentException(msg(U.U00101, canonical));
 		}		
 
 		/**
@@ -273,7 +276,7 @@ public class Args implements Iterable<String> {
 		 * @return a boolean array
 		 */
 		public boolean[] booleanArray() {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00103, canonical));
+			throw new IllegalArgumentException(msg(U.U00103, canonical));
 		}		
 
 		/**
@@ -283,7 +286,7 @@ public class Args implements Iterable<String> {
 		 * @return a double
 		 */
 		public double doubleValue() {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00101, canonical));
+			throw new IllegalArgumentException(msg(U.U00101, canonical));
 		}		
 
 		/**
@@ -293,7 +296,7 @@ public class Args implements Iterable<String> {
 		 * @return a double array
 		 */
 		public double[] doubleArray() {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00102, canonical));
+			throw new IllegalArgumentException(msg(U.U00102, canonical));
 		}		
 
 		protected boolean asBoolean(String value, int index) {
@@ -302,7 +305,7 @@ public class Args implements Iterable<String> {
 			boolean result = value.equals("true");
 			if (!result && !value.equals("false")) {
 				String name = index >= 0 ? String.format("%s[%d]", getName(), index) : getName();
-				throw new IllegalArgumentException(UtilMsg.msg(U.U00112, name, orig));
+				throw new IllegalArgumentException(msg(U.U00112, name, orig));
 			}
 			return result;
 		}
@@ -312,7 +315,7 @@ public class Args implements Iterable<String> {
 				return Integer.parseInt(value);
 			} catch (NumberFormatException e) {
 				String name = index >= 0 ? String.format("%s[%d]", getName(), index) : getName();
-				throw new IllegalArgumentException(UtilMsg.msg(U.U00114, name, value));
+				throw new IllegalArgumentException(msg(U.U00114, name, value));
 			}
 		}
 		
@@ -321,7 +324,7 @@ public class Args implements Iterable<String> {
 				return Double.parseDouble(value);
 			} catch (NumberFormatException e) {
 				String name = index >= 0 ? String.format("%s[%d]", getName(), index) : getName();
-				throw new IllegalArgumentException(UtilMsg.msg(U.U00113, name, value));
+				throw new IllegalArgumentException(msg(U.U00113, name, value));
 			}
 		}
 
@@ -349,7 +352,7 @@ public class Args implements Iterable<String> {
 		public String stringValue() {
 			if (value == null) {
 				if (defaultValue == null)
-					throw new IllegalStateException(UtilMsg.msg(U.U00105, getName()));
+					throw new IllegalStateException(msg(U.U00105, getName()));
 				return defaultValue;
 			}
 			return value;
@@ -399,11 +402,11 @@ public class Args implements Iterable<String> {
 				throw new IllegalArgumentException("minSize < 0 or maxSize < 0");
 			if (minSize == maxSize) {
 				if (minSize > -1 && values.size() != minSize)
-					throw new IllegalStateException(UtilMsg.msg(U.U00108, getName(), 
+					throw new IllegalStateException(msg(U.U00108, getName(), 
 							values.size(), minSize));
 			} else {
 				if (values.size() < minSize || values.size() > maxSize)
-					throw new IllegalStateException(UtilMsg.msg(U.U00109, getName(), 
+					throw new IllegalStateException(msg(U.U00109, getName(), 
 							values.size(), minSize, maxSize));
 			}
 			return this;
@@ -414,7 +417,7 @@ public class Args implements Iterable<String> {
 			if (size < 0)
 				throw new IllegalArgumentException("size < 0");
 			if (values.size() < size)
-				throw new IllegalStateException(UtilMsg.msg(U.U00110, getName(), 
+				throw new IllegalStateException(msg(U.U00110, getName(), 
 						values.size(), size));
 			return this;
 		}
@@ -424,7 +427,7 @@ public class Args implements Iterable<String> {
 			if (size < 0)
 				throw new IllegalArgumentException("size < 0");
 			if (values.size() > size)
-				throw new IllegalStateException(UtilMsg.msg(U.U00111, getName(), 
+				throw new IllegalStateException(msg(U.U00111, getName(), 
 						values.size(), size));
 			return this;
 		}
@@ -504,6 +507,7 @@ public class Args implements Iterable<String> {
 	private String fileParameterName;
 	private String mappingSeparator;
 	private Map<String, Value> args;
+	private Map<String, String> vars;
 	private boolean namelessAllowed;
 	private TextFile textFile; // use only one for duplicate detection to work
 
@@ -521,9 +525,10 @@ public class Args implements Iterable<String> {
 		this.fileParameterName = (name == null ? FILE : name);
 		this.mappingSeparator = (sep == null ? MAPPING_SEPARATOR : sep);
 		args = new HashMap<String, Args.Value>();
+		vars = new HashMap<String, String>();
 		textFile = new TextFile();
 	}
-
+	
 	/**
 	 * Construct an Args object using defaults.
 	 * The default values for the name of the file parameter and the mapping 
@@ -650,12 +655,44 @@ public class Args implements Iterable<String> {
 		if (name == null)
 			throw new IllegalArgumentException("name null");
 		Value v = args.get(name);
-		if (v == null)
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00103, name));
-		else
-			v.set(value);
+		if (v == null) {
+			if (name.startsWith(VAR_PREFIX))
+				vars.put(name.substring(VAR_PREFIX.length()), resolve(value));
+			else
+				throw new IllegalArgumentException(msg(U.U00103, name));
+		}
+		else {
+			v.set(resolve(value));
+		}
 	}
 
+	private String resolve(String value) {
+		String[] parts = value.split("\\$\\{");
+		StringBuilder s = new StringBuilder(parts[0]);
+		for (int i = 1; i < parts.length; i++) {
+			int len = s.length();
+			if (len > 0 && s.charAt(len - 1) == '\\') {
+				// \$ is an escape
+				s.deleteCharAt(len - 1);
+				s.append("${" + parts[i]);
+			} else {
+				String[] nameRemainder = parts[i].split("}", 2);
+				if (nameRemainder.length == 1)
+					s.append("${" + nameRemainder[0]);
+				else {
+					
+					String resolved = vars.get(nameRemainder[0]);
+					if (resolved == null)
+						throw new IllegalArgumentException(msg(U.U00116, value, nameRemainder[0]));
+					else
+						s.append(resolved);
+					s.append(nameRemainder[1]);
+				}
+			}
+		}
+		return s.toString();
+	}
+	
 	/**
 	 * Return the value object for the parameter specified. An exception is
 	 * thrown if the the name is unknown. For a nameless parameter, pass an
@@ -668,7 +705,7 @@ public class Args implements Iterable<String> {
 	public Value getVal(String name) {
 		Value v = args.get(name);
 		if (v == null)
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00103, name));
+			throw new IllegalArgumentException(msg(U.U00103, name));
 		return v;
 	}
 	
@@ -690,13 +727,17 @@ public class Args implements Iterable<String> {
 			throw new IllegalArgumentException("name null");
 		Value v = args.get(name);
 		if (v != null)
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00104, name));
+			throw new IllegalArgumentException(msg(U.U00104, name));
 		put(name, value);
 	}
 	
 	private void put(String name, Value value) {
 		if (name.length() == 0)
 			namelessAllowed = true; // once set remains set forever
+		else {
+			if (name.startsWith(VAR_PREFIX))
+				throw new IllegalArgumentException(msg(U.U00115, name, VAR_PREFIX));
+		}
 		args.put(name, value);
 	}
 
@@ -741,7 +782,7 @@ public class Args implements Iterable<String> {
 			else
 				return parseFile(fm[0]);
 		} catch (Exception e) {
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00130, fileParameterName, fileSpec), e);
+			throw new IllegalArgumentException(msg(U.U00130, fileParameterName, fileSpec), e);
 		}
 	}
 	
@@ -784,5 +825,7 @@ public class Args implements Iterable<String> {
 			v.set(null);
 		}
 	}
+	
+	
 
 }

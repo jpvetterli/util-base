@@ -438,5 +438,116 @@ public class ArgsTest {
 			fail("unexpected exception");
 		}
 	}
+	
+	@Test
+	public void testVars1() {
+		try {
+			args.def("foo");
+			args.parse("$a=b $c=${a} foo=${c}");
+			assertEquals("b", args.get("foo"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testVars2() {
+		try {
+			args.def("foo");
+			args.parse("$a=525 $c=${a} foo=${c}");
+			assertEquals(525, args.getVal("foo").intValue());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testVars3() {
+		try {
+			args.def("foo");
+			args.parse("$a=true $c=${a} foo=${c}");
+			assertEquals(Boolean.TRUE, args.getVal("foo").booleanValue());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testVars4() {
+		try {
+			args.defList("foo");
+			args.parse("$a=1 $b=2 foo=${a} foo=${b}");
+			int[] values = args.getVal("foo").intArray();
+			assertEquals(1, values[0]);
+			assertEquals(2, values[1]);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testVars5() {
+		try {
+			args.def("foo");
+			args.parse("$a=b $c=${a} foo=[ ${c} ]");
+			assertEquals(" b ", args.get("foo"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testVars6() {
+		try {
+			args.def("foo");
+			args.parse("$a=b $c=[ ${a} ] foo=[ x${c}x ]");
+			assertEquals(" x b x ", args.get("foo"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testVars7() {
+		try {
+			args.def("foo");
+			args.parse("$a=b $c=\\${a} foo=${c}");
+			assertEquals("${a}", args.get("foo"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testVars8() {
+		try {
+			args.def("foo");
+			args.parse("$a=b $c=${a} foo=\\${c}");
+			assertEquals("${c}", args.get("foo"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testVars9() {
+		try {
+			args.def("$foo");
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith("U00115"));
+		}
+	}
+	@Test
+	public void testVars10() {
+		try {
+			args.def("foo");
+			args.put("foo", "${bar}");
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith("U00116"));
+		}
+	}
 
 }
