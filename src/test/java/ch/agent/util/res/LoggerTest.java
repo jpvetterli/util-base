@@ -58,7 +58,7 @@ public class LoggerTest {
 			TextFile f = new TextFile();
 			List<String> lines = f.read(logFile.getAbsolutePath());
 			assertEquals(1, lines.size());
-			assertEquals("[INFO] #2=foo #1=NaN", lines.get(0));
+			assertEquals("[INFO] #2=foo #1=\uFFFD", lines.get(0));
 			assertEquals(1, toStringCount); // see note above 
 		} catch (Exception e) {
 			fail("unexpected exception");
