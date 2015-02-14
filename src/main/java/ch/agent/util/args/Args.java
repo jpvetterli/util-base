@@ -684,6 +684,12 @@ public class Args implements Iterable<String> {
 	 * <code>IllegalArgumentException</code> is thrown if there is no parameter
 	 * with this name. If the parameter is a list parameter and the value is
 	 * null, all values are cleared.
+	 * <p>
+	 * If the name is prefixed with {@link Args#VAR_PREFIX} it is a substitution
+	 * variable, which is defined on the fly. If an existing substitution variable
+	 * is set a second time it is ignored. This allows to set substitution variables
+	 * with default values in parameter files and override them on the command line
+	 * <b>before</b> the file. 
 	 * 
 	 * @param name
 	 *            the name of the parameter
@@ -696,9 +702,12 @@ public class Args implements Iterable<String> {
 			throw new IllegalArgumentException("name null");
 		Value v = args.get(name);
 		if (v == null) {
-			if (name.startsWith(VAR_PREFIX))
-				vars.put(name.substring(VAR_PREFIX.length()), resolve(value));
-			else
+			if (name.startsWith(VAR_PREFIX)) {
+				String variable = name.substring(VAR_PREFIX.length());
+				if (vars.get(variable) == null)
+					vars.put(variable, resolve(value));
+				// the first wins, others are ignored
+			} else
 				throw new IllegalArgumentException(msg(U.U00103, name));
 		}
 		else {

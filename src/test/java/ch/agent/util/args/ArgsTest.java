@@ -550,6 +550,18 @@ public class ArgsTest {
 			assertTrue(e.getMessage().startsWith("U00122"));
 		}
 	}
+	@Test
+	public void testVars11() {
+		try {
+			// test "the first wins"
+			args.def("foo");
+			args.parse("$a=b $a=B $c=${a} foo=${c}");
+			assertEquals("b", args.get("foo"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
 	
 	public enum Good {
 		good1, good2
