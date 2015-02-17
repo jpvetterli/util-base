@@ -11,14 +11,16 @@ import ch.agent.util.UtilMsg.U;
  * pairs or isolated values. It supports embedded white space. To include white
  * space in a string, the string must be put inside brackets. Everything inside
  * brackets is taken verbatim. Empty brackets are used to specify an empty
- * string. To include a closing bracket it must be preceded by the escape
- * character. The only other case where the escape character plays a special
- * role is inside brackets, in front of another escape: a double escape is
- * replaced with a single escape. This allows to write a string like "{}=!" as
- * "{{!}=!!}" (where {} open and close the bracket and ! escapes). The opening
- * and closing bracket characters can be included inside a normal string, and
- * the name-value separator can be included inside a string in brackets. An
- * isolated name-value separator in brackets is still a name-value separator.
+ * string. Brackets can be nested: to terminate a string with two or more open
+ * brackets two or more closing brackets are needed. This nesting effect can be
+ * disabled by prefixing embedded brackets with an escape character. The escape
+ * character has only an effect inside brackets and only before embedded
+ * brackets or another escape: a double escape is replaced with a single escape.
+ * This allows to write a string like "{}=!" as "{{!}=!!}" (where {} open and
+ * close the bracket and ! escapes). The opening and closing bracket characters
+ * can be included inside a normal string, and the name-value separator can be
+ * included inside a string in brackets. An isolated name-value separator in
+ * brackets is still a name-value separator.
  * <p>
  * The meta characters and their default values are:
  * <ul>
@@ -31,9 +33,7 @@ import ch.agent.util.UtilMsg.U;
  * It is possible to redefine meta characters on the fly in the input using the
  * reserved name Tokenizer.MetaCharacters. The value must have length 4 and is
  * interpreted as the sequence opening bracket, closing bracket, name-value
- * separator, and escape character. These characters must be distinct except the
- * opening and closing brackets (so it is possible to use a pair of " or ' for
- * bracketing).
+ * separator, and escape character. These characters must be distinct.
  * 
  * @author Jean-Paul Vetterli
  * 
@@ -59,6 +59,7 @@ public class ArgsScanner {
 		private String token;
 		private StringBuffer buffer;
 		private State state;
+		private int depth; // nested BRACKET
 
 		/**
 		 * Constructor taking default meta characters.
@@ -93,7 +94,7 @@ public class ArgsScanner {
 		}
 		
 		private void checkMetaCharacters(char open, char close, char equals, char esc) {
-			if (open == equals || open == esc || close == equals || close == esc || equals == esc)
+			if (open == equals || open == esc || open == close || close == equals || close == esc || equals == esc)
 				throw new IllegalArgumentException(UtilMsg.msg(U.U00163, open, close, equals, esc));
 		}
 		
@@ -157,6 +158,7 @@ public class ArgsScanner {
 					addToken(false);
 				} else if (ch == opening) {
 					state = State.BRACKET;
+					depth = 1;
 				} else if (Character.isWhitespace(ch)) {
 				} else {
 					buffer.append(ch);
@@ -181,9 +183,9 @@ public class ArgsScanner {
 				if (ch == 0) {
 					addToken(false);
 					state = State.END;
-				} else if (ch == closing) {
-					// replace the escape with the closing bracket
-					buffer.setCharAt(buffer.length() - 1, closing);
+				} else if (ch == closing || ch == opening) {
+					// replace the escape with the bracket
+					buffer.setCharAt(buffer.length() - 1, ch);
 					state = State.BRACKET;
 				} else {
 					// replace two escapes with a single one
@@ -196,9 +198,16 @@ public class ArgsScanner {
 				if (ch == 0) {
 					addToken(false);
 					state = State.END;
-				} else if (ch == closing)
-					addToken(true);
-				else {
+				} else if (ch == opening) {
+					depth++;
+					buffer.append(ch);
+				} else if (ch == closing) {
+					--depth;
+					if (depth == 0)
+						addToken(true);
+					else
+						buffer.append(ch);
+				} else {
 					if (ch == esc)
 						state = State.ESCAPE;
 					buffer.append(ch);

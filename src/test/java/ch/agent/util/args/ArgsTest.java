@@ -259,7 +259,7 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.def("x");
-			args.parse("x=[[y\\]] foo = bar");
+			args.parse("x=[[y]] foo = bar");
 			assertEquals("[y]", args.getVal("x") + "");
 			assertEquals("bar", args.getVal("foo") + "");
 		} catch (Exception e) {
@@ -272,7 +272,7 @@ public class ArgsTest {
 		try {
 			args.defList("foo");
 			args.def("qu ux");
-			args.parse("foo = bar [qu ux]=[[what = ever\\]] foo = [2nd val]");
+			args.parse("foo = bar [qu ux]=[\\[what = ever\\]] foo = [2nd val]");
 			String[] values = args.getVal("foo").stringArray();
 			assertEquals("[what = ever]", args.getVal("qu ux").stringValue());
 			assertEquals(2, values.length);
@@ -288,7 +288,7 @@ public class ArgsTest {
 		try {
 			args.defList("");
 			args.def("qu ux");
-			args.parse("bar [qu ux]=[[what = ever\\]] [2nd val]");
+			args.parse("bar [qu ux]=[[what = ever]] [2nd val]");
 			String[] values = args.getVal("").stringArray();
 			assertEquals("[what = ever]", args.getVal("qu ux").stringValue());
 			assertEquals(2, values.length);
