@@ -704,9 +704,7 @@ public class Args implements Iterable<String> {
 		if (v == null) {
 			if (name.startsWith(VAR_PREFIX)) {
 				String variable = name.substring(VAR_PREFIX.length());
-				if (vars.get(variable) == null)
-					vars.put(variable, resolve(value));
-				// the first wins, others are ignored
+				putVariable(variable, value);
 			} else
 				throw new IllegalArgumentException(msg(U.U00103, name));
 		}
@@ -771,6 +769,42 @@ public class Args implements Iterable<String> {
 		return getVal(name).stringValue();
 	}
 
+	/**
+	 * Return a copy of all variables. Variables are arguments prefixed with a 
+	 * special prefix (by default a dollar sign) which do not need be defined.
+	 * 
+	 * @return a map containing all variables 
+	 */
+	public Map<String, String> getVariables() {
+		Map<String, String> result = new HashMap<String, String>();
+		for (Map.Entry<String, String> e : vars.entrySet()) {
+			result.put(e.getKey(), e.getValue());
+		}
+		return result;
+	}
+	
+	/**
+	 * Add a variable. If a variable with the same name exists nothing is done
+	 * (the principle is that <em>the first one wins</em>). If the value
+	 * contains embedded variables these are substituted before adding the
+	 * variable.
+	 * 
+	 * @param name
+	 *            the name of the variable
+	 * @param value
+	 *            the value of the variable
+	 * @return true if the variable was added or false if a variable with the
+	 *         same name already exists
+	 */
+	public boolean putVariable(String name, String value) {
+		boolean done = false;
+		if (vars.get(name) == null) {
+			vars.put(name, resolve(value));
+			done = true;
+		}
+		return done;
+	}
+	
 	private void putValue(String name, Value value) {
 		if (name == null)
 			throw new IllegalArgumentException("name null");

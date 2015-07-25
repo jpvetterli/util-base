@@ -3,7 +3,10 @@ package ch.agent.util.args;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
+
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -441,6 +444,42 @@ public class ArgsTest {
 	}
 	
 	@Test
+	public void testPositional1() {
+		try {
+			args.defList("");
+			args.def("name1").init("value");
+			args.def("name2");
+			args.parse("name2=x foo bar baf");
+			assertEquals(3, args.getVal("").stringArray().length);
+			assertEquals("value", args.get("name1"));
+			assertEquals("x", args.get("name2"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testPositional2() {
+		try {
+			args.def("").init("");
+			args.def("name1").init("value");
+			args.def("name2");
+			args.parse("name2=x foo");
+			assertEquals("value", args.get("name1"));
+			assertEquals("x", args.get("name2"));
+			assertEquals("foo", args.get(""));
+			args.reset();
+			args.parse("name2=x");
+			assertEquals("", args.get(""));
+			assertEquals("x", args.get("name2"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
 	public void testVars1() {
 		try {
 			args.def("foo");
@@ -640,5 +679,32 @@ public class ArgsTest {
 		}
 	}
 
+	@Test
+	public void testVariables1() {
+		try {
+			args.def("foo");
+			args.parse("$HOP = hop $YET = another foo = [${HOP} la boum]");
+			assertEquals("hop la boum", args.get("foo"));
+			Map<String, String>vars = args.getVariables();
+			assertEquals("hop", vars.get("HOP"));
+			assertEquals("another", vars.get("YET"));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testVariables2() {
+		try {
+			args.putVariable("HOP", "hop");
+			boolean result = args.putVariable("HOP", "hophop");
+			args.def("foo");
+			args.parse("foo = [${HOP} la boum]");
+			assertEquals("hop la boum", args.get("foo"));
+			assertFalse(result);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
 
 }
