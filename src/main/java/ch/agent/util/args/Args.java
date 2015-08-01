@@ -82,6 +82,8 @@ import ch.agent.util.file.TextFile;
  */
 public class Args implements Iterable<String> {
 
+	public final static char EQ = '=';
+	
 	public final static String VAR_PREFIX = "$";
 	
 	/**
@@ -509,18 +511,24 @@ public class Args implements Iterable<String> {
 	private class ArgsFileVisitor implements TextFile.Visitor {
 
 		private StringBuffer buffer;
+		private boolean simple;
 		private String separator;
 		
-		public ArgsFileVisitor(String separator) {
+		public ArgsFileVisitor(boolean simple, String separator) {
 			super();
 			buffer = new StringBuffer();
+			this.simple = simple;
 			this.separator = separator;
 		}
 
 		@Override
 		public boolean visit(int lineNr, String line) throws Exception {
-			if (!line.startsWith(COMMENT)) {
-				buffer.append(line);
+			if (!line.trim().startsWith(COMMENT)) {
+				if (simple) {
+					if (line.indexOf(EQ) >= 0)
+						buffer.append(line);
+				} else 
+					buffer.append(line);
 				buffer.append(separator);
 			}
 			return false;
@@ -536,6 +544,12 @@ public class Args implements Iterable<String> {
 	 * The default name of the file parameter is simply "file".
 	 */
 	public static final String FILE = "file";
+	
+	/**
+	 * The default suffix after FILE to force "simple" parsing. Simple parsing
+	 * excludes all lines which don't look like simple name-value pairs.
+	 */
+	public static final String FILE_SIMPLE_SUFFIX = "*";
 	/**
 	 * The default mapping separator is a semicolon surrounded
 	 * by zero or more white space characters.
@@ -545,6 +559,7 @@ public class Args implements Iterable<String> {
 	private static final String SEPARATOR = " ";
 	private static final String COMMENT = "#";
 	private String fileParameterName;
+	private String simpleFileParameterName;
 	private String mappingSeparator;
 	private Map<String, Value> args;
 	private Map<String, String> vars;
@@ -558,11 +573,15 @@ public class Args implements Iterable<String> {
 	 * 
 	 * @param name
 	 *            the name of the file parameter, or null
+	 * @param suffix
+	 *            the suffix used to request simple parsing
 	 * @param sep
 	 *            a regular expression used as the mapping separator, or null
 	 */
-	public Args(String name, String sep) {
+	public Args(String name, String suffix, String sep) {
 		this.fileParameterName = (name == null ? FILE : name);
+		this.simpleFileParameterName = (suffix == null ? 
+				fileParameterName + FILE_SIMPLE_SUFFIX : fileParameterName + suffix);
 		this.mappingSeparator = (sep == null ? MAPPING_SEPARATOR : sep);
 		args = new HashMap<String, Args.Value>();
 		vars = new HashMap<String, String>();
@@ -570,12 +589,13 @@ public class Args implements Iterable<String> {
 	}
 	
 	/**
-	 * Construct an Args object using defaults.
-	 * The default values for the name of the file parameter and the mapping 
-	 * separator are taken from {@link #FILE} and {@link #MAPPING_SEPARATOR}.
+	 * Construct an Args object using defaults. The default values for the name
+	 * of the file parameter, the suffix, and the mapping separator are taken
+	 * from {@link #FILE}, {@link Args#FILE_SIMPLE_SUFFIX} and
+	 * {@link #MAPPING_SEPARATOR}.
 	 */
 	public Args() {
-		this(null, null);
+		this(null, null, null);
 	}
 	
 	/**
@@ -617,7 +637,7 @@ public class Args implements Iterable<String> {
 	 * @throws IllegalArgumentException
 	 */
 	public void parse(String string) {
-		parse(new ArgsScanner().asValuesAndPairs(string, !namelessAllowed));
+		parse(new ArgsScanner('[', ']', EQ, '\\').asValuesAndPairs(string, !namelessAllowed));
 	}
 	
 	/**
@@ -634,7 +654,9 @@ public class Args implements Iterable<String> {
 				break;
 			case 2:
 				if (pair[0].equals(fileParameterName))
-					parse(parseFileAndMapping(pair[1]));
+					parse(parseFileAndMapping(false, pair[0], pair[1]));
+				else if (pair[0].equals(simpleFileParameterName))
+					parse(parseFileAndMapping(true, pair[0], pair[1]));
 				else
 					put(pair[0], pair[1]);
 				break;
@@ -852,31 +874,33 @@ public class Args implements Iterable<String> {
 	 * goes wrong while parsing the file specification. Some of these exceptions
 	 * are wrapped <code>IOException</code>s.
 	 * 
+	 * @param simple request simple parsing 
+	 * @param fileParameterName the name of the parameter (typically, "file" or "file*")
 	 * @param fileSpec
 	 *            a file name possibly followed by mappings
 	 * @return a list of arrays of length 2 (name and value)
 	 * @throws IllegalArgumentException
 	 */
-	private List<String[]> parseFileAndMapping(String fileSpec) {
+	private List<String[]> parseFileAndMapping(boolean simple, String fileParameterName, String fileSpec) {
 		String[] fm = fileSpec.split(mappingSeparator, 2);
 		try {
 			if (fm.length > 1)
-				return parseFile(fm[0], fm[1]);
+				return parseFile(simple, fm[0], fm[1]);
 			else
-				return parseFile(fm[0]);
+				return parseFile(simple, fm[0]);
 		} catch (Exception e) {
 			throw new IllegalArgumentException(msg(U.U00130, fileParameterName, fileSpec), e);
 		}
 	}
 	
-	private List<String[]> parseFile(String fileName) throws IOException {
-		ArgsFileVisitor visitor = new ArgsFileVisitor(SEPARATOR);
+	private List<String[]> parseFile(boolean simple, String fileName) throws IOException {
+		ArgsFileVisitor visitor = new ArgsFileVisitor(simple, SEPARATOR);
 		textFile.read(fileName, visitor);
 		return new ArgsScanner().asPairs(visitor.getContent());
 	}
 	
-	private List<String[]> parseFile(String fileName, String mappings) throws IOException {
-		List<String[]> pairs = parseFile(fileName);
+	private List<String[]> parseFile(boolean simple, String fileName, String mappings) throws IOException {
+		List<String[]> pairs = parseFile(simple, fileName);
 		Map<String, String> map = asMap(new ArgsScanner().asPairs(mappings));
 		Iterator<String[]> it = pairs.iterator();
 		while(it.hasNext()) {
