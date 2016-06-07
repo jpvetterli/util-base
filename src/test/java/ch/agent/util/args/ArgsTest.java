@@ -1,9 +1,9 @@
 package ch.agent.util.args;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import java.util.Map;
@@ -18,7 +18,7 @@ public class ArgsTest {
 	private static void assertMessage(Throwable e, String prefix) {
 		assertEquals(prefix, e.getMessage().substring(0, 6));
 	}
-
+	
 	private Args args;
 	private String file1;
 	private String file2;
@@ -352,6 +352,70 @@ public class ArgsTest {
 		}
 	}
 	
+	@Test
+	public void testArgsFileWithVariable1() {
+		try {
+			args.def("name0");
+			args.def("name1");
+			args.def("name2");
+			args.parse("file = ArgsTest.fileE");
+			assertEquals("val0", args.get("name0"));
+			assertEquals("val1", args.get("name1"));
+			assertEquals("val2", args.get("name2"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testArgsFileWithVariable2() {
+		try {
+			args.def("name0");
+			args.def("name1");
+			args.def("name2");
+			args.parse("$VAR-SET-IN-LEVEL1=val2 file = ArgsTest.fileD");
+			assertEquals("val0", args.get("name0"));
+			assertEquals("val1", args.get("name1"));
+			assertEquals("val2", args.get("name2"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testArgsFileWithVariable3() {
+		try {
+			args.def("name0");
+			args.def("name1");
+			args.def("name2");
+			args.parse("$VAR-SET-IN-LEVEL1=val2 $FILE=ArgsTest.fileF file = ArgsTest.fileC");
+			assertEquals("val0", args.get("name0"));
+			assertEquals("val1", args.get("name1"));
+			assertEquals("val2", args.get("name2"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testArgsFileWithVariable4() {
+		try {
+			args.def("name0");
+			args.def("name1");
+			args.def("name2");
+			args.parse("$VAR-SET-IN-LEVEL1=val2 $FILE=ArgsTest.fileD file = ${FILE}");
+			assertEquals("val0", args.get("name0"));
+			assertEquals("val1", args.get("name1"));
+			assertEquals("val2", args.get("name2"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
 	@Test
 	public void testArgsFileWithMapping() {
 		try {
@@ -706,5 +770,6 @@ public class ArgsTest {
 			fail("unexpected exception");
 		}
 	}
+
 
 }

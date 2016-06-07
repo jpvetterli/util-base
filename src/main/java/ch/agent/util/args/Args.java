@@ -654,9 +654,9 @@ public class Args implements Iterable<String> {
 				break;
 			case 2:
 				if (pair[0].equals(fileParameterName))
-					parse(parseFileAndMapping(false, pair[0], pair[1]));
+					parse(parseFileAndMapping(false, pair[0], resolve(pair[1])));
 				else if (pair[0].equals(simpleFileParameterName))
-					parse(parseFileAndMapping(true, pair[0], pair[1]));
+					parse(parseFileAndMapping(true, pair[0], resolve(pair[1])));
 				else
 					put(pair[0], pair[1]);
 				break;
