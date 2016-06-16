@@ -45,6 +45,15 @@ public class UtilMsg extends LazyMessage {
 		public static final String U00208 = "U00208";
 		public static final String U00209 = "U00209";
 		public static final String U00301 = "U00301";
+		
+		public static final String C01 = "C01";
+		public static final String C02 = "C02";
+		public static final String C03 = "C03";
+		public static final String C04 = "C04";
+		public static final String C05 = "C05";
+		public static final String C20 = "C20";
+		public static final String C21 = "C21";
+
 	}
 
 	private static final String BUNDLE_NAME = ch.agent.util.UtilMsg.class.getName();
@@ -70,6 +79,10 @@ public class UtilMsg extends LazyMessage {
 	 */
 	public static String msg(String key, Object... args) {
 		return new UtilMsg(key, args).toString();
+	}
+
+	public static LazyMessage lazymsg(String key, Object... args) {
+		return new UtilMsg(key, args);
 	}
 
 }
