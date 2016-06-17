@@ -51,6 +51,12 @@ public class UtilMsg extends LazyMessage {
 		public static final String C03 = "C03";
 		public static final String C04 = "C04";
 		public static final String C05 = "C05";
+		public static final String C06 = "C06";
+		public static final String C07 = "C07";
+		public static final String C08 = "C08";
+		public static final String C09 = "C09";
+		public static final String C10 = "C10";
+		public static final String C11 = "C11";
 		public static final String C20 = "C20";
 		public static final String C21 = "C21";
 
