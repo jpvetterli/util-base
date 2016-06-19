@@ -565,6 +565,7 @@ public class Args implements Iterable<String> {
 	private Map<String, String> vars;
 	private boolean namelessAllowed;
 	private TextFile textFile; // use only one for duplicate detection to work
+	private List<String[]> sequence;
 
 	/**
 	 * Construct a custom <code>Args</code> object. Nulls are valid arguments
@@ -596,6 +597,32 @@ public class Args implements Iterable<String> {
 	 */
 	public Args() {
 		this(null, null, null);
+	}
+	
+	/**
+	 * Activate or deactivate the parser sequence tracking mode. This mode must
+	 * be set before using {@link #parse} for the {@link #getSequence} method to
+	 * return a non-null result. By default this mode is not active.
+	 * 
+	 * @param track
+	 *            if true, sequence tracking will be activated, else it will be deactivated
+	 */
+	public void setSequenceTrackingMode(boolean track) {
+		if (track)
+			sequence = new ArrayList<String[]>();
+		else
+			sequence = null;
+	}
+
+	/**
+	 * Get the name-value pairs in original sequence. This method returns null
+	 * when sequence tracking is not active. See
+	 * {@link #setSequenceTrackingMode}.
+	 * 
+	 * @return a list of pairs or null
+	 */
+	public List<String[]> getSequence() {
+		return sequence;
 	}
 	
 	/**
@@ -637,6 +664,8 @@ public class Args implements Iterable<String> {
 	 * @throws IllegalArgumentException
 	 */
 	public void parse(String string) {
+		if (sequence != null)
+			sequence.clear();
 		parse(new ArgsScanner('[', ']', EQ, '\\').asValuesAndPairs(string, !namelessAllowed));
 	}
 	
@@ -731,7 +760,10 @@ public class Args implements Iterable<String> {
 				throw new IllegalArgumentException(msg(U.U00103, name));
 		}
 		else {
-			v.set(resolve(value));
+			String resolved = resolve(value);
+			v.set(resolved);
+			if (sequence != null)
+				sequence.add(new String[]{name , resolved});
 		}
 	}
 
