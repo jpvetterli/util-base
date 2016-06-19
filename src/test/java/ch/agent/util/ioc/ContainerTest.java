@@ -65,19 +65,77 @@ public class ContainerTest {
 		}
 
 		@Override
-		public int start() {
-			b.set("This is module \"" + getName() + "\" starting");
-			b.changeTag("xyzz");
-			return 0;
+		public void configure(Args ignore) {
 		}
 
 		@Override
-		public boolean stop() {
+		public void initialize() {
+			b.set("This is module \"" + getName() + "\" starting");
+			b.changeTag("xyzzy");
+		}
+
+		@Override
+		public void registerCommands(CommandRegistry registry) {
+			final Module<A> m = this;
+			registry.register(
+				new Command<ContainerTest.A>() {
+				@Override
+				public String getName() {
+					return "changeTag";
+				}
+				@Override
+				public Module<A> getModule() {
+					return m;
+				}
+				@Override
+				public int execute(String parameters) {
+					b.changeTag(parameters);
+					return 0;
+				}
+			});
+		registry.register(
+				new Command<ContainerTest.A>() {
+				@Override
+				public String getName() {
+					return "set";
+				}
+				@Override
+				public Module<A> getModule() {
+					return m;
+				}
+				@Override
+				public int execute(String parameters) {
+					b.set(parameters);
+					return 0;
+				}
+			});
+		}
+
+		@Override
+		public String getName() {
+			// TODO Auto-generated method stub
+			return super.getName();
+		}
+
+		@Override
+		public Args defineConfiguration() {
+			// TODO Auto-generated method stub
+			return super.defineConfiguration();
+		}
+
+		@Override
+		public void configure(String specs) {
+			// TODO Auto-generated method stub
+			super.configure(specs);
+		}
+
+		@Override
+		public void shutdown() {
 			b.set("This is module \"" + getName() + "\" stopping");
-			return true;
 		}
 		
 	}
+	
 	public static class BModule extends AbstractModule<B>  implements Module<B> {
 
 		B b;
@@ -93,12 +151,15 @@ public class ContainerTest {
 		}
 
 		@Override
-		public void define(Args config) {
+		public Args defineConfiguration() {
+			Args config = super.defineConfiguration();
 			config.def("tag").init("default");
+			return config;
 		}
 
 		@Override
-		public void configure(Args config) throws Exception {
+		public void configure(Args config) {
+			super.configure(config);
 			b.changeTag(config.get("tag"));
 		}
 		
@@ -113,15 +174,35 @@ public class ContainerTest {
 		try {
 			Container c = new Container();
 			c.run(new String[]{
-					"module=[name = a class=ch.agent.util.ioc.ContainerTest$AModule start=true require=b]",
+					"module=[name = a class=ch.agent.util.ioc.ContainerTest$AModule require=b]",
 					"module=[name = b class=ch.agent.util.ioc.ContainerTest$BModule]",
-					"config=[b=[tag=[This tag was modified.]]]"
-					
+					"config=[b=[tag=[This tag was modified.]]]",
 			});
 			c.shutdown();
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
-			assertEquals("B#set This is module \"a\" stopping and tag=xyzz", texts.get(1));
+			assertEquals("B#set This is module \"a\" stopping and tag=xyzzy", texts.get(1));
 			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void test11() {
+		try {
+			Container c = new Container();
+			c.run(new String[]{
+					"module=[name = a class=ch.agent.util.ioc.ContainerTest$AModule require=b]",
+					"module=[name = b class=ch.agent.util.ioc.ContainerTest$BModule]",
+					"config=[b=[tag=[This tag was modified.]]]",
+					"exec=[set=[exec1] changeTag=[exec2] set=[exec3]]"
+			});
+			c.shutdown();
+			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
+			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));
+			assertEquals("B#set exec1 and tag=xyzzy", texts.get(1));
+			assertEquals("B#set exec3 and tag=exec2", texts.get(2));
+			assertEquals("B#set This is module \"a\" stopping and tag=exec2", texts.get(3));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("unexpected exception");
@@ -135,9 +216,9 @@ public class ContainerTest {
 			c.run(new String[]{
 			});
 			c.shutdown();
-			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith("C04"));
+			e.printStackTrace();
+			fail("unexpected exception");
 		}
 	}
 	
@@ -146,7 +227,7 @@ public class ContainerTest {
 		try {
 			Container c = new Container();
 			c.run(new String[]{
-					"module=[name = foo class=foo start=true]"
+					"module=[name = foo class=foo]"
 			});
 			c.shutdown();
 			fail("exception expected");
@@ -160,7 +241,7 @@ public class ContainerTest {
 		try {
 			Container c = new Container();
 			c.run(new String[]{
-					"module=[name = foo class=java.lang.String start=true]"
+					"module=[name = foo class=java.lang.String]"
 			});
 			c.shutdown();
 			fail("exception expected");
@@ -174,7 +255,7 @@ public class ContainerTest {
 		try {
 			Container c = new Container();
 			c.run(new String[]{
-					"module=[name = foo class=java.lang.String start=true require=bar]",
+					"module=[name = foo class=java.lang.String require=bar]",
 					"module=[name = bar class=java.lang.String require=foo]"
 			});
 			c.shutdown();

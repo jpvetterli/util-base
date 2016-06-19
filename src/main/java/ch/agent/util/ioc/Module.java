@@ -1,12 +1,24 @@
 package ch.agent.util.ioc;
 
-import ch.agent.util.args.Args;
 
 /**
- * A module is an adapter allowing an underlying object to be configured and
- * manipulated in a standard way. Modules are created and managed by a
- * {@link Container}. The container expects a module constructor to have a
- * single parameter: the module name.
+ * A module is an adapter allowing an underlying object to be manipulated in a
+ * standard way. Modules are created and managed by a {@link Container}. The
+ * container expects a module constructor to have a single parameter: the module
+ * name.
+ * <p>
+ * In the life-cycle of the module the following methods are called in sequence:
+ * <ul>
+ * <li>The constructor.
+ * <li>{@link #configure}, exactly once
+ * <li>{@link #add}, zero or more times
+ * <li>{@link #registerCommands}, exactly once 
+ * <li>{@link #initialize}, exactly once
+ * <li>commands, zero or more times
+ * <li>{@link #shutdown}, exactly once
+ * </ul>
+ * The design for adding and removing modules dynamically, and for updating the configuration
+ * is not ready. 
  * 
  * @param <T>
  *            the type of the underlying object
@@ -16,32 +28,29 @@ public interface Module<T> {
 	/**
 	 * Get the module name.
 	 * 
-	 * @return a string
+	 * @return a non-null and non-empty string
 	 */
 	String getName();
 	
 	/**
-	 * Define configuration parameters.
+	 * Configure the module. 
 	 * 
-	 * @param config
-	 *            the configuration object
+	 * @param specs
+	 *            a string containing specifications
+	 * @throws IllegalStateException
+	 *             if the method is called more than once
+	 * @throws InvalidArgumentException
+	 *             if there are errors in the specification
 	 */
-	void define(Args config);
+	void configure(String specs) throws IllegalStateException, IllegalArgumentException;
 
 	/**
-	 * Configure the module. This method is called before {@link #add}. If the
-	 * method throws an exception, the exception's message is logged by the
-	 * container as an error, and after all modules have been parameterized, the
-	 * container throws an exception.
-	 * <p>
-	 * This method can be called only once.
+	 * Register module commands with the registry.
 	 * 
-	 * @param config
-	 *            the configuration
-	 * @throws Exception
-	 *             if there is an error
+	 * @param registry
+	 *            the command registry
 	 */
-	void configure(Args config) throws Exception;
+	void registerCommands(CommandRegistry registry);
 	
 	/**
 	 * Add a required module. This method is called for all modules, as required
@@ -63,52 +72,16 @@ public interface Module<T> {
 	T getObject();
 	
 	/**
-	 * Start execution of the underlying object implementing the module. The
-	 * application configuration declares one and only one module as the module
-	 * to be started when the configuration is ready. 
-	 * <p>
-	 * This method can be called only once.
-	 * 
-	 * @return an exit code
+	 * Initialize the module.
 	 */
-	int start();
+	void initialize();
 	
 	/**
 	 * Stop execution of the underlying object implementing the module.
 	 * <p>
 	 * This method can be called only once. It is possible that the method will
 	 * be called even after the module has thrown an exception.
-	 * 
-	 * @return return true if stopping is supported, else false
 	 */
-	boolean stop();
+	void shutdown();
 	
-	/**
-	 * Remove a required module. This method is called by the container when
-	 * dynamically removing a module. The container will not remove the module
-	 * when this method returns false.
-	 * 
-	 * @param module
-	 *            a module, already parameterized
-	 * @return true if removal accepted else false
-	 */
-	boolean remove(Module<?> module);
-	
-	/**
-	 * Update the module configuration. This method is called by the container
-	 * when dynamically changing the configuration and can be called at any time
-	 * after {@link #start}. If the method throws an
-	 * {@link IllegalArgumentException}, the exception's message is logged as an
-	 * error by the container, and processing continue. For any other exception,
-	 * the message is logged, and the container throws an exception. The method
-	 * returns false when updating the configuration is not supported.
-	 * 
-	 * @param config
-	 *            the configuration
-	 * @return true if updating is supported, else false
-	 * @throws Exception
-	 *             if there is an error
-	 */
-	boolean update(Args config) throws Exception;
-
 }

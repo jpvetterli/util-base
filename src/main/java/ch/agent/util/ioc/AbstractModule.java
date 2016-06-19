@@ -3,9 +3,12 @@ package ch.agent.util.ioc;
 import ch.agent.util.args.Args;
 
 /**
- * A minimal abstract implementation of the {@link Module} interface. It provides
- * a useful implementation of {@link #getName}, leaves {@link #getObject} to
- * subclasses, and provides dummy implementations of all other methods.
+ * A minimal abstract implementation of the {@link Module} interface. It
+ * provides a useful implementation of {@link #getName} and
+ * {@link #configure(String)}, leaves {@link #getObject} to subclasses, and
+ * provides dummy implementations of all other methods. It adds two methods to
+ * be overriden by actual modules: {@link #defineConfiguration} and
+ * {@link #configure(Args)}.
  * 
  * @param <T>
  *            the type of the underlying object
@@ -13,8 +16,11 @@ import ch.agent.util.args.Args;
 public abstract class AbstractModule<T> implements Module<T> {
 
 	private String name;
+	private boolean configure;
 	
 	public AbstractModule(String name) {
+		if (name == null || name.length() == 0)
+			throw new IllegalArgumentException("name null or emtpy");
 		this.name = name;
 	}
 
@@ -23,12 +29,44 @@ public abstract class AbstractModule<T> implements Module<T> {
 		return name;
 	}
 
-	@Override
-	public void define(Args config) {
+	/**
+	 * Define configuration parameters.
+	 * <p>
+	 * Subclasses should usually call the super method first, before adding
+	 * their definitions.
+	 * 
+	 * @return the configuration object
+	 */
+	public Args defineConfiguration() {
+		return new Args();
+	}
+	
+	/**
+	 * Configure the module.
+	 * <p>
+	 * Subclasses should usually call the super method first, before performing
+	 * their own configuration.
+	 * 
+	 * @param config
+	 *            the configuration object
+	 * @throws IllegalArgumentException
+	 *             if there is an error
+	 */
+	public void configure(Args config) {
 	}
 
 	@Override
-	public void configure(Args config) throws Exception {
+	public void configure(String specs) {
+		if (configure)
+			throw new RuntimeException("bug found: configure called again, module: " + getName());
+		configure = true;
+		Args config = defineConfiguration();
+		config.parse(specs);
+		configure(config);
+	}
+
+	@Override
+	public void registerCommands(CommandRegistry registry) {
 	}
 
 	@Override
@@ -37,23 +75,11 @@ public abstract class AbstractModule<T> implements Module<T> {
 	}
 
 	@Override
-	public int start() {
-		return 0;
+	public void initialize() {
 	}
 
 	@Override
-	public boolean stop() {
-		return false;
-	}
-
-	@Override
-	public boolean remove(Module<?> module) {
-		return false;
-	}
-
-	@Override
-	public boolean update(Args config) throws Exception {
-		return false;
+	public void shutdown() {
 	}
 
 }

@@ -26,47 +26,65 @@ import ch.agent.util.args.Args;
  * has its own configuration syntax, which becomes known only after the module
  * has been instantiated.
  * <p>
- * The top-level syntax consists of multiple <em>module</em> statements and a
- * single <em>config</em> statement.
+ * The top-level syntax consists of multiple <em>module</em> statements, a
+ * single <em>config</em> statement and a single <em>exec</em> statement.
  * <p>
  * 
  * <pre>
  * module=[
  *   name=<em>module-name</em> 
- *   start?=true|false 
  *   class=<em>class-name</em> 
  *   require*=<em>module-name</em>
  * ]
  * </pre>
  * 
  * There is one <em>module</em> statement for each module. Names must be unique.
- * Exactly one of them must be configured as the <em>start</em> module (the
- * parameter is optional, with a false default value). A module is an object of
- * the class specified in the statement. The class must implement the
- * {@link Module} interface. A module can require zero or more other modules.
- * The modules are initialized in a sequence which guarantees that required
- * modules are always initialized before the module requiring them (unless a
- * dependency cycle is detected).
+ * A module is an object of the class specified in the statement. The class must
+ * implement the {@link Module} interface. A module can require zero or more
+ * other modules. The modules are initialized in a sequence which guarantees
+ * that required modules are always initialized before the module requiring them
+ * (unless a dependency cycle is detected).
  * <p>
- * When shutting down the container, the {@link Module#stop} methods of all
+ * When shutting down the container, the {@link Module#shutdown} methods of all
  * modules are called in the reverse order of the initialization sequence.
  * Exceptions occurring during shutdown are discarded.
  * 
  * <pre>
  * config=[
- *   module-name1=[...]
- *   module-name2=[...]
+ *   module-name=[...]
+ *   module-name=[...]
  *   ...
  * ]
  * </pre>
  * 
- * There is a single <em>config</em> parameter. Its value is a sequence of
+ * There is a single <em>config</em> statement. Its value is a sequence of
  * statements named after the module names declared in the <em>module</em>
  * statements. There is at most one statement for each module. The syntax of the
  * module configuration is defined by the module itself.
  * 
+ * <pre>
+ * exec=[
+ *   command-name=[...]
+ *   command-name=[...]
+ *   ...
+ * ]
+ * </pre>
+ * 
+ * There is a single <em>exec</em> statement. Its value is a sequence of
+ * statements which are the command names registered by modules during module
+ * initialization. The names of the commands are the preferred names given by
+ * {@link Command#getName} or, if that name is already registered by another
+ * module, the concatenation of the module name and the command name, with a
+ * period between them. The syntax of command parameters is defined by the
+ * command themselves. The container passes the value verbatim to the
+ * {@link Command#execute} methods.
+ * <p>
+ * The {@link #run} method returns the sum of the exit codes of all commands
+ * executed. Because the convention is for a command to return 0 to mean "okay",
+ * the final exit code will be also be 0 if everything is "okay".
+ * 
  */
-public class Container {
+public class Container implements CommandRegistry {
 
 	final static Logger logger = LoggerFactory.getLogger(Container.class);
 
@@ -90,13 +108,12 @@ public class Container {
 	
 	private class ModuleSpecification {
 		private final String name;
-		private final boolean start;
 		private final String className;
 		private final String[] requires; // array of module names
 		private String configuration;
 		private Module<?> module;
 		
-		public ModuleSpecification(String name, boolean start, String className, String[] requires) {
+		public ModuleSpecification(String name, String className, String[] requires) {
 			if (name.length() == 0)
 				throw new IllegalArgumentException("name empty");
 			if (className.length() == 0)
@@ -106,7 +123,6 @@ public class Container {
 					throw new IllegalArgumentException(msg(U.C06, name));
 			}
 			this.name = name;
-			this.start = start;
 			this.className = className;
 			this.requires = requires;
 		}
@@ -124,21 +140,21 @@ public class Container {
 		
 	}
 	
-	private static final String CONFIG = "config";
 	private static final String MODULE = "module";
+	private static final String CONFIG = "config";
+	private static final String EXEC = "exec";
 	private static final String MODULE_NAME = "name";
-	private static final String MODULE_START = "start";
 	private static final String MODULE_CLASS = "class";
 	private static final String MODULE_REQUIRE = "require";
 	
 	private Map<String, ModuleSpecification> modules; // key is module name 
-	private Map<String, Args> moduleArgs; // key is module class name
+	private Map<String, Command<?>> commands; // key is the actual command name 
 	private List<String> sequence;
-	private String startModule;
+	private String exec;
 	
 	public Container() {
 		modules = new LinkedHashMap<String, ModuleSpecification>(); // keep sequence
-		moduleArgs = new HashMap<String, Args>();
+		commands = new HashMap<String, Command<?>>();
 	}
 	
 	/**
@@ -162,7 +178,7 @@ public class Container {
 	 * 
 	 * @param parameters
 	 *            an array of command line parameters
-	 * @return the exit code
+	 * @return the sum of all exit codes of the commands executed
 	 */
 	public int run(String[] parameters) throws Exception {
 		long start = System.currentTimeMillis();
@@ -172,7 +188,7 @@ public class Container {
 		validateConfiguration();
 		computeValidSequence();
 		initializeModules(sequence);
-		int exitCode = modules.get(startModule).module.start();
+		int exitCode = executeCommands(exec);
 		
 		logger.info("{}", lazymsg(U.C21, dhms(System.currentTimeMillis() - start)));
 		return exitCode;
@@ -183,13 +199,34 @@ public class Container {
 		Collections.reverse(shutDownSequence);
 		for (String name : shutDownSequence) {
 			try {
-				modules.get(name).module.stop();
+				modules.get(name).module.shutdown();
 			} catch (Exception e) {
 				// ignore
 			}
 		}
 	}
 	
+	@Override
+	public String register(Command<?> command) {
+		String name = command.getName();
+		Command<?> existing = commands.get(name);
+		if (existing == null)
+			commands.put(name, command);
+		else {
+			String moduleName = command.getModule().getName();
+			if (existing.getModule().getName().equals(moduleName))
+				throw new IllegalStateException(msg(U.C12, moduleName, name));
+			else {
+				name = moduleName + "." + name;
+				if (commands.get(name) != null)
+					throw new RuntimeException("bug found " + name);
+				else
+					commands.put(name, command);
+			}
+		}
+		return name;
+	}
+
 	/**
 	 * Define the top level parameters.
 	 * 
@@ -197,8 +234,9 @@ public class Container {
 	 */
 	protected Args defineTopLevelSyntax() {
 		Args args = new Args();
-		args.def(CONFIG).init(""); // can be omitted
 		args.defList(MODULE);
+		args.def(CONFIG).init(""); // can be omitted
+		args.def(EXEC).init(""); // can be omitted
 		return args;
 	}
 	
@@ -210,7 +248,6 @@ public class Container {
 	protected Args defineModuleStatementSyntax() {
 		Args args = new Args();
 		args.def(MODULE_NAME);
-		args.def(MODULE_START).init("false");
 		args.def(MODULE_CLASS);
 		args.defList(MODULE_REQUIRE);
 		return args;
@@ -237,6 +274,7 @@ public class Container {
 		topSyntax.parse(arguments);
 		String[] moduleStatements = topSyntax.getVal(MODULE).stringArray(); 
 		String config = topSyntax.get(CONFIG);
+		exec = topSyntax.get(EXEC);
 		
 		// parse each "module" statement
 		Args configSyntax = new Args();
@@ -248,9 +286,7 @@ public class Container {
 			configSyntax.def(name).init(""); // it is okay to omit the statement
 			try {
 				modules.put(name, new ModuleSpecification(
-						name, 
-						moduleSyntax.getVal(MODULE_START).booleanValue(), 
-						moduleSyntax.get(MODULE_CLASS), 
+						name, moduleSyntax.get(MODULE_CLASS), 
 						moduleSyntax.getVal(MODULE_REQUIRE).stringArray())
 				);
 			} catch (Exception e) {
@@ -280,25 +316,13 @@ public class Container {
 	 */
 	protected void validateConfiguration() throws Exception {
 		int errors = 0;
-		startModule = null;
 		for (ModuleSpecification mc : modules.values()) {
-			if (mc.start) {
-				if (startModule != null) {
-					errors++;
-					logger.error(msg(U.C01, mc.name, startModule));
-				} else
-					startModule = mc.name;
-			}
 			for (String req : mc.requires) {
 				if (!modules.containsKey(req)) {
 					errors++;
 					logger.error(msg(U.C02, req, mc.name));
 				}
 			}
-		}
-		if (startModule == null) {
-			errors++;
-			logger.error(msg(U.C11));
 		}
 		if (errors > 0)
 			throw new Exception(msg(U.C04));
@@ -352,16 +376,39 @@ public class Container {
 	protected void initializeModule(ModuleSpecification spec) throws Exception {
 		try {
 			spec.create(); // sets spec.module
-			Args config = getConfigurationSyntax(spec);
-			config.parse(spec.configuration);
-			spec.module.configure(config);
+			spec.module.configure(spec.configuration);
 			addRequiredModules(spec);
+			spec.module.registerCommands(this);
+			spec.module.initialize();
 			logger.info(msg(U.C08, spec.name));
 		} catch (Exception e) {
 			throw new Exception(msg(U.C07, spec.name), e);
 		}
 	}
 
+	/**
+	 * Execute all commands in the exec statement.
+	 * 
+	 * @param exec
+	 *            the value of the exec statement
+	 * @return the sum of all exit codes of the commands executed
+	 */
+	protected int executeCommands(String exec) {
+		Args execSyntax = new Args();
+		for (String commandName : commands.keySet()) {
+			execSyntax.defList(commandName); // a command can be executed 0 or more times
+		}
+		execSyntax.setSequenceTrackingMode(true);
+		execSyntax.parse(exec);
+		List<String[]> statements = execSyntax.getSequence();
+		int exitCodeTotal = 0;
+		for (String[] statement : statements) {
+			Command<?> command = commands.get(statement[0]);
+			exitCodeTotal += command.execute(statement[1]);
+		}
+		return exitCodeTotal;
+	}
+	
 	/**
 	 * Add all modules required by a module.
 	 * 
@@ -375,7 +422,7 @@ public class Container {
 		for (String req : spec.requires) {
 			ModuleSpecification reqSpec = modules.get(req);
 			if (reqSpec.module == null)
-				throw new IllegalStateException("bug found, module " + req + " required by " + spec.name + " null");
+				throw new RuntimeException("bug found, module \"" + req + "\" required by \"" + spec.name + "\" is null");
 			else {
 				if (!spec.module.add(modules.get(req).module)) {
 					logger.error(msg(U.C05, spec.name, req));
@@ -385,26 +432,6 @@ public class Container {
 		}
 		if (errors > 0)
 			throw new Exception(msg(U.C10, spec.name));
-	}
-
-	/**
-	 * Get the configuration syntax object for a module. If not yet available,
-	 * create it and store it in a map keyed by the module class (a module with
-	 * the same class can be declared multiple times under different names with
-	 * a <em>module</em> statement, but the configuration syntax is the same).
-	 * 
-	 * @param spec
-	 *            a module specification
-	 * @return a configuration syntax object
-	 */
-	protected Args getConfigurationSyntax(ModuleSpecification spec) {
-		Args config = moduleArgs.get(spec.className);
-		if (config == null) {
-			config = new Args();
-			spec.module.define(config);
-			moduleArgs.put(spec.className, config);
-		}
-		return config;
 	}
 
 	/**
