@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import ch.agent.util.base.Util;
+import ch.agent.util.base.Misc;
 
 /**
  * A directed acyclic graph is used to handle module dependencies in a
@@ -68,7 +68,7 @@ public class DAG<T> {
 		private boolean visited;
 
 		public DAGNode(T payload) {
-			Util.nullIllegal(payload, "payload null");
+			Misc.nullIllegal(payload, "payload null");
 			this.payload = payload;
 			links = new LinkedHashSet<Node<T>>();
 		}

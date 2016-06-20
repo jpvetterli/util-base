@@ -8,7 +8,7 @@ import java.util.Iterator;
  * Miscellaneous utility methods.
  *
  */
-public class Util {
+public class Misc {
 
 	/**
 	 * Ensure a reference is not null. The description passed in the second

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import ch.agent.util.STRINGS.U;
-import ch.agent.util.base.Util;
+import ch.agent.util.base.Misc;
 import ch.agent.util.file.TextFile;
 
 /**
@@ -101,8 +101,8 @@ public class Args implements Iterable<String> {
 		private String name;
 		
 		private Definition(Args args, String name) {
-			Util.nullIllegal(args, "args null");
-			Util.nullIllegal(name, "name null");
+			Misc.nullIllegal(args, "args null");
+			Misc.nullIllegal(name, "name null");
 			this.args = args;
 			this.name = name;
 		}
@@ -656,7 +656,7 @@ public class Args implements Iterable<String> {
 	 * @throws IllegalArgumentException
 	 */
 	public void parse(String[] args) {
-		parse(Util.join(SEPARATOR, args));
+		parse(Misc.join(SEPARATOR, args));
 	}
 
 	/**
@@ -757,7 +757,7 @@ public class Args implements Iterable<String> {
 	 * @throws IllegalArgumentException
 	 */
 	public void put(String name, String value) {
-		Util.nullIllegal(name, "name null");
+		Misc.nullIllegal(name, "name null");
 		Value v = args.get(name);
 		if (v == null) {
 			if (name.startsWith(VAR_PREFIX)) {
@@ -867,7 +867,7 @@ public class Args implements Iterable<String> {
 	}
 	
 	private void putValue(String name, Value value) {
-		Util.nullIllegal(name, "name null");
+		Misc.nullIllegal(name, "name null");
 		Value v = args.get(name);
 		if (v != null)
 			throw new IllegalArgumentException(msg(U.U00104, name));

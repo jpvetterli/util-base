@@ -8,7 +8,7 @@ import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 
-public class UtilTest {
+public class MiscTest {
 	
 
 	@Before
@@ -20,7 +20,7 @@ public class UtilTest {
 	public void test10() {
 		try {
 			String[] strings = new String[]{"foo", "bar"};
-			assertEquals("foo bar", ch.agent.util.base.Util.join(" ", strings));
+			assertEquals("foo bar", ch.agent.util.base.Misc.join(" ", strings));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("unexpected exception");
@@ -30,7 +30,7 @@ public class UtilTest {
 	public void test20() {
 		try {
 			String[] strings = new String[]{"foo", "bar"};
-			assertEquals("foo bar", ch.agent.util.base.Util.join(" ", Arrays.asList(strings)));
+			assertEquals("foo bar", ch.agent.util.base.Misc.join(" ", Arrays.asList(strings)));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("unexpected exception");
@@ -39,7 +39,7 @@ public class UtilTest {
 	@Test
 	public void test30() {
 		try {
-			assertEquals("", ch.agent.util.base.Util.join("", new String[]{}));
+			assertEquals("", ch.agent.util.base.Misc.join("", new String[]{}));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("unexpected exception");
@@ -49,7 +49,7 @@ public class UtilTest {
 	@Test
 	public void test40() {
 		try {
-			ch.agent.util.base.Util.join(null, new String[]{});
+			ch.agent.util.base.Misc.join(null, new String[]{});
 			fail("exception expected");
 		} catch (Exception e) {
 			assertEquals("separator null", e.getMessage());
@@ -58,7 +58,7 @@ public class UtilTest {
 	@Test
 	public void test50() {
 		try {
-			ch.agent.util.base.Util.join("", (String[])null);
+			ch.agent.util.base.Misc.join("", (String[])null);
 			fail("exception expected");
 		} catch (Exception e) {
 			assertEquals("items null", e.getMessage());

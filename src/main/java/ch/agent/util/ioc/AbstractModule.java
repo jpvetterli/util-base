@@ -1,7 +1,7 @@
 package ch.agent.util.ioc;
 
 import ch.agent.util.args.Args;
-import ch.agent.util.base.Util;
+import ch.agent.util.base.Misc;
 
 /**
  * A minimal abstract implementation of the {@link Module} interface. It
@@ -20,7 +20,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	private boolean configure;
 	
 	public AbstractModule(String name) {
-		if (Util.isEmpty(name))
+		if (Misc.isEmpty(name))
 			throw new IllegalArgumentException("name null or emtpy");
 		this.name = name;
 	}

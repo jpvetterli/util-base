@@ -1,7 +1,7 @@
 package ch.agent.util.ioc;
 
 import ch.agent.util.args.Args;
-import ch.agent.util.base.Util;
+import ch.agent.util.base.Misc;
 
 /**
  * A minimal abstract implementation of the {@link Command} interface. It
@@ -19,8 +19,8 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	private Args args;
 	
 	public AbstractCommand(Module<T> module, String name) {
-		Util.nullIllegal(module, "module null");
-		if (Util.isEmpty(name))
+		Misc.nullIllegal(module, "module null");
+		if (Misc.isEmpty(name))
 			throw new IllegalArgumentException("name null or emtpy");
 		this.module = module;
 		this.name = name;
