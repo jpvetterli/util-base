@@ -123,6 +123,48 @@ public class TextFileTest {
 	}
 	
 	@Test
+	public void testWriteRead3() {
+		try {
+			String fileName = File.createTempFile("test", null).getPath();
+			textFile.write(fileName, false, "foo");
+			List<String> text = textFile.read(fileName);
+			assertEquals("foo", text.get(0));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testWriteRead4() {
+		try {
+			String fileName = File.createTempFile("test", null).getPath();
+			textFile.write(fileName, false, "");
+			List<String> text = textFile.read(fileName);
+			assertEquals(1, text.size());
+			assertEquals("", text.get(0));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testWriteReadAndAppend() {
+		try {
+			textFile.setDuplicateDetection(false);
+			String fileName = File.createTempFile("test", null).getPath();
+			textFile.write(fileName, false, (String) null);
+			List<String> text = textFile.read(fileName);
+			assertEquals(0, text.size());
+			textFile.write(fileName, true, new String[]{"line 1", "line 2"});
+			text = textFile.read(fileName);
+			assertEquals(2, text.size());
+			assertEquals("line 1", text.get(0));
+			assertEquals("line 2", text.get(1));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
 	public void testFileNotFound() {
 		try {
 			textFile.read("/foo/bar", new TextFile.Visitor() {

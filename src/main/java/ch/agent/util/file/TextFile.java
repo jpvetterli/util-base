@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -210,14 +211,15 @@ public class TextFile {
 	 * Write a series of lines to a file. The file is created if it does not
 	 * exist, as is the file's directory (but not the directory's directory).
 	 * Lines are terminated by the platform's line separator. An
-	 * <code>IOException</code> is thrown if the file cannot be written.
+	 * <code>IOException</code> is thrown if the file cannot be written. If the
+	 * iterator is null, an empty file is created if one does not exist.
 	 * 
 	 * @param fileName
 	 *            the name of the file
 	 * @param append
 	 *            if true append to existing file, else overwrite
 	 * @param lines
-	 *            an iterator supplying lines of text
+	 *            an iterator supplying lines of text or null
 	 * @throws IOException
 	 */
 	public void write(String fileName, boolean append, Iterator<String> lines) throws IOException {
@@ -226,10 +228,12 @@ public class TextFile {
 		try {
 			OutputStreamWriter w = new OutputStreamWriter(out.getStream(), charset);
 			String sep = System.getProperty("line.separator");
-			while(lines.hasNext()) {
-				lineNr++;
-				w.write(lines.next());
-				w.write(sep);
+			if (lines != null) {
+				while (lines.hasNext()) {
+					lineNr++;
+					w.write(lines.next());
+					w.write(sep);
+				}
 			}
 			w.close();
 		} catch (IOException e) {
@@ -237,6 +241,44 @@ public class TextFile {
 		} finally {
 			out.stream.close();
 		}
+	}
+	
+	/**
+	 * Write an array of strings to a file. The file is created if it does not
+	 * exist, as is the file's directory (but not the directory's directory).
+	 * Lines are terminated by the platform's line separator. An
+	 * <code>IOException</code> is thrown if the file cannot be written. If the
+	 * array is null, an empty file is created if one does not exist.
+	 * 
+	 * @param fileName
+	 *            the name of the file
+	 * @param append
+	 *            if true append to existing file
+	 * @param lines
+	 *            an array of strings or null
+	 * @throws IOException
+	 */
+	public void write(String fileName, boolean append, String[] lines) throws IOException {
+		write(fileName, append, lines == null ? null : Arrays.asList(lines).iterator());
+	}
+	
+	/**
+	 * Write a string to a file. The file is created if it does not exist, as is
+	 * the file's directory (but not the directory's directory). Lines are
+	 * terminated by the platform's line separator. An <code>IOException</code>
+	 * is thrown if the file cannot be written. If the string is null, an empty
+	 * file is created if one does not exist.
+	 * 
+	 * @param fileName
+	 *            the name of the file
+	 * @param append
+	 *            if true append to existing file
+	 * @param string
+	 *            a string
+	 * @throws IOException
+	 */
+	public void write(String fileName, boolean append, String string) throws IOException {
+		write(fileName, append, string == null ? null : new String[]{string});
 	}
 
 	/**
