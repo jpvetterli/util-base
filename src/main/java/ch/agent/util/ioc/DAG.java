@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import ch.agent.util.base.Util;
+
 /**
  * A directed acyclic graph is used to handle module dependencies in a
  * container. Nodes in the DAG are generic. It is VERY important to use
@@ -66,8 +68,7 @@ public class DAG<T> {
 		private boolean visited;
 
 		public DAGNode(T payload) {
-			if (payload == null)
-				throw new IllegalArgumentException("payload null");
+			Util.nullIllegal(payload, "payload null");
 			this.payload = payload;
 			links = new LinkedHashSet<Node<T>>();
 		}

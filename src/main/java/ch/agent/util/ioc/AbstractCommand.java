@@ -1,6 +1,7 @@
 package ch.agent.util.ioc;
 
 import ch.agent.util.args.Args;
+import ch.agent.util.base.Util;
 
 /**
  * A minimal abstract implementation of the {@link Command} interface. It
@@ -15,11 +16,11 @@ public abstract class AbstractCommand<T> implements Command<T> {
 
 	private Module<T> module;
 	private String name;
+	private Args args;
 	
 	public AbstractCommand(Module<T> module, String name) {
-		if (module == null)
-			throw new IllegalArgumentException("module null");
-		if (name == null || name.length() == 0)
+		Util.nullIllegal(module, "module null");
+		if (Util.isEmpty(name))
 			throw new IllegalArgumentException("name null or emtpy");
 		this.module = module;
 		this.name = name;
@@ -36,15 +37,21 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	}
 
 	/**
-	 * Define execution parameters.
+	 * Define execution parameters or reset values.
 	 * <p>
 	 * Subclasses should usually call the super method first, before adding
-	 * their definitions.
+	 * their definitions. This method does not add any definition of its own.
+	 * Subclasses can test if the result is a new object or it has only been
+	 * reset using the {@link Args#size} method.
 	 * 
 	 * @return the parameters object
 	 */
 	public Args defineParameters() {
-		return new Args();
+		if (args == null)
+			args = new Args();
+		else
+			args.reset();
+		return args;
 	}
 	
 	/**

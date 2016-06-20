@@ -1,6 +1,7 @@
 package ch.agent.util.ioc;
 
 import ch.agent.util.args.Args;
+import ch.agent.util.base.Util;
 
 /**
  * A minimal abstract implementation of the {@link Module} interface. It
@@ -19,7 +20,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	private boolean configure;
 	
 	public AbstractModule(String name) {
-		if (name == null || name.length() == 0)
+		if (Util.isEmpty(name))
 			throw new IllegalArgumentException("name null or emtpy");
 		this.name = name;
 	}
@@ -33,7 +34,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	 * Define configuration parameters.
 	 * <p>
 	 * Subclasses should usually call the super method first, before adding
-	 * their definitions.
+	 * their definitions. The method always returns a new object.
 	 * 
 	 * @return the configuration object
 	 */

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import ch.agent.util.UtilMsg.U;
+import ch.agent.util.base.Util;
 import ch.agent.util.file.TextFile;
 
 /**
@@ -100,10 +101,8 @@ public class Args implements Iterable<String> {
 		private String name;
 		
 		private Definition(Args args, String name) {
-			if (args == null)
-				throw new IllegalArgumentException("args null");
-			if (name == null)
-				throw new IllegalArgumentException("name null");
+			Util.nullIllegal(args, "args null");
+			Util.nullIllegal(name, "name null");
 			this.args = args;
 			this.name = name;
 		}
@@ -638,6 +637,15 @@ public class Args implements Iterable<String> {
 	}
 
 	/**
+	 * Get the size.
+	 * 
+	 * @return the number of parameters defined
+	 */
+	public int size() {
+		return args.size();
+	}
+	
+	/**
 	 * Convenience method to parse parameters specified in an array. Elements
 	 * are joined using a space separator into a single string and passed to
 	 * {@link #parse(String)}. An <code>IllegalArgumentException</code> is 
@@ -648,7 +656,7 @@ public class Args implements Iterable<String> {
 	 * @throws IllegalArgumentException
 	 */
 	public void parse(String[] args) {
-		parse(join(SEPARATOR, args));
+		parse(Util.join(SEPARATOR, args));
 	}
 
 	/**
@@ -749,8 +757,7 @@ public class Args implements Iterable<String> {
 	 * @throws IllegalArgumentException
 	 */
 	public void put(String name, String value) {
-		if (name == null)
-			throw new IllegalArgumentException("name null");
+		Util.nullIllegal(name, "name null");
 		Value v = args.get(name);
 		if (v == null) {
 			if (name.startsWith(VAR_PREFIX)) {
@@ -860,8 +867,7 @@ public class Args implements Iterable<String> {
 	}
 	
 	private void putValue(String name, Value value) {
-		if (name == null)
-			throw new IllegalArgumentException("name null");
+		Util.nullIllegal(name, "name null");
 		Value v = args.get(name);
 		if (v != null)
 			throw new IllegalArgumentException(msg(U.U00104, name));
@@ -882,17 +888,6 @@ public class Args implements Iterable<String> {
 		return args.get(name);
 	}
 	
-	private String join(String separator, String[] string) {
-		StringBuilder b = new StringBuilder();
-		for (int i = 0; i < string.length; i++) {
-			b = b.append(string[i]);
-			b = b.append(separator);
-		}
-		if (b.length() > separator.length())
-			b.setLength(b.length() - separator.length());
-		return b.toString();
-	}
-
 	/**
 	 * Return a list of name-value pairs from a text file. Lines starting with a
 	 * hash are skipped.
