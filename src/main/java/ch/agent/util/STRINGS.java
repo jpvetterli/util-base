@@ -2,12 +2,12 @@ package ch.agent.util;
 
 import java.util.ResourceBundle;
 
-import ch.agent.util.res.LazyMessage;
+import ch.agent.util.base.LazyString;
 
 /**
  * Error messages for base utilities.
  */
-public class UtilMsg extends LazyMessage {
+public class STRINGS extends LazyString {
 
 	/**
 	 * Message symbols. The symbols correspond to keys in the
@@ -61,7 +61,7 @@ public class UtilMsg extends LazyMessage {
 
 	}
 
-	private static final String BUNDLE_NAME = ch.agent.util.UtilMsg.class.getName();
+	private static final String BUNDLE_NAME = ch.agent.util.STRINGS.class.getName();
 	private static final ResourceBundle BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
 
 	/**
@@ -70,7 +70,7 @@ public class UtilMsg extends LazyMessage {
 	 * @param key message key
 	 * @param args message arguments
 	 */
-	public UtilMsg(String key, Object... args) {
+	public STRINGS(String key, Object... args) {
 		super(key, BUNDLE_NAME, BUNDLE, "", args);
 	}
 	
@@ -83,11 +83,11 @@ public class UtilMsg extends LazyMessage {
 	 * @return the message resolved to a string
 	 */
 	public static String msg(String key, Object... args) {
-		return new UtilMsg(key, args).toString();
+		return new STRINGS(key, args).toString();
 	}
 
-	public static LazyMessage lazymsg(String key, Object... args) {
-		return new UtilMsg(key, args);
+	public static LazyString lazymsg(String key, Object... args) {
+		return new STRINGS(key, args);
 	}
 
 }

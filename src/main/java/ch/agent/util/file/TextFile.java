@@ -17,8 +17,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import ch.agent.util.UtilMsg;
-import ch.agent.util.UtilMsg.U;
+import ch.agent.util.STRINGS;
+import ch.agent.util.STRINGS.U;
 
 /**
  * Support for reading and writing text files.
@@ -180,9 +180,9 @@ public class TextFile {
 			r.close();
 		} catch (Exception e) {
 			if (lineNr > 0)
-				throw new IOException(UtilMsg.msg(U.U00202, fh.getName(), lineNr), e);
+				throw new IOException(STRINGS.msg(U.U00202, fh.getName(), lineNr), e);
 			else
-				throw new IOException(UtilMsg.msg(U.U00201, fh.getName()), e);
+				throw new IOException(STRINGS.msg(U.U00201, fh.getName()), e);
 		} finally {
 			fh.stream.close();
 		}
@@ -233,7 +233,7 @@ public class TextFile {
 			}
 			w.close();
 		} catch (IOException e) {
-			throw new IOException(UtilMsg.msg(U.U00207, out.getName(), lineNr), e);
+			throw new IOException(STRINGS.msg(U.U00207, out.getName(), lineNr), e);
 		} finally {
 			out.stream.close();
 		}
@@ -261,11 +261,11 @@ public class TextFile {
 			if (is != null)
 				in = new Input(fileName, is);
 			else
-				throw new FileNotFoundException(UtilMsg.msg(U.U00208, file.getAbsolutePath()));
+				throw new FileNotFoundException(STRINGS.msg(U.U00208, file.getAbsolutePath()));
 		}
 		if (duplicates != null) {
 			if (!duplicates.add(in.getName()))
-				throw new FileNotFoundException(UtilMsg.msg(U.U00209, in.getName()));
+				throw new FileNotFoundException(STRINGS.msg(U.U00209, in.getName()));
 		}
 		return in;
 	}
@@ -289,7 +289,7 @@ public class TextFile {
 	private Output openOutput(String fileName, boolean append) throws FileNotFoundException {
 		File file = new File(fileName);
 		if (!file.isAbsolute()) {
-			throw new FileNotFoundException(UtilMsg.msg(U.U00205, fileName));
+			throw new FileNotFoundException(STRINGS.msg(U.U00205, fileName));
 		}
 		File dir = file.getParentFile();
 		dir.mkdirs();

@@ -1,7 +1,7 @@
 package ch.agent.util.ioc;
 
-import static ch.agent.util.UtilMsg.lazymsg;
-import static ch.agent.util.UtilMsg.msg;
+import static ch.agent.util.STRINGS.lazymsg;
+import static ch.agent.util.STRINGS.msg;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import java.util.NoSuchElementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.agent.util.UtilMsg.U;
+import ch.agent.util.STRINGS.U;
 import ch.agent.util.args.Args;
 
 /**

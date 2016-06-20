@@ -1,6 +1,6 @@
 package ch.agent.util.args;
 
-import static ch.agent.util.UtilMsg.msg;
+import static ch.agent.util.STRINGS.msg;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import ch.agent.util.UtilMsg.U;
+import ch.agent.util.STRINGS.U;
 import ch.agent.util.base.Util;
 import ch.agent.util.file.TextFile;
 

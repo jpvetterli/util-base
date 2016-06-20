@@ -2,8 +2,8 @@ package ch.agent.util.sleep;
 
 import java.util.Random;
 
-import ch.agent.util.UtilMsg;
-import ch.agent.util.UtilMsg.U;
+import ch.agent.util.STRINGS;
+import ch.agent.util.STRINGS.U;
 
 /**
  * A <code>Sleeper</code> sleeps. The sleep unit is a random duration selected
@@ -94,10 +94,10 @@ public class Sleeper {
 			try {
 				setSleepUnit(Integer.parseInt(values[0]), Integer.parseInt(values[1]));
 			} catch (Exception e) {
-				throw new IllegalArgumentException(UtilMsg.msg(U.U00301, spec), e);
+				throw new IllegalArgumentException(STRINGS.msg(U.U00301, spec), e);
 			}
 		} else
-			throw new IllegalArgumentException(UtilMsg.msg(U.U00301, spec));
+			throw new IllegalArgumentException(STRINGS.msg(U.U00301, spec));
 	}	
 	
 	/**

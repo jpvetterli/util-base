@@ -1,4 +1,4 @@
-package ch.agent.util.res;
+package ch.agent.util.base;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -14,13 +14,14 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.junit.Test;
 
+import ch.agent.util.base.LazyString;
 import ch.agent.util.file.TextFile;
 
 public class LoggerTest {
 
 	private static int toStringCount;
 	
-	private class TestMessage extends LazyMessage {
+	private class TestMessage extends LazyString {
 		public TestMessage(String message, Object... args) {
 			super(message, null, null, null, args);
 		}

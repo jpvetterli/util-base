@@ -9,7 +9,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import ch.agent.util.UtilMsg.U;
+import ch.agent.util.STRINGS.U;
 
 public class ArgsScannerTest {
 

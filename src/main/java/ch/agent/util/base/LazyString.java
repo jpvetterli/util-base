@@ -1,16 +1,16 @@
-package ch.agent.util.res;
+package ch.agent.util.base;
 
 import java.text.MessageFormat;
 import java.util.ResourceBundle;
 
 /**
- * A lazy message is a text with optional parameters. Parameters follow
+ * A lazy string is a text with optional parameters. Parameters follow
  * {@link MessageFormat} conventions. They are resolved and the text is
  * formatted only when actually needed. Subclasses manage a resource bundle,
  * which can be kept hidden from client code.
  * 
  * <p>
- * The following example shows a way to use <code>LazyMessage</code>.
+ * The following example shows a way to use <code>LazyString</code>.
  * <p>
  * This is in Java class FooMsg:
  * 
@@ -18,9 +18,9 @@ import java.util.ResourceBundle;
  * <code>
  * package org.example.bar;
  * 
- * import ch.agent.util.err.LazyMessage;
+ * import ch.agent.util.base.LazyString;
  * 
- * public class FooMsg extends LazyMessage {
+ * public class FooMsg extends LazyString {
  * 	
  * 	// Message symbols
  * 	public class M {
@@ -78,7 +78,7 @@ import java.util.ResourceBundle;
  * @author Jean-Paul Vetterli
  * 
  */
-public class LazyMessage {
+public class LazyString {
 
 	private static String DEFAULT_KEY_BODY_FORMAT = "%s - %s"; 
 	
@@ -120,7 +120,7 @@ public class LazyMessage {
 	 * @param args
 	 *            zero of more arguments
 	 */
-	public LazyMessage(String key, String bundleName, ResourceBundle bundle,
+	public LazyString(String key, String bundleName, ResourceBundle bundle,
 			String keyBodyFormat, Object... args) {
 		this.bundle = bundle;
 		this.bundleName = bundleName;
@@ -141,8 +141,8 @@ public class LazyMessage {
 	 * @param args message arguments
 	 * @return a message that will be formatted as a side-effect of {@link #toString()}
 	 */
-	public static LazyMessage lazy(String text, Object... args) {
-		return new LazyMessage(text, null, null, null, args);
+	public static LazyString lazy(String text, Object... args) {
+		return new LazyString(text, null, null, null, args);
 	}
 
 	private String format(String rawMessage, Object... args) {

@@ -1,8 +1,10 @@
-package ch.agent.util.res;
+package ch.agent.util.base;
 
 import java.util.ResourceBundle;
 
-public class TestMessage extends LazyMessage {
+import ch.agent.util.base.LazyString;
+
+public class TestMessage extends LazyString {
 
 	/**
 	 * Message symbols.
@@ -14,7 +16,7 @@ public class TestMessage extends LazyMessage {
 		public static final String M4 = "M4";
 	}
 	
-	private static final String BUNDLE_NAME = ch.agent.util.res.TestMessage.class.getName();
+	private static final String BUNDLE_NAME = ch.agent.util.base.TestMessage.class.getName();
 	private static final ResourceBundle BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
 	
 	public TestMessage(String key, String pattern, Object... args) {
