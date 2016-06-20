@@ -44,7 +44,6 @@ public class STRINGS extends LazyString {
 		public static final String U00207 = "U00207";
 		public static final String U00208 = "U00208";
 		public static final String U00209 = "U00209";
-		public static final String U00301 = "U00301";
 		
 		public static final String C02 = "C02";
 		public static final String C03 = "C03";
@@ -61,7 +60,7 @@ public class STRINGS extends LazyString {
 
 	}
 
-	private static final String BUNDLE_NAME = ch.agent.util.STRINGS.class.getName();
+	private static final String BUNDLE_NAME = STRINGS.class.getName();
 	private static final ResourceBundle BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
 
 	/**
