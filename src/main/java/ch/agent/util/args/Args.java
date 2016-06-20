@@ -169,7 +169,7 @@ public class Args implements Iterable<String> {
 		public abstract void set(String value);
 		
 		public void setDefault(String value) {
-			throw new IllegalStateException(msg(U.U00106, canonical));
+			throw new IllegalStateException(msg(U.U00106, getName()));
 		}
 
 		/**
@@ -195,7 +195,7 @@ public class Args implements Iterable<String> {
 		 * @return this value 
 		 */
 		public Value size(int minSize, int maxSize) { 
-			throw new IllegalStateException(msg(U.U00107, canonical));
+			throw new IllegalStateException(msg(U.U00107, getName()));
 		}
 		
 		/**
@@ -207,7 +207,7 @@ public class Args implements Iterable<String> {
 		 * @return this value 
 		 */
 		public Value maxSize(int size) { 
-			throw new IllegalStateException(msg(U.U00107, canonical));
+			throw new IllegalStateException(msg(U.U00107, getName()));
 		}
 		
 		/**
@@ -219,7 +219,7 @@ public class Args implements Iterable<String> {
 		 * @return this value 
 		 */
 		public Value minSize(int size) { 
-			throw new IllegalStateException(msg(U.U00107, canonical));
+			throw new IllegalStateException(msg(U.U00107, getName()));
 		}
 
 		/**
@@ -229,7 +229,7 @@ public class Args implements Iterable<String> {
 		 * @return a string
 		 */
 		public String stringValue() {
-			throw new IllegalArgumentException(msg(U.U00101, canonical));
+			throw new IllegalArgumentException(msg(U.U00101, getName()));
 		}		
 		/**
 		 * Return the value as a string array. Throw an exception if the value is 
@@ -238,7 +238,7 @@ public class Args implements Iterable<String> {
 		 * @return a string array
 		 */
 		public String[] stringArray() {
-			throw new IllegalArgumentException(msg(U.U00102, canonical));
+			throw new IllegalArgumentException(msg(U.U00102, getName()));
 		}
 		/**
 		 * Return the value as a int. Throw an exception if the value is not
@@ -247,7 +247,7 @@ public class Args implements Iterable<String> {
 		 * @return an int
 		 */
 		public int intValue() {
-			throw new IllegalArgumentException(msg(U.U00101, canonical));
+			throw new IllegalArgumentException(msg(U.U00101, getName()));
 		}		
 		/**
 		 * Return the value as an int array. Throw an exception if the value is 
@@ -256,7 +256,7 @@ public class Args implements Iterable<String> {
 		 * @return an int array
 		 */
 		public int[] intArray() {
-			throw new IllegalArgumentException(msg(U.U00102, canonical));
+			throw new IllegalArgumentException(msg(U.U00102, getName()));
 		}		
 		/**
 		 * Return the value as an Enum. Throw an exception if the value is not
@@ -265,7 +265,7 @@ public class Args implements Iterable<String> {
 		 * @return an Enum 
 		 */
 		public Enum<?> enumValue(Enum<?> example) {
-			throw new IllegalArgumentException(msg(U.U00101, canonical));
+			throw new IllegalArgumentException(msg(U.U00101, getName()));
 		}		
 		/**
 		 * Return the value as an Enum array. Throw an exception if the value is 
@@ -274,7 +274,7 @@ public class Args implements Iterable<String> {
 		 * @return an Enum array
 		 */
 		public Enum<?>[] enumArray(Enum<?> example) {
-			throw new IllegalArgumentException(msg(U.U00102, canonical));
+			throw new IllegalArgumentException(msg(U.U00102, getName()));
 		}		
 		/**
 		 * Return the value as a boolean. Throw an exception if the value is not
@@ -283,7 +283,7 @@ public class Args implements Iterable<String> {
 		 * @return a boolean
 		 */
 		public boolean booleanValue() {
-			throw new IllegalArgumentException(msg(U.U00101, canonical));
+			throw new IllegalArgumentException(msg(U.U00101, getName()));
 		}		
 
 		/**
@@ -293,7 +293,7 @@ public class Args implements Iterable<String> {
 		 * @return a boolean array
 		 */
 		public boolean[] booleanArray() {
-			throw new IllegalArgumentException(msg(U.U00103, canonical));
+			throw new IllegalArgumentException(msg(U.U00103, getName()));
 		}		
 
 		/**
@@ -303,7 +303,7 @@ public class Args implements Iterable<String> {
 		 * @return a double
 		 */
 		public double doubleValue() {
-			throw new IllegalArgumentException(msg(U.U00101, canonical));
+			throw new IllegalArgumentException(msg(U.U00101, getName()));
 		}		
 
 		/**
@@ -313,7 +313,7 @@ public class Args implements Iterable<String> {
 		 * @return a double array
 		 */
 		public double[] doubleArray() {
-			throw new IllegalArgumentException(msg(U.U00102, canonical));
+			throw new IllegalArgumentException(msg(U.U00102, getName()));
 		}		
 
 		protected boolean asBoolean(String value, int index) {
