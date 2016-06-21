@@ -6,8 +6,9 @@ import ch.agent.util.base.Misc;
 /**
  * A minimal abstract implementation of the {@link Command} interface. It
  * provides a useful implementation of {@link #getModule}, {@link #getName}, and
- * {@link #execute}. It adds two methods to be overriden by actual
- * commands: {@link #defineParameters} and {@link #execute(Args)}.
+ * {@link #execute}. It adds two methods to be overridden by actual commands:
+ * {@link #defineParameters}, which is called only once and
+ * {@link #execute(Args)}.
  * 
  * @param <T>
  *            the type of the underlying object
@@ -37,31 +38,24 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	}
 
 	/**
-	 * Define execution parameters or reset values.
+	 * Define execution parameters.
 	 * <p>
-	 * Subclasses should usually call the super method first, before adding
-	 * their definitions. This method does not add any definition of its own.
-	 * Subclasses can test if the result is a new object or it has only been
-	 * reset using the {@link Args#size} method.
+	 * This default implementation does not define any parameter. The method is
+	 * called only once in the life time of the command.
 	 * 
-	 * @return the parameters object
+	 * @param parameters
+	 *            the parameters object
 	 */
-	public Args defineParameters() {
-		if (args == null)
-			args = new Args();
-		else
-			args.reset();
-		return args;
+	public void defineParameters(Args parameters) {
 	}
 	
 	/**
 	 * Execute the command.
 	 * <p>
-	 * Subclasses should usually call the super method first, before performing
-	 * their own configuration.
 	 * 
 	 * @param parameters
 	 *            the parameters object
+	 * @return a status code, with 0 usually meaning "okay"
 	 * @throws IllegalArgumentException
 	 *             if there is an error
 	 */
@@ -71,7 +65,11 @@ public abstract class AbstractCommand<T> implements Command<T> {
 
 	@Override
 	public int execute(String parameters) {
-		Args args = defineParameters();
+		if (args == null) {
+			args = new Args();
+			defineParameters(args);
+		} else
+			args.reset();
 		args.parse(parameters);
 		return execute(args);
 	}
