@@ -12,13 +12,19 @@ package ch.agent.util.ioc;
  * <li>The constructor.
  * <li>{@link #configure}, exactly once
  * <li>{@link #add}, zero or more times
- * <li>{@link #registerCommands}, exactly once 
+ * <li>{@link #registerCommands}, exactly once
  * <li>{@link #initialize}, exactly once
  * <li>commands, zero or more times
  * <li>{@link #shutdown}, exactly once
  * </ul>
- * The design for adding and removing modules dynamically, and for updating the configuration
- * is not ready. 
+ * The design for adding and removing modules dynamically, and for updating the
+ * configuration is not ready.
+ * <p>
+ * <b>IMPORTANT:</b> An actual module should carefully document in the comment of
+ * its {@link #add} method the module types that it requires and whether they
+ * are mandatory or optional.
+ * 
+ * 
  * 
  * @param <T>
  *            the type of the underlying object
@@ -34,6 +40,8 @@ public interface Module<T> {
 	
 	/**
 	 * Configure the module. 
+	 * <p>
+	 * This method can be called only once. 
 	 * 
 	 * @param specs
 	 *            a string containing specifications
@@ -46,6 +54,8 @@ public interface Module<T> {
 
 	/**
 	 * Register module commands with the registry.
+	 * <p>
+	 * This method can be called only once. 
 	 * 
 	 * @param registry
 	 *            the command registry
@@ -53,8 +63,9 @@ public interface Module<T> {
 	void registerCommands(CommandRegistry registry);
 	
 	/**
-	 * Add a required module. This method is called for all modules, as required
-	 * by the configuration, after {@link #configure} is called.
+	 * Add a required module. This method is used to add any module declared
+	 * with the <em>require</em> parameter of the <em>module</em> statement in
+	 * the container configuration.
 	 * 
 	 * @param module
 	 *            a module, already parameterized
@@ -73,6 +84,8 @@ public interface Module<T> {
 	
 	/**
 	 * Initialize the module.
+	 * <p>
+	 * This method can be called only once. 
 	 */
 	void initialize();
 	
