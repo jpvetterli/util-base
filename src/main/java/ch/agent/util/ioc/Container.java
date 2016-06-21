@@ -159,6 +159,8 @@ public class Container implements CommandRegistry {
 	
 	/**
 	 * Get a named module.
+	 * <p>
+	 * <em>This method is provided to support unit testing.</em>
 	 * 
 	 * @param name
 	 *            the name of the module
@@ -193,7 +195,25 @@ public class Container implements CommandRegistry {
 		logger.info("{}", lazymsg(U.C21, dhms(System.currentTimeMillis() - start)));
 		return exitCode;
 	}
+	
+	/**
+	 * Method hook for subclasses. The method is called before a module is
+	 * initialized.
+	 */
+	public void preModuleInitialization(Module<?> module) {
+	}
 
+	/**
+	 * Method hook for subclasses. The method is called after a module has been
+	 * initialized and before any command is executed.
+	 */
+	public void postModuleInitialization(Module<?> module) {
+	}
+	
+	/**
+	 * Shutdown all modules. The sequence is the reverse of the initialization
+	 * sequence.
+	 */
 	public void shutdown() {
 		List<String> shutDownSequence = new ArrayList<String>(sequence);
 		Collections.reverse(shutDownSequence);
