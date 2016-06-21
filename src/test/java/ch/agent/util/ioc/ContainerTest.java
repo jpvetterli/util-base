@@ -112,24 +112,6 @@ public class ContainerTest {
 		}
 
 		@Override
-		public String getName() {
-			// TODO Auto-generated method stub
-			return super.getName();
-		}
-
-		@Override
-		public Args defineConfiguration() {
-			// TODO Auto-generated method stub
-			return super.defineConfiguration();
-		}
-
-		@Override
-		public void configure(String specs) {
-			// TODO Auto-generated method stub
-			super.configure(specs);
-		}
-
-		@Override
 		public void shutdown() {
 			b.set("This is module \"" + getName() + "\" stopping");
 		}
@@ -151,10 +133,8 @@ public class ContainerTest {
 		}
 
 		@Override
-		public Args defineConfiguration() {
-			Args config = super.defineConfiguration();
+		public void defineConfiguration(Args config) {
 			config.def("tag").init("default");
-			return config;
 		}
 
 		@Override
