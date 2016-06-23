@@ -96,6 +96,8 @@ public class Container implements CommandRegistry {
 		} catch (Exception e) {
 			e.printStackTrace();
 			exit = 1;
+		} finally {
+			c.shutdown();
 		}
 		System.exit(exit);
 	}
@@ -145,6 +147,7 @@ public class Container implements CommandRegistry {
 	private Map<String, Command<?>> commands; // key is the actual command name 
 	private List<String> initSequence; // is null in case of cycles
 	private String exec;
+	private long start; // start time of the #run method
 	
 	public Container() {
 		modules = new LinkedHashMap<String, ModuleSpecification>(); // keep sequence
@@ -175,6 +178,11 @@ public class Container implements CommandRegistry {
 	 * message followed by all exception messages in the cause chain. If a stack
 	 * trace is wanted, it can be produced by catching the exception thrown by
 	 * {@link #run}.
+	 * <p>
+	 * The method does not perform the {@link #shutdown} because some
+	 * applications or unit tests need to access module data after {@link #run}
+	 * has returned or has been interrupted by an exception. Performing the
+	 * {@link #shutdown} is therefore the responsibility of the client.
 	 * 
 	 * @param parameters
 	 *            an array of command line parameters
@@ -182,7 +190,7 @@ public class Container implements CommandRegistry {
 	 *             anything can happen during execution
 	 */
 	public void run(String[] parameters) throws Exception {
-		long start = System.currentTimeMillis();
+		start = System.currentTimeMillis();
 		logger.info("{}", lazymsg(U.C20, Arrays.toString((String[]) parameters)));
 		try {
 			parseConfiguration(parameters);
@@ -198,9 +206,6 @@ public class Container implements CommandRegistry {
 				cause = cause == cause.getCause() ? null : cause.getCause();
 			}
 			throw e;
-		} finally {
-			shutdown();
-			logger.info("{}", lazymsg(U.C21, dhms(System.currentTimeMillis() - start)));
 		}
 	}
 	
@@ -222,7 +227,7 @@ public class Container implements CommandRegistry {
 	 * Shutdown all modules. The sequence is the reverse of the initialization
 	 * sequence.
 	 */
-	protected void shutdown() {
+	public void shutdown() {
 		if (initSequence != null) {
 			List<String> shutDownSequence = new ArrayList<String>(initSequence);
 			Collections.reverse(shutDownSequence);
@@ -234,6 +239,7 @@ public class Container implements CommandRegistry {
 				}
 			}
 		}
+		logger.info("{}", lazymsg(U.C21, dhms(System.currentTimeMillis() - start)));
 	}
 	
 	@Override

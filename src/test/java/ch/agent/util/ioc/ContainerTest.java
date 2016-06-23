@@ -149,13 +149,14 @@ public class ContainerTest {
 
 	@Test
 	public void test10() {
+		Container c = new Container();
 		try {
-			Container c = new Container();
 			c.run(new String[]{
 					"module=[name = a class=ch.agent.util.ioc.ContainerTest$AModule require=b]",
 					"module=[name = b class=ch.agent.util.ioc.ContainerTest$BModule]",
 					"config=[b=[tag=[This tag was modified.]]]",
 			});
+			c.shutdown();
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
 			assertEquals("B#set This is module \"a\" stopping and tag=xyzzy", texts.get(1));
 			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));
@@ -166,14 +167,15 @@ public class ContainerTest {
 	}
 	@Test
 	public void test11() {
+		Container c = new Container();
 		try {
-			Container c = new Container();
 			c.run(new String[]{
 					"module=[name = a class=ch.agent.util.ioc.ContainerTest$AModule require=b]",
 					"module=[name = b class=ch.agent.util.ioc.ContainerTest$BModule]",
 					"config=[b=[tag=[This tag was modified.]]]",
 					"exec=[set=[exec1] changeTag=[exec2] set=[exec3]]"
 			});
+			c.shutdown();
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
 			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));
 			assertEquals("B#set exec1 and tag=xyzzy", texts.get(1));
@@ -187,38 +189,48 @@ public class ContainerTest {
 
 	@Test
 	public void test20() {
+		Container c = new Container();
 		try {
-			new Container().run(new String[]{});
+			c.run(new String[]{});
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("unexpected exception");
+		} finally {
+			c.shutdown();
 		}
 	}
 	
 	@Test
 	public void test21() {
+		Container c = new Container();
 		try {
-			new Container().run(new String[]{"module=[name = foo class=foo]"});
+			c.run(new String[]{"module=[name = foo class=foo]"});
 			fail("exception expected");
 		} catch (Exception e) {
 			assertTrue(e.getMessage().startsWith("C07"));
+		} finally {
+			c.shutdown();
 		}
 	}
 
 	@Test
 	public void test22() {
+		Container c = new Container();
 		try {
-			new Container().run(new String[]{"module=[name = foo class=java.lang.String]"});
+			c.run(new String[]{"module=[name = foo class=java.lang.String]"});
 			fail("exception expected");
 		} catch (Exception e) {
 			assertTrue(e.getMessage().startsWith("C07"));
+		} finally {
+			c.shutdown();
 		}
 	}
 
 	@Test
 	public void test23() {
+		Container c = new Container();
 		try {
-			new Container().run(new String[]{
+			c.run(new String[]{
 					"module=[name = foo class=java.lang.String require=bar]",
 					"module=[name = bar class=java.lang.String require=foo]"
 			});
@@ -226,6 +238,8 @@ public class ContainerTest {
 		} catch (Exception e) {
 			e.printStackTrace();
 			assertTrue(e.getMessage().startsWith("C09"));
+		} finally {
+			c.shutdown();
 		}
 	}
 
