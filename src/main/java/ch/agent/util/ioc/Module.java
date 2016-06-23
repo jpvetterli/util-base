@@ -46,7 +46,7 @@ public interface Module<T> {
 	 * @param specs
 	 *            a string containing specifications
 	 * @throws IllegalStateException
-	 *             if the method is called more than once
+	 *             if called more than once
 	 * @throws InvalidArgumentException
 	 *             if there are errors in the specification
 	 */
@@ -55,10 +55,12 @@ public interface Module<T> {
 	/**
 	 * Register module commands with the registry.
 	 * <p>
-	 * This method can be called only once. 
+	 * This method may be called only once.
 	 * 
 	 * @param registry
 	 *            the command registry
+	 * @throws IllegalStateException
+	 *             if called more than once
 	 */
 	void registerCommands(CommandRegistry registry);
 	
@@ -85,16 +87,24 @@ public interface Module<T> {
 	/**
 	 * Initialize the module.
 	 * <p>
-	 * This method can be called only once. 
+	 * This method may be called only once.
+	 * 
+	 * @throws IllegalStateException
+	 *             if called more than once
+	 * @throws Exception
+	 *             anything can happen during initialization
 	 */
-	void initialize();
+	void initialize() throws Exception;
 	
 	/**
 	 * Stop execution of the underlying object implementing the module.
 	 * <p>
-	 * This method can be called only once. It is possible that the method will
+	 * This method may be called only once. It is possible that the method will
 	 * be called even after the module has thrown an exception.
+	 * 
+	 * @throws IllegalStateException
+	 *             if called more than once
 	 */
 	void shutdown();
-	
+
 }

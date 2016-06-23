@@ -92,16 +92,10 @@ public class Container implements CommandRegistry {
 		Container c =  new Container();
 		int exit = 0;
 		try {
-			exit = c.run(args);
+			c.run(args);
 		} catch (Exception e) {
 			e.printStackTrace();
 			exit = 1;
-		} finally {
-			try {
-				c.shutdown();
-			} catch (Exception e) {
-				// ignore
-			}
 		}
 		System.exit(exit);
 	}
@@ -149,7 +143,7 @@ public class Container implements CommandRegistry {
 	
 	private Map<String, ModuleSpecification> modules; // key is module name 
 	private Map<String, Command<?>> commands; // key is the actual command name 
-	private List<String> sequence;
+	private List<String> initSequence; // is null in case of cycles
 	private String exec;
 	
 	public Container() {
@@ -176,24 +170,38 @@ public class Container implements CommandRegistry {
 	}
 	
 	/**
-	 * Run the application.
+	 * Configure and execute the modules. Any {@link Exception} during
+	 * processing is caught and thrown again, after logging a termination
+	 * message followed by all exception messages in the cause chain. If a stack
+	 * trace is wanted, it can be produced by catching the exception thrown by
+	 * {@link #run}.
 	 * 
 	 * @param parameters
 	 *            an array of command line parameters
-	 * @return the sum of all exit codes of the commands executed
+	 * @throws Exception
+	 *             anything can happen during execution
 	 */
-	public int run(String[] parameters) throws Exception {
+	public void run(String[] parameters) throws Exception {
 		long start = System.currentTimeMillis();
 		logger.info("{}", lazymsg(U.C20, Arrays.toString((String[]) parameters)));
-		
-		parseConfiguration(parameters);
-		validateConfiguration();
-		computeValidSequence();
-		initializeModules(sequence);
-		int exitCode = executeCommands(exec);
-		
-		logger.info("{}", lazymsg(U.C21, dhms(System.currentTimeMillis() - start)));
-		return exitCode;
+		try {
+			parseConfiguration(parameters);
+			validateConfiguration();
+			computeValidSequence();
+			initializeModules();
+			executeCommands(exec);
+		} catch (Exception e) {
+			logger.error(msg(U.C23, e.getClass().getSimpleName()));
+			Throwable cause = e;
+			while (cause != null) {
+				logger.error(cause.getMessage());
+				cause = cause == cause.getCause() ? null : cause.getCause();
+			}
+			throw e;
+		} finally {
+			shutdown();
+			logger.info("{}", lazymsg(U.C21, dhms(System.currentTimeMillis() - start)));
+		}
 	}
 	
 	/**
@@ -214,14 +222,16 @@ public class Container implements CommandRegistry {
 	 * Shutdown all modules. The sequence is the reverse of the initialization
 	 * sequence.
 	 */
-	public void shutdown() {
-		List<String> shutDownSequence = new ArrayList<String>(sequence);
-		Collections.reverse(shutDownSequence);
-		for (String name : shutDownSequence) {
-			try {
-				modules.get(name).module.shutdown();
-			} catch (Exception e) {
-				// ignore
+	protected void shutdown() {
+		if (initSequence != null) {
+			List<String> shutDownSequence = new ArrayList<String>(initSequence);
+			Collections.reverse(shutDownSequence);
+			for (String name : shutDownSequence) {
+				try {
+					modules.get(name).module.shutdown();
+				} catch (Exception e) {
+					// ignore
+				}
 			}
 		}
 	}
@@ -364,7 +374,7 @@ public class Container implements CommandRegistry {
 		}
 		// ... except for a possible cycle
 		try {
-			sequence = dag.sort();
+			initSequence = dag.sort();
 		} catch (Exception e) {
 			throw new Exception(msg(U.C09), e);
 		}
@@ -374,13 +384,11 @@ public class Container implements CommandRegistry {
 	 * Initialize all modules following a sequence which guarantees that a
 	 * required module is initialized before a module which requires it.
 	 * 
-	 * @param sequence
-	 *            a valid sequence of module names
 	 * @throws Exception
 	 *             as soon as the initialization of a module fails
 	 */
-	protected void initializeModules(List<String> sequence) throws Exception {
-		for (String name : sequence) {
+	protected void initializeModules() throws Exception {
+		for (String name : initSequence) {
 			initializeModule(modules.get(name));
 		}
 	}
@@ -411,9 +419,9 @@ public class Container implements CommandRegistry {
 	 * 
 	 * @param exec
 	 *            the value of the exec statement
-	 * @return the sum of all exit codes of the commands executed
+	 * @throws Exception execution of commands can throw exceptions
 	 */
-	protected int executeCommands(String exec) {
+	protected void executeCommands(String exec) throws Exception {
 		Args execSyntax = new Args();
 		for (String commandName : commands.keySet()) {
 			execSyntax.defList(commandName); // a command can be executed 0 or more times
@@ -421,12 +429,14 @@ public class Container implements CommandRegistry {
 		execSyntax.setSequenceTrackingMode(true);
 		execSyntax.parse(exec);
 		List<String[]> statements = execSyntax.getSequence();
-		int exitCodeTotal = 0;
 		for (String[] statement : statements) {
 			Command<?> command = commands.get(statement[0]);
-			exitCodeTotal += command.execute(statement[1]);
+			try {
+				command.execute(statement[1]);
+			} catch (Exception e) {
+				throw new Exception(msg(U.C22, command.getName(), command.getModule().getName(), statement[1]), e);
+			}
 		}
-		return exitCodeTotal;
 	}
 	
 	/**

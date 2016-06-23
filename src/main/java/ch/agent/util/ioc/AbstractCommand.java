@@ -55,23 +55,21 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	 * 
 	 * @param parameters
 	 *            the parameters object
-	 * @return a status code, with 0 usually meaning "okay"
 	 * @throws IllegalArgumentException
 	 *             if there is an error
 	 */
-	public int execute(Args parameters) {
-		return 1;
+	public void execute(Args parameters) {
 	}
 
 	@Override
-	public int execute(String parameters) {
+	public void execute(String parameters) {
 		if (args == null) {
 			args = new Args();
 			defineParameters(args);
 		} else
 			args.reset();
 		args.parse(parameters);
-		return execute(args);
+		execute(args);
 	}
 
 }

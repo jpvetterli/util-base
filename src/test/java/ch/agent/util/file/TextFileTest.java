@@ -125,7 +125,6 @@ public class TextFileTest {
 	@Test
 	public void testWriteRead3() {
 		try {
-			String fileName = File.createTempFile("test", null).getPath();
 			textFile.write(fileName, false, "foo");
 			List<String> text = textFile.read(fileName);
 			assertEquals("foo", text.get(0));
@@ -136,7 +135,6 @@ public class TextFileTest {
 	@Test
 	public void testWriteRead4() {
 		try {
-			String fileName = File.createTempFile("test", null).getPath();
 			textFile.write(fileName, false, "");
 			List<String> text = textFile.read(fileName);
 			assertEquals(1, text.size());
@@ -150,7 +148,6 @@ public class TextFileTest {
 	public void testWriteReadAndAppend() {
 		try {
 			textFile.setDuplicateDetection(false);
-			String fileName = File.createTempFile("test", null).getPath();
 			textFile.write(fileName, false, (String) null);
 			List<String> text = textFile.read(fileName);
 			assertEquals(0, text.size());

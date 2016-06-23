@@ -30,8 +30,8 @@ public interface Command<T> {
 	 * 
 	 * @param parameters
 	 *            a string containing parameters
-	 * @return a status code, with 0 usually meaning "okay"
+	 * @throws Exception anything can happen during execution
 	 */
-	int execute(String parameters);
+	void execute(String parameters) throws Exception;
 
 }
