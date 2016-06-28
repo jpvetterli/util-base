@@ -103,6 +103,9 @@ public class MiscTest {
 	public void testJoin4() {
 		try {
 			assertEquals(null, Misc.join("-", (String[])null));
+			fail("exception expected");
+		} catch (IllegalArgumentException e) {
+			assertEquals("items null", e.getMessage());
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("unexpected exception");
