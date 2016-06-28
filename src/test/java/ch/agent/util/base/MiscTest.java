@@ -3,7 +3,9 @@ package ch.agent.util.base;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -62,6 +64,48 @@ public class MiscTest {
 			fail("exception expected");
 		} catch (Exception e) {
 			assertEquals("items null", e.getMessage());
+		}
+	}
+
+	@Test
+	public void testJoin1() {
+		try {
+			assertEquals("a-b-c", Misc.join("-", new String[]{"a", "b", "c"}));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testJoin2() {
+		try {
+			Collection<String> s = new ArrayList<String>();
+			s.add("a");
+			s.add("b");
+			s.add("c");
+			assertEquals("a-b-c", Misc.join("-", s));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testJoin3() {
+		try {
+			Collection<String> s = new ArrayList<String>();
+			assertEquals("", Misc.join("-", s));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testJoin4() {
+		try {
+			assertEquals(null, Misc.join("-", (String[])null));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
 		}
 	}
 
