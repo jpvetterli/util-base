@@ -231,6 +231,21 @@ public class Args implements Iterable<String> {
 		public String stringValue() {
 			throw new IllegalArgumentException(msg(U.U00101, getName()));
 		}		
+
+		/**
+		 * Return the value split into a string array. Throw an exception if the
+		 * value is not scalar.
+		 * 
+		 * @param separator
+		 *            a string specifying the separator pattern, not null
+		 * @param count
+		 *            the number of elements, negative for any
+		 * @return an string array
+		 */
+		public String[] stringSplit(String separator, int count) {
+			throw new IllegalArgumentException(msg(U.U00101, getName()));
+		}
+
 		/**
 		 * Return the value as a string array. Throw an exception if the value is 
 		 * scalar. 
@@ -240,6 +255,7 @@ public class Args implements Iterable<String> {
 		public String[] stringArray() {
 			throw new IllegalArgumentException(msg(U.U00102, getName()));
 		}
+		
 		/**
 		 * Return the value as a int. Throw an exception if the value is not
 		 * scalar or if the value cannot be converted.
@@ -249,6 +265,21 @@ public class Args implements Iterable<String> {
 		public int intValue() {
 			throw new IllegalArgumentException(msg(U.U00101, getName()));
 		}		
+
+		/**
+		 * Return the value split into an int array. Throw an exception if the
+		 * value is not scalar or if the value cannot be converted.
+		 * 
+		 * @param separator
+		 *            a string specifying the separator pattern, not null
+		 * @param count
+		 *            the number of elements, negative for any
+		 * @return an int array
+		 */
+		public int[] intSplit(String separator, int count) {
+			throw new IllegalArgumentException(msg(U.U00101, getName()));
+		}
+
 		/**
 		 * Return the value as an int array. Throw an exception if the value is 
 		 * scalar or if any element cannot be converted.
@@ -257,7 +288,8 @@ public class Args implements Iterable<String> {
 		 */
 		public int[] intArray() {
 			throw new IllegalArgumentException(msg(U.U00102, getName()));
-		}		
+		}	
+		
 		/**
 		 * Return the value as an Enum. Throw an exception if the value is not
 		 * scalar or if the value cannot be converted.
@@ -266,7 +298,8 @@ public class Args implements Iterable<String> {
 		 */
 		public Enum<?> enumValue(Enum<?> example) {
 			throw new IllegalArgumentException(msg(U.U00101, getName()));
-		}		
+		}
+		
 		/**
 		 * Return the value as an Enum array. Throw an exception if the value is 
 		 * scalar or if any element cannot be converted.
@@ -275,7 +308,8 @@ public class Args implements Iterable<String> {
 		 */
 		public Enum<?>[] enumArray(Enum<?> example) {
 			throw new IllegalArgumentException(msg(U.U00102, getName()));
-		}		
+		}
+		
 		/**
 		 * Return the value as a boolean. Throw an exception if the value is not
 		 * scalar or if the value cannot be converted.
@@ -379,15 +413,39 @@ public class Args implements Iterable<String> {
 		public String stringValue() {
 			if (value == null) {
 				if (defaultValue == null)
-					throw new IllegalStateException(msg(U.U00105, getName()));
+					throw new IllegalArgumentException(msg(U.U00105, getName()));
 				return defaultValue;
 			}
 			return value;
+		}
+		
+		@Override
+		public String[] stringSplit(String separator, int count) {
+			String s = stringValue();
+			try {
+				return Misc.split(s, separator, count);
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException(msg(U.U00116, getName(), s, count, separator));
+			}
 		}
 
 		@Override
 		public int intValue() {
 			return asInt(stringValue(), -1);
+		}
+
+		@Override
+		public int[] intSplit(String separator, int count) {
+			String[] parts = stringSplit(separator, count);
+			int[] result = new int[parts.length];
+			try {
+				for (int i = 0; i < result.length; i++) {
+					result[i] = Integer.parseInt(parts[i]);
+				}
+			} catch (NumberFormatException e) {
+				throw new IllegalArgumentException(msg(U.U00117, getName(), stringValue(), count, separator));
+			}
+			return result;
 		}
 
 		@Override
@@ -434,11 +492,11 @@ public class Args implements Iterable<String> {
 				throw new IllegalArgumentException("minSize < 0 or maxSize < 0");
 			if (minSize == maxSize) {
 				if (minSize > -1 && values.size() != minSize)
-					throw new IllegalStateException(msg(U.U00108, getName(), 
+					throw new IllegalArgumentException(msg(U.U00108, getName(), 
 							values.size(), minSize));
 			} else {
 				if (values.size() < minSize || values.size() > maxSize)
-					throw new IllegalStateException(msg(U.U00109, getName(), 
+					throw new IllegalArgumentException(msg(U.U00109, getName(), 
 							values.size(), minSize, maxSize));
 			}
 			return this;
@@ -449,7 +507,7 @@ public class Args implements Iterable<String> {
 			if (size < 0)
 				throw new IllegalArgumentException("size < 0");
 			if (values.size() < size)
-				throw new IllegalStateException(msg(U.U00110, getName(), 
+				throw new IllegalArgumentException(msg(U.U00110, getName(), 
 						values.size(), size));
 			return this;
 		}
@@ -459,7 +517,7 @@ public class Args implements Iterable<String> {
 			if (size < 0)
 				throw new IllegalArgumentException("size < 0");
 			if (values.size() > size)
-				throw new IllegalStateException(msg(U.U00111, getName(), 
+				throw new IllegalArgumentException(msg(U.U00111, getName(), 
 						values.size(), size));
 			return this;
 		}

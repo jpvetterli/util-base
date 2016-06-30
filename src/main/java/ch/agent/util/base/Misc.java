@@ -86,4 +86,37 @@ public class Misc {
 		return b.toString();
 	}
 
+	/**
+	 * Split a string into a given number of parts. If {@code count} is negative
+	 * there is no restriction on the number of parts. If it is zero, the method
+	 * returns an empty array. If it is 1 the method returns an array with the
+	 * input as single element. If it is larger than 1, it must be possible to
+	 * split the input into exactly {@code count} parts. When this is not the
+	 * case the method throws an {@link IllegalArgumentException} with a terse
+	 * message indicating the actual number of parts and the count.
+	 * 
+	 * @param input
+	 *            the string to split, not null
+	 * @param separator
+	 *            a string specifying the separator pattern, not null
+	 * @param count
+	 *            the number of parts
+	 * @return the array of parts split from the input
+	 */
+	public static String[] split(String input, String separator, int count) {
+		Misc.nullIllegal(input, "input null");
+		Misc.nullIllegal(separator, "separator null");
+		String[] parts = null; 
+		if (count == 0)
+			parts = new String[0];
+		else if (count == 1)
+			parts = new String[]{input};
+		else {
+			parts = input.split(separator);
+			if (count > 0 && parts.length != count)
+				throw new IllegalArgumentException(parts.length + "!=" + count);
+		}
+		return parts;
+	}
+	
 }

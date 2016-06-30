@@ -111,5 +111,91 @@ public class MiscTest {
 			fail("unexpected exception");
 		}
 	}
+	
+	@Test
+	public void testSplit01() {
+		try {
+			String[] parts = Misc.split("a:b", ":", 2);
+			assertEquals(2, parts.length);
+			assertEquals("a", parts[0]);
+			assertEquals("b", parts[1]);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testSplit02() {
+		try {
+			String[] parts = Misc.split("a :   b", "\\s*:\\s*", 2);
+			assertEquals(2, parts.length);
+			assertEquals("a", parts[0]);
+			assertEquals("b", parts[1]);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testSplit03() {
+		try {
+			String[] parts = Misc.split("a --   b", "--", 2);
+			assertEquals(2, parts.length);
+			assertEquals("a ", parts[0]);
+			assertEquals("   b", parts[1]);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testSplit04() {
+		try {
+			String[] parts = Misc.split("[a1,b2, c3, d4]", "\\s*,\\s*", 4);
+			assertEquals(4, parts.length);
+			assertEquals("[a1", parts[0]);
+			assertEquals("b2", parts[1]);
+			assertEquals("c3", parts[2]);
+			assertEquals("d4]", parts[3]);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testSplit05() {
+		try {
+			Misc.split("[a1,b2, c3, d4]", "\\s*,\\s*", 5);
+			fail("exception expected");
+		} catch (IllegalArgumentException e) {
+			assertEquals("4!=5", e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testSplit06() {
+		try {
+			String[] parts = Misc.split("[a1,b2, c3, d4]", "\\s*,\\s*", 0);
+			assertEquals(0, parts.length);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testSplit07() {
+		try {
+			String[] parts = Misc.split("[a1,b2, c3, d4]", "\\s*,\\s*", 1);
+			assertEquals(1, parts.length);
+			assertEquals("[a1,b2, c3, d4]", parts[0]);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
 
 }

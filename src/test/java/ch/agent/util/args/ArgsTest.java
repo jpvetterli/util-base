@@ -785,5 +785,69 @@ public class ArgsTest {
 		}
 	}
 
+	@Test
+	public void testSplitString1() {
+		try {
+			args.def("foo");
+			args.put("foo", "a, b, c");
+			String[] parts = args.getVal("foo").stringSplit("\\s*,\\s*", 3);
+			assertEquals(3, parts.length);
+			assertEquals("a", parts[0]);
+			assertEquals("b", parts[1]);
+			assertEquals("c", parts[2]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testSplitString2() {
+		try {
+			args.def("foo");
+			args.put("foo", "a, b");
+			args.getVal("foo").stringSplit("\\s*,\\s*", 3);
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith("U00116"));
+		}
+	}
+	@Test
+	public void testSplitInt1() {
+		try {
+			args.def("foo");
+			args.put("foo", "1, -2, 3");
+			int[] elem = args.getVal("foo").intSplit("\\s*,\\s*", 3);
+			assertEquals(3, elem.length);
+			assertEquals(1, elem[0]);
+			assertEquals(-2, elem[1]);
+			assertEquals(3, elem[2]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testSplitInt2() {
+		try {
+			args.def("foo");
+			args.put("foo", "a, b");
+			args.getVal("foo").intSplit("\\s*,\\s*", 3);
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith("U00116"));
+		}
+	}
+	
+	@Test
+	public void testSplitInt3() {
+		try {
+			args.def("foo");
+			args.put("foo", "1, 2, x");
+			args.getVal("foo").intSplit("\\s*,\\s*", 3);
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith("U00117"));
+		}
+	}
 
 }
