@@ -824,6 +824,36 @@ public class ArgsTest {
 			fail("unexpected exception");
 		}
 	}
+	
+	@Test
+	public void testSplitString4() {
+		try {
+			args.def("scalar").init("");
+			args.defList("list");
+			String[] scalar = args.getVal("scalar").stringSplit("WHATEVER", -1);
+			String[] list = args.getVal("list").stringArray();
+			assertEquals(0, scalar.length);
+			assertEquals(0, list.length);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testSplitString5() {
+		try {
+			args.def("scalar").init("");
+			args.defList("list");
+			int[] scalar = args.getVal("scalar").intSplit("WHATEVER", -1);
+			int[] list = args.getVal("list").intArray();
+			assertEquals(0, scalar.length);
+			assertEquals(0, list.length);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
 
 	@Test
 	public void testSplitInt1() {
