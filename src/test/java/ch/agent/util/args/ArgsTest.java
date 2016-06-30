@@ -796,6 +796,7 @@ public class ArgsTest {
 			assertEquals("b", parts[1]);
 			assertEquals("c", parts[2]);
 		} catch (Exception e) {
+			e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -811,6 +812,19 @@ public class ArgsTest {
 			assertTrue(e.getMessage().startsWith("U00116"));
 		}
 	}
+	
+	@Test
+	public void testSplitString3() {
+		try {
+			args.def("foo");
+			args.put("foo", "");
+			assertEquals(0, args.getVal("foo").stringSplit("\\s*,\\s*", -1).length);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
 	@Test
 	public void testSplitInt1() {
 		try {
@@ -850,4 +864,17 @@ public class ArgsTest {
 		}
 	}
 
+	@Test
+	public void testSplitInt4() {
+		try {
+			args.def("foo");
+			args.put("foo", "");
+			int[] elem = args.getVal("foo").intSplit("\\s*,\\s*", -1);
+			assertEquals(0, elem.length);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	
 }

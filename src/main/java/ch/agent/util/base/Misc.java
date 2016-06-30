@@ -94,6 +94,9 @@ public class Misc {
 	 * split the input into exactly {@code count} parts. When this is not the
 	 * case the method throws an {@link IllegalArgumentException} with a terse
 	 * message indicating the actual number of parts and the count.
+	 * <p>
+	 * To make usage easier, when the input is empty and count is negative, the
+	 * result is an empty array.
 	 * 
 	 * @param input
 	 *            the string to split, not null
@@ -113,8 +116,14 @@ public class Misc {
 			parts = new String[]{input};
 		else {
 			parts = input.split(separator);
-			if (count > 0 && parts.length != count)
-				throw new IllegalArgumentException(parts.length + "!=" + count);
+			if (count > 0) {
+				if (parts.length != count)
+					throw new IllegalArgumentException(parts.length + "!=" + count);
+			} else {
+				// more convenient for Args#stringSplit and #intSplit
+				if (parts.length == 1 && parts[0].length() == 0)
+					parts = new String[0];
+			}
 		}
 		return parts;
 	}

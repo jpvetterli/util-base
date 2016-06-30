@@ -197,5 +197,39 @@ public class MiscTest {
 			fail("unexpected exception");
 		}
 	}
+	
+	@Test
+	public void testSplit08() {
+		try {
+			String[] parts = Misc.split("","-", -1);
+			assertEquals(0, parts.length);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testSplit09() {
+		try {
+			String[] parts = Misc.split("","-", 1);
+			assertEquals(1, parts.length);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testSplit10() {
+		try {
+			Misc.split("", "\\s+", 2);
+			fail("exception expected");
+		} catch (IllegalArgumentException e) {
+			assertEquals("1!=2", e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
 
 }
