@@ -8,10 +8,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,16 +36,19 @@ import ch.agent.util.args.Args;
  * module=[
  *   name=<em>module-name</em> 
  *   class=<em>class-name</em> 
- *   require*=<em>module-name</em>
+ *   requirement*=<em>module-name</em> (abbreviated require)
+ *   predecessor</em>*=<em>module-name</em> (abbreviated pred)
  * ]
  * </pre>
  * 
  * There is one <em>module</em> statement for each module. Names must be unique.
  * A module is an object of the class specified in the statement. The class must
- * implement the {@link Module} interface. A module can require zero or more
- * other modules. The modules are initialized in a sequence which guarantees
- * that required modules are always initialized before the module requiring them
- * (unless a dependency cycle is detected).
+ * implement the {@link Module} interface. A module can declare zero or more
+ * other modules as requirements or predecessors. The modules are initialized in
+ * a sequence which guarantees that required modules and predecessors are always
+ * initialized before the module requiring them (unless a dependency cycle is
+ * detected). Only requirements, not predecessors, will be added to the module
+ * using {@link Module#add}.
  * <p>
  * When shutting down the container, the {@link Module#shutdown} methods of all
  * modules are called in the reverse order of the initialization sequence.
@@ -105,22 +110,34 @@ public class Container implements CommandRegistry {
 	private class ModuleSpecification {
 		private final String name;
 		private final String className;
-		private final String[] requires; // array of module names
+		private final String[] req; // module names required by this module
+		private final String[] pred; // module names preceding but not required
 		private String configuration;
 		private Module<?> module;
 		
-		public ModuleSpecification(String name, String className, String[] requires) {
+		public ModuleSpecification(String name, String className, String[] requires, String[] preceding) {
 			if (name.length() == 0)
 				throw new IllegalArgumentException("name empty");
 			if (className.length() == 0)
 				throw new IllegalArgumentException("className empty");
+			Set<String> duplicates = new HashSet<String>();
 			for (String req : requires) {
 				if (name.equals(req))
 					throw new IllegalArgumentException(msg(U.C06, name));
+				if (!duplicates.add(req))
+					throw new IllegalArgumentException(msg(U.C13, name, req));
 			}
+			for (String prec : preceding) {
+				if (name.equals(prec))
+					throw new IllegalArgumentException(msg(U.C06, name));
+				if (!duplicates.add(prec))
+					throw new IllegalArgumentException(msg(U.C13, name, prec));
+			}
+			
 			this.name = name;
 			this.className = className;
-			this.requires = requires;
+			this.req = requires;
+			this.pred = preceding;
 		}
 		
 		protected void create() {
@@ -134,6 +151,14 @@ public class Container implements CommandRegistry {
 			}
 		}
 		
+		protected String[] requirements() {
+			return req;
+		}
+		
+		protected String[] predecessors() {
+			return pred;
+		}
+
 	}
 	
 	private static final String MODULE = "module";
@@ -141,7 +166,10 @@ public class Container implements CommandRegistry {
 	private static final String EXEC = "exec";
 	private static final String MODULE_NAME = "name";
 	private static final String MODULE_CLASS = "class";
-	private static final String MODULE_REQUIRE = "require";
+	private static final String MODULE_REQUIREMENT = "requirement";
+	private static final String MODULE_REQUIREMENT_AKA = "require";
+	private static final String MODULE_PREDECESSOR = "predecessor";
+	private static final String MODULE_PREDECESSOR_AKA = "pred";
 	
 	private Map<String, ModuleSpecification> modules; // key is module name 
 	private Map<String, Command<?>> commands; // key is the actual command name 
@@ -285,7 +313,8 @@ public class Container implements CommandRegistry {
 		Args args = new Args();
 		args.def(MODULE_NAME);
 		args.def(MODULE_CLASS);
-		args.defList(MODULE_REQUIRE);
+		args.defList(MODULE_REQUIREMENT).aka(MODULE_REQUIREMENT_AKA);
+		args.defList(MODULE_PREDECESSOR).aka(MODULE_PREDECESSOR_AKA);
 		return args;
 	}
 	
@@ -323,8 +352,8 @@ public class Container implements CommandRegistry {
 			try {
 				modules.put(name, new ModuleSpecification(
 						name, moduleSyntax.get(MODULE_CLASS), 
-						moduleSyntax.getVal(MODULE_REQUIRE).stringArray())
-				);
+						moduleSyntax.getVal(MODULE_REQUIREMENT).stringArray(),
+						moduleSyntax.getVal(MODULE_PREDECESSOR).stringArray()));
 			} catch (Exception e) {
 				errors++;
 				logger.error(e.getMessage());
@@ -353,7 +382,13 @@ public class Container implements CommandRegistry {
 	protected void validateConfiguration() throws Exception {
 		int errors = 0;
 		for (ModuleSpecification mc : modules.values()) {
-			for (String req : mc.requires) {
+			for (String req : mc.requirements()) {
+				if (!modules.containsKey(req)) {
+					errors++;
+					logger.error(msg(U.C02, req, mc.name));
+				}
+			}
+			for (String req : mc.predecessors()) {
 				if (!modules.containsKey(req)) {
 					errors++;
 					logger.error(msg(U.C02, req, mc.name));
@@ -376,7 +411,8 @@ public class Container implements CommandRegistry {
 		DAG<String> dag = new DAG<String>();
 		dag.add(modules.keySet().toArray(new String[modules.size()]));
 		for (ModuleSpecification spec : modules.values()) {
-			dag.addLinks(spec.name, spec.requires);
+			dag.addLinks(spec.name, spec.requirements());
+			dag.addLinks(spec.name, spec.predecessors());
 		}
 		// ... except for a possible cycle
 		try {
@@ -455,7 +491,7 @@ public class Container implements CommandRegistry {
 	 */
 	protected void addRequiredModules(ModuleSpecification spec) throws Exception {
 		int errors = 0;
-		for (String req : spec.requires) {
+		for (String req : spec.requirements()) {
 			ModuleSpecification reqSpec = modules.get(req);
 			if (reqSpec.module == null)
 				throw new RuntimeException("bug found, module \"" + req + "\" required by \"" + spec.name + "\" is null");
@@ -469,7 +505,7 @@ public class Container implements CommandRegistry {
 		if (errors > 0)
 			throw new Exception(msg(U.C10, spec.name));
 	}
-
+	
 	/**
 	 * Convert milliseconds into string with days, hours, minutes, and seconds.
 	 * Leading days and hours are omitted if zero.

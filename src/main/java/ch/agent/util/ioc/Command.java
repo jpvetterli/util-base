@@ -5,6 +5,12 @@ package ch.agent.util.ioc;
  * object of a module in a standard way. A command belongs to a module and a
  * module can have zero or more commands. A module and all its commands have the
  * same underlying object.
+ * <p>
+ * It is important that a command behaves in <em>non-modal</em> fashion. For
+ * this it should directly support all its relevant parameters and should not
+ * rely on parameters set with other commands. On the other hand it can rely on
+ * parameters set during configuration, if these cannot be modified by another
+ * command.
  * 
  * @param <T>
  *            the type of the underlying object

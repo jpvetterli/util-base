@@ -66,7 +66,7 @@ public interface Module<T> {
 	
 	/**
 	 * Add a required module. This method is used to add any module declared
-	 * with the <em>require</em> parameter of the <em>module</em> statement in
+	 * with the <em>requirement</em> parameter of the <em>module</em> statement in
 	 * the container configuration.
 	 * 
 	 * @param module
