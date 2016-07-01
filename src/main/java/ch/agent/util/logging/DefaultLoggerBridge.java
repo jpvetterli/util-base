@@ -1,104 +1,102 @@
 package ch.agent.util.logging;
 
-import org.slf4j.Logger;
-
 import ch.agent.util.base.LazyString;
 
 /**
- * SLF4J implementation of logger bridge.
- *
+ * Default logger bridge. Always prints all messages to standard error.
+ * Messages are prefix with a capital letter indicating the logging level.
  */
-public class SLF4JLoggerBridge implements LoggerBridge {
+public class DefaultLoggerBridge implements LoggerBridge {
 
-	private Logger logger;
 	
-	public SLF4JLoggerBridge(Logger logger) {
-		this.logger = logger;
+	public DefaultLoggerBridge() {
 	}
 
 	@Override
 	public boolean isTraceEnabled() {
-		return logger.isTraceEnabled();
+		return true;
 	}
 
 	@Override
 	public boolean isDebugEnabled() {
-		return logger.isDebugEnabled();
+		return true;
 	}
 
 	@Override
 	public boolean isInfoEnabled() {
-		return logger.isInfoEnabled();
+		return true;
 	}
 
 	@Override
 	public boolean isWarnEnabled() {
-		return logger.isWarnEnabled();
+		return true;
 	}
 
 	@Override
 	public boolean isErrorEnabled() {
-		return logger.isErrorEnabled();
+		return true;
 	}
 	
 	@Override
 	public void trace(LazyString msg) {
-		logger.trace("{}", msg);
+		System.err.println("T " + msg.toString());
 	}
 
 	@Override
 	public void trace(String msg) {
-		logger.trace(msg);
+		System.err.println("T " + msg);
 	}
 
 	@Override
 	public void debug(LazyString msg) {
-		logger.debug("{}", msg);
+		System.err.println("D " + msg.toString());
 	}
 
 	@Override
 	public void debug(String msg) {
-		logger.debug(msg);
+		System.err.println("D " + msg);
 	}
 
 	@Override
 	public void info(LazyString msg) {
-		logger.info("{}", msg);
+		System.err.println("I " + msg.toString());
 	}
 
 	@Override
 	public void info(String msg) {
-		logger.info(msg);
+		System.err.println("I " + msg);
 	}
 
 	@Override
 	public void warn(LazyString msg) {
-		logger.warn("{}", msg);
+		System.err.println("W " + msg.toString());
 	}
 
 	@Override
 	public void warn(String msg) {
-		logger.warn(msg);
+		System.err.println("W " + msg);
 	}
 
 	@Override
 	public void error(LazyString msg) {
-		logger.error("{}", msg);
+		System.err.println("E " + msg.toString());
 	}
 
 	@Override
 	public void error(String msg) {
-		logger.error(msg);
+		System.err.println("E " + msg);
 	}
 
 	@Override
 	public void error(LazyString msg, Throwable t) {
-		logger.error(msg.toString(), t);
+		System.err.println("E " + msg.toString());
+		t.printStackTrace(System.err);
 	}
 
 	@Override
 	public void error(String msg, Throwable t) {
-		logger.error(msg, t);
+		System.err.println("E " + msg);
+		t.printStackTrace(System.err);
 	}
 
 }

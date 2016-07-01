@@ -1,6 +1,5 @@
 package ch.agent.util.logging;
 
-import org.slf4j.LoggerFactory;
 
 /**
  * The default logger factory provides access to the SLF4J logger factory.
@@ -23,12 +22,12 @@ public final class DefaultLoggerBridgeFactory implements LoggerBridgeFactory {
 
 	@Override
 	public LoggerBridge getLogger(String name) {
-		return new SLF4JLoggerBridge(LoggerFactory.getLogger(name));
+		return new DefaultLoggerBridge();
 	}
 
 	@Override
 	public LoggerBridge getLogger(Class<?> klass) {
-		return new SLF4JLoggerBridge(LoggerFactory.getLogger(klass));
+		return new DefaultLoggerBridge();
 	}
 	
 }
