@@ -12,12 +12,12 @@ import ch.agent.util.STRINGS.U;
  * {@link DefaultLoggerBridgeFactory} as the logger bridge factory, which
  * provides access to SLF4J. To override the default, the name of an alternative
  * factory class can be passed as a system property with the key
- * <em>LoggerFactory</em>.
+ * <em>LoggerBridgeFactory</em>.
  * 
  */
 public class LoggerManager {
 
-	private static final String PROP = "LoggerFactory";
+	private static final String PROP = "LoggerBridgeFactory";
 	private static final String INSTANCE_METHOD = "getInstance";
 	
 	private static LoggerBridgeFactory factory;
