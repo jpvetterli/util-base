@@ -15,11 +15,10 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ch.agent.util.STRINGS.U;
 import ch.agent.util.args.Args;
+import ch.agent.util.logging.LoggerBridge;
+import ch.agent.util.logging.LoggerManager;
 
 /**
  * A container is used to set up and start a system of modules. The container
@@ -91,7 +90,7 @@ import ch.agent.util.args.Args;
  */
 public class Container implements CommandRegistry {
 
-	final static Logger logger = LoggerFactory.getLogger(Container.class);
+	final static LoggerBridge logger = LoggerManager.getLogger(Container.class);
 
 	public static void main(String[] args) {
 		Container c =  new Container();
@@ -219,7 +218,7 @@ public class Container implements CommandRegistry {
 	 */
 	public void run(String[] parameters) throws Exception {
 		start = System.currentTimeMillis();
-		logger.info("{}", lazymsg(U.C20, Arrays.toString((String[]) parameters)));
+		logger.info(lazymsg(U.C20, Arrays.toString((String[]) parameters)));
 		try {
 			parseConfiguration(parameters);
 			validateConfiguration();
@@ -267,7 +266,7 @@ public class Container implements CommandRegistry {
 				}
 			}
 		}
-		logger.info("{}", lazymsg(U.C21, dhms(System.currentTimeMillis() - start)));
+		logger.info(lazymsg(U.C21, dhms(System.currentTimeMillis() - start)));
 	}
 	
 	@Override
