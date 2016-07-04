@@ -50,7 +50,7 @@ public interface Module<T> {
 	 * @throws InvalidArgumentException
 	 *             if there are errors in the specification
 	 */
-	void configure(String specs) throws IllegalStateException, IllegalArgumentException;
+	void configure(String specs);
 
 	/**
 	 * Register module commands with the registry.
@@ -76,7 +76,8 @@ public interface Module<T> {
 	boolean add(Module<?> module);
 	
 	/**
-	 * Get the underlying object implementing the module.
+	 * Get the underlying object implementing the module. Some modules don't
+	 * have an underlying object distinct from themselves and return null.
 	 * 
 	 * @return an object
 	 * @throws IllegalStateException
