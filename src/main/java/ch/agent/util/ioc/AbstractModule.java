@@ -8,7 +8,7 @@ import ch.agent.util.base.Misc;
  * provides a useful implementation of {@link #getName} and
  * {@link #configure(String)}, leaves {@link #getObject} to subclasses, and
  * provides dummy implementations of all other methods. It adds two methods to
- * be overriden by actual modules: {@link #defineConfiguration} and
+ * be overriden by actual modules: {@link #defineParameters} and
  * {@link #configure(Args)}.
  * <p>
  * When subclassing, the default implementation of {@link #configure(String)},
@@ -17,7 +17,7 @@ import ch.agent.util.base.Misc;
  * {@link #configure(String)} does not need itself to be subclassed, since it
  * splits the work into two easier methods, which need to be subclassed in 
  * modules with configuration parameters:
- * {@link #defineConfiguration(Args)} and {@link #configure(Args)}.
+ * {@link #defineParameters(Args)} and {@link #configure(Args)}.
  * 
  * 
  * @param <T>
@@ -47,7 +47,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	 * 
 	 * @param config the configuration object
 	 */
-	public void defineConfiguration(Args config) {
+	public void defineParameters(Args config) {
 	}
 	
 	/**
@@ -70,7 +70,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 			throw new RuntimeException("bug found: configure called again, module: " + getName());
 		configure = true;
 		Args config = new Args();
-		defineConfiguration(config);
+		defineParameters(config);
 		config.parse(specs);
 		configure(config);
 	}
