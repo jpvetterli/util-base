@@ -2,6 +2,7 @@ package ch.agent.util.ioc;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -120,6 +121,20 @@ public class DAG<T> {
 	 *             if there is duplicate node in the input
 	 */
 	public void add(T... nodes) {
+		for (T node : nodes) {
+			add(new DAGNode(node));
+		}
+	}
+	
+	/**
+	 * Add nodes to the DAG.
+	 * 
+	 * @param nodes
+	 *            a collection of nodes
+	 * @throws IllegalStateException
+	 *             if there is duplicate node in the input
+	 */
+	public void add(Collection<T> nodes) {
 		for (T node : nodes) {
 			add(new DAGNode(node));
 		}

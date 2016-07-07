@@ -17,8 +17,6 @@ package ch.agent.util.ioc;
  * <li>commands, zero or more times
  * <li>{@link #shutdown}, exactly once
  * </ul>
- * The design for adding and removing modules dynamically, and for updating the
- * configuration is not ready.
  * <p>
  * <b>IMPORTANT:</b> An actual module should carefully document in the comment of
  * its {@link #add} method the module types that it requires and whether they
@@ -45,10 +43,8 @@ public interface Module<T> {
 	 * 
 	 * @param specs
 	 *            a string containing specifications
-	 * @throws IllegalStateException
-	 *             if called more than once
-	 * @throws InvalidArgumentException
-	 *             if there are errors in the specification
+	 * @throws ConfigurationException
+	 *             if there are errors during configuration
 	 */
 	void configure(String specs);
 
@@ -65,12 +61,11 @@ public interface Module<T> {
 	void registerCommands(CommandRegistry registry);
 	
 	/**
-	 * Add a required module. This method is used to add any module declared
-	 * with the <em>requirement</em> parameter of the <em>module</em> statement in
-	 * the container configuration.
+	 * Add a required module. This method is used to add any prerequisite 
+	 * module.
 	 * 
 	 * @param module
-	 *            a module, already parameterized
+	 *            a module, initialized
 	 * @return true if the module is accepted else false
 	 */
 	boolean add(Module<?> module);

@@ -131,7 +131,7 @@ public class ContainerTest {
 		}
 
 		@Override
-		public void defineConfiguration(Args config) {
+		public void defineParameters(Args config) {
 			config.def("tag").init("default");
 		}
 
@@ -207,7 +207,7 @@ public class ContainerTest {
 			c.run(new String[]{"module=[name = foo class=foo]"});
 			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith("C07"));
+			assertTrue(e.getMessage().startsWith("C14"));
 		} finally {
 			c.shutdown();
 		}
@@ -220,7 +220,7 @@ public class ContainerTest {
 			c.run(new String[]{"module=[name = foo class=java.lang.String]"});
 			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith("C07"));
+			assertTrue(e.getMessage().startsWith("C14"));
 		} finally {
 			c.shutdown();
 		}
@@ -236,11 +236,10 @@ public class ContainerTest {
 			});
 			fail("exception expected");
 		} catch (Exception e) {
-			e.printStackTrace();
 			assertTrue(e.getMessage().startsWith("C09"));
 		} finally {
 			c.shutdown();
 		}
 	}
-
+	
 }
