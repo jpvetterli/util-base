@@ -79,11 +79,11 @@ public class ModuleDefinition {
 	protected Module<?> create() {
 		try {
 			@SuppressWarnings("unchecked")
-			Class<? extends Module<?>> classe = (Class<? extends Module<?>>) Class.forName(className);
+			Class<? extends Module<?>> classe = (Class<? extends Module<?>>) Class.forName(getClassName());
 			Constructor<? extends Module<?>> constructor = classe.getConstructor(String.class);
 			return (Module<?>) constructor.newInstance(getName());
 		} catch (Exception e) {
-			throw new ConfigurationException(msg(U.C03, getName(), className), e);
+			throw new ConfigurationException(msg(U.C03, getName(), getClassName()), e);
 		}
 	}
 	
