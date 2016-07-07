@@ -182,7 +182,7 @@ public class ConfigurationBuilder<C extends Configuration<M>, M extends ModuleDe
 			}
 		}
 		if (missing.size() > 0)
-			throw new ConfigurationException(msg(U.C16, Misc.join(", ", missing)));
+			throw new ConfigurationException(msg(U.C16, Misc.join("\", \"", missing)));
 	}
 	
 	/**
