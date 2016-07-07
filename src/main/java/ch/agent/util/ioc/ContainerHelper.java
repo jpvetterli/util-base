@@ -16,9 +16,10 @@ import ch.agent.util.base.Misc;
  * useful for implementing containers. 
  *
  * @param <C> the configuration type
+ * @param <B> the module definition builder type
  * @param <M> the module definition type
  */
-public class ContainerHelper<C extends Configuration<M>, M extends ModuleDefinition> {
+public class ContainerHelper<C extends Configuration<M>, B extends ModuleDefinitionBuilder<M>, M extends ModuleDefinition> {
 
 	/**
 	 * Command registry used during module initialization.
@@ -101,8 +102,8 @@ public class ContainerHelper<C extends Configuration<M>, M extends ModuleDefinit
 	 * @throws ConfigurationException
 	 *             if something is wrong with the configuration
 	 */
-	public C parseConfiguration(String specification) {
-		ConfigurationBuilder<C,M> builder = new ConfigurationBuilder<C,M>(new ModuleDefinitionBuilder<M>());
+	public C parseConfiguration(String specification, B moduleDefinitionBuilder) {
+		ConfigurationBuilder<C,B,M> builder = new ConfigurationBuilder<C,B,M>(moduleDefinitionBuilder);
 		return builder.build(specification);
 	}
 

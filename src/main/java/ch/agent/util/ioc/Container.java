@@ -72,14 +72,14 @@ public class Container {
 	private List<Module<?>> sortedModules;
 	private long start; // start time of the #run method
 	
-	private ContainerHelper<Configuration<ModuleDefinition>, ModuleDefinition> helper;
+	private ContainerHelper<Configuration<ModuleDefinition>, ModuleDefinitionBuilder<ModuleDefinition>, ModuleDefinition> helper;
 	
 	/**
 	 * Constructor.
 	 */
 	public Container() {
 		sortedModules = new ArrayList<Module<?>>();
-		helper = new ContainerHelper<Configuration<ModuleDefinition>, ModuleDefinition>();
+		helper = new ContainerHelper<Configuration<ModuleDefinition>, ModuleDefinitionBuilder<ModuleDefinition>, ModuleDefinition>();
 	}
 	
 	/**
@@ -142,7 +142,8 @@ public class Container {
 		start = System.currentTimeMillis();
 		logger.info(lazymsg(U.C20, Arrays.toString((String[]) parameters)));
 		try {
-			Configuration<ModuleDefinition> configuration = helper.parseConfiguration(Misc.join(" ", parameters));
+			ModuleDefinitionBuilder<ModuleDefinition> builder = new ModuleDefinitionBuilder<ModuleDefinition>();
+			Configuration<ModuleDefinition> configuration = helper.parseConfiguration(Misc.join(" ", parameters), builder);
 			sortedModules = helper.configureModules(configuration);
 			Map<String, Command<?>> commands = helper.initializeModules(configuration, sortedModules);
 			logInitializationMessage(sortedModules);

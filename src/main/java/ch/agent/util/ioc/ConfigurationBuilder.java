@@ -42,9 +42,10 @@ import ch.agent.util.base.Misc;
  * </pre>
  * 
  * @param <C> the configuration type
+ * @param <B> the module definition builder type
  * @param <M> the module definition type
  */
-public class ConfigurationBuilder<C extends Configuration<M>, M extends ModuleDefinition> {
+public class ConfigurationBuilder<C extends Configuration<M>, B extends ModuleDefinitionBuilder<M>, M extends ModuleDefinition> {
 
 	public static final String MODULE = "module";
 	public static final String CONFIG = "configuration";
@@ -52,7 +53,7 @@ public class ConfigurationBuilder<C extends Configuration<M>, M extends ModuleDe
 	public static final String EXEC = "execution";
 	public static final String EXEC_AKA = "exec";
 	
-	private ModuleDefinitionBuilder<M>moduleDefinitionBuilder;
+	private B moduleDefinitionBuilder;
 	private Args parameters;
 	
 	/**
@@ -60,7 +61,7 @@ public class ConfigurationBuilder<C extends Configuration<M>, M extends ModuleDe
 	 * 
 	 * @param builder the module definition builder to use
 	 */
-	public ConfigurationBuilder(ModuleDefinitionBuilder<M> builder) {
+	public ConfigurationBuilder(B builder) {
 		super();
 		this.moduleDefinitionBuilder = builder;
 	}

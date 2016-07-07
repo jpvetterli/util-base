@@ -12,11 +12,11 @@ import ch.agent.util.args.Args;
 
 public class ConfigurationTest {
 	
-	public static class FooModuleDefinition extends ModuleDefinition {
+	public static class FooModDef extends ModuleDefinition {
 
 		private final boolean isFoo;
 		
-		public FooModuleDefinition(String name, boolean isFoo, String className, String[] required, String[] predecessors) {
+		public FooModDef(String name, boolean isFoo, String className, String[] required, String[] predecessors) {
 			super(name, className, required, predecessors);
 			this.isFoo = isFoo;
 		}
@@ -27,12 +27,12 @@ public class ConfigurationTest {
 		
 	}
 
-	public static class FooModuleDefinitionBuilder<T extends FooModuleDefinition> extends ModuleDefinitionBuilder<T> {
+	public static class FooModDefBldr<T extends FooModDef> extends ModuleDefinitionBuilder<T> {
 
 		@SuppressWarnings("unchecked")
 		@Override
 		public T build(Args p) {
-			return (T) new FooModuleDefinition(
+			return (T) new FooModDef(
 					p.get(MODULE_NAME), 
 					p.getVal("foo").booleanValue(),
 					p.get(MODULE_CLASS), 
@@ -47,11 +47,11 @@ public class ConfigurationTest {
 		}
 	}
 	
-	public static class FooConfiguration<T extends FooModuleDefinition> extends Configuration<T> {
+	public static class FooConf<T extends FooModDef> extends Configuration<T> {
 
 		private final String foo;
 		
-		public FooConfiguration(List<T> modules, String config, String exec, String foo) {
+		public FooConf(List<T> modules, String config, String exec, String foo) {
 			super(modules, config, exec);
 			this.foo = foo;
 		}
@@ -62,9 +62,9 @@ public class ConfigurationTest {
 		
 	}
 	
-	public static class FooConfigurationBuilder<C extends FooConfiguration<M>, M extends FooModuleDefinition> extends ConfigurationBuilder<C, M> {
+	public static class FooConfBldr<C extends FooConf<M>, B extends FooModDefBldr<M>, M extends FooModDef> extends ConfigurationBuilder<C, B, M> {
 
-		public FooConfigurationBuilder(FooModuleDefinitionBuilder<M> builder) {
+		public FooConfBldr(B builder) {
 			super(builder);
 		}
 
@@ -78,7 +78,7 @@ public class ConfigurationTest {
 		@Override
 		protected C build(Args p) {
 			Configuration<M> c = super.build(p);
-			return (C) new FooConfiguration<M>(c.getModuleDefinitions(), c.getConfiguration(), c.getExecution(), p.get("foo"));
+			return (C) new FooConf<M>(c.getModuleDefinitions(), c.getConfiguration(), c.getExecution(), p.get("foo"));
 		}
 		
 	}
@@ -89,23 +89,24 @@ public class ConfigurationTest {
 	@Test
 	public void test1() {
 		try {
-			FooModuleDefinitionBuilder<FooModuleDefinition> mdb = new FooModuleDefinitionBuilder<FooModuleDefinition>();
-			FooConfigurationBuilder<FooConfiguration<FooModuleDefinition>, FooModuleDefinition> cb = new FooConfigurationBuilder<ConfigurationTest.FooConfiguration<FooModuleDefinition>, ConfigurationTest.FooModuleDefinition>(mdb);
+			FooModDefBldr<FooModDef> mdb = new FooModDefBldr<FooModDef>();
+			FooConfBldr<FooConf<FooModDef>, FooModDefBldr<FooModDef>, FooModDef> cb = 
+					new FooConfBldr<FooConf<FooModDef>, FooModDefBldr<FooModDef>, FooModDef>(mdb);
 			String spec = 
 				"module=[name=a class=aclass require=b foo=true]" + 
 				"module=[name=b class=bclass foo=false]" + 
 				"config=[config stuff]" + 
 				"exec = [exec stuff]" + 
 				"foo = [foo stuff]";
-			FooConfiguration<FooModuleDefinition> c = cb.build(spec);
+			FooConf<FooModDef> c = cb.build(spec);
 			assertEquals("config stuff", c.getConfiguration());
 			assertEquals("exec stuff", c.getExecution());
 			assertEquals("foo stuff", c.getFoo());
-			Iterator<FooModuleDefinition> mdi = c.iterator();
-			FooModuleDefinition mb = mdi.next();
+			Iterator<FooModDef> mdi = c.iterator();
+			FooModDef mb = mdi.next();
 			assertEquals("b", mb.getName());
 			assertEquals(false, mb.isFoo());
-			FooModuleDefinition ma = mdi.next();
+			FooModDef ma = mdi.next();
 			assertEquals(true, ma.isFoo());
 			assertEquals(false, mdi.hasNext());
 		} catch (Exception e) {
