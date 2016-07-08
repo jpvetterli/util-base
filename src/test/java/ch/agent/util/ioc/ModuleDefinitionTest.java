@@ -8,7 +8,7 @@ import ch.agent.util.args.Args;
 
 public class ModuleDefinitionTest {
 	
-	public static class FooModuleDefinition extends ModuleDefinition {
+	public static class FooModuleDefinition extends ModuleDefinition<Module<?>> {
 
 		private final boolean isFoo;
 		
@@ -39,7 +39,7 @@ public class ModuleDefinitionTest {
 	}
 
 	
-	public static class FooModuleDefinitionBuilder<T extends FooModuleDefinition> extends ModuleDefinitionBuilder<T> {
+	public static class FooModuleDefinitionBuilder<T extends FooModuleDefinition> extends ModuleDefinitionBuilder<T, Module<?>> {
 
 		@SuppressWarnings("unchecked")
 		@Override
@@ -87,7 +87,7 @@ public class ModuleDefinitionTest {
 
 	@Test
 	public void test1() {
-		ModuleDefinitionBuilder<FooModuleDefinition> mdb = new FooModuleDefinitionBuilder<FooModuleDefinition>();
+		ModuleDefinitionBuilder<FooModuleDefinition, Module<?>> mdb = new FooModuleDefinitionBuilder<FooModuleDefinition>();
 		FooModuleDefinition md = mdb.build("name=foo class=bar foo=true require=x require=y pred=a");
 		assertEquals("foo", md.getName());
 		assertEquals(true, md.isFoo());
@@ -98,7 +98,7 @@ public class ModuleDefinitionTest {
 
 	@Test
 	public void test2() {
-		ModuleDefinitionBuilder<FooBarModuleDefinition> mdb = new FooBarModuleDefinitionBuilder<FooBarModuleDefinition>();
+		ModuleDefinitionBuilder<FooBarModuleDefinition, Module<?>> mdb = new FooBarModuleDefinitionBuilder<FooBarModuleDefinition>();
 		FooBarModuleDefinition md = mdb.build("bar=true name=foo class=bar require=x require=y pred=a");
 		assertEquals("foo", md.getName());
 		assertEquals(false, md.isFoo());

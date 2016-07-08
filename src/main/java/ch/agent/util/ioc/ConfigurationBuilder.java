@@ -15,11 +15,12 @@ import ch.agent.util.base.Misc;
  * A configuration builder turns a specification into a configuration.
  * <p>
  * The builder is designed to be extensible. In a typical use case the client
- * code uses the builder to create a configuration from a textual
- * specification with {@link #build(String)}. In most situations, subclasses
- * override only {@link #defineSyntax(Args)} and {@link #build(Args)}.
+ * code uses the builder to create a configuration from a textual specification
+ * with {@link #build(String)}. In most situations, subclasses override only
+ * {@link #defineSyntax(Args)} and {@link #build(Args)}.
  * <p>
  * This builder extracts a series of module specifications from an input like:
+ * 
  * <pre>
  * <code>
  * module=[<em>string containing the module specification</em>]
@@ -28,12 +29,14 @@ import ch.agent.util.base.Misc;
  * module=[<em>string containing the module specification</em>]
  * </code>
  * </pre>
+ * 
  * The configuration builder does not know anything about module specifications
- * and delegates their handling to a <em>module definition builder</em>
- * passed to the constructor.
+ * and delegates their handling to a <em>module definition builder</em> passed
+ * to the constructor.
  * <p>
- * The builder also extracts the <em>configuration</em> and <em>execution</em> specifications
- * from:
+ * The builder also extracts the <em>configuration</em> and <em>execution</em>
+ * specifications from:
+ * 
  * <pre>
  * <code>
  * configuration=[<em>config string</em>]  (abbreviated config)
@@ -41,11 +44,16 @@ import ch.agent.util.base.Misc;
  * </code>
  * </pre>
  * 
- * @param <C> the configuration type
- * @param <B> the module definition builder type
- * @param <M> the module definition type
+ * @param <C>
+ *            the configuration type
+ * @param <B>
+ *            the module definition builder type
+ * @param <D>
+ *            the module definition type
+ * @param <M>
+ *            the module type
  */
-public class ConfigurationBuilder<C extends Configuration<M>, B extends ModuleDefinitionBuilder<M>, M extends ModuleDefinition> {
+public class ConfigurationBuilder<C extends Configuration<D,M>, B extends ModuleDefinitionBuilder<D,M>, D extends ModuleDefinition<M>, M extends Module<?>> {
 
 	public static final String MODULE = "module";
 	public static final String CONFIG = "configuration";
@@ -114,8 +122,8 @@ public class ConfigurationBuilder<C extends Configuration<M>, B extends ModuleDe
 		String[] moduleStatements = p.getVal(MODULE).stringArray();
 		String config = p.get(CONFIG);
 		String exec = p.get(EXEC);
-		List<M> sortedModules = parseModuleSpecifications(moduleStatements);
-		return (C) new Configuration<M>(sortedModules, config, exec);
+		List<D> sortedModules = parseModuleSpecifications(moduleStatements);
+		return (C) new Configuration<D,M>(sortedModules, config, exec);
 	}
 
 	/**
@@ -135,8 +143,8 @@ public class ConfigurationBuilder<C extends Configuration<M>, B extends ModuleDe
 	 * @throws ConfigurationException
 	 *             when a configuration error is detected
 	 */
-	protected List<M> parseModuleSpecifications(String[] specifications) {
-		Map<String, M> definitions = new LinkedHashMap<String, M>();
+	protected List<D> parseModuleSpecifications(String[] specifications) {
+		Map<String, D> definitions = new LinkedHashMap<String, D>();
 		parseModuleSpecifications(specifications, definitions);
 		validatePrerequisites(definitions);
 		return sortDependencies(definitions);
@@ -152,10 +160,10 @@ public class ConfigurationBuilder<C extends Configuration<M>, B extends ModuleDe
 	 * @throws ConfigurationException
 	 *             when a configuration error is detected
 	 */
-	protected void parseModuleSpecifications(String[] specifications, Map<String, M> definitions) {
+	protected void parseModuleSpecifications(String[] specifications, Map<String, D> definitions) {
 		for (String spec : specifications) {
 			try {
-				M def = moduleDefinitionBuilder.build(spec);
+				D def = moduleDefinitionBuilder.build(spec);
 				if (definitions.put(def.getName(), def) != null)
 					throw new ConfigurationException(msg(U.C11, def.getName()));
 			} catch (Exception e) {
@@ -170,9 +178,9 @@ public class ConfigurationBuilder<C extends Configuration<M>, B extends ModuleDe
 	 * @throws ConfigurationException
 	 *             if one or more required modules are missing
 	 */
-	protected void validatePrerequisites(Map<String, M> definitions) {
+	protected void validatePrerequisites(Map<String, D> definitions) {
 		List<String> missing = new ArrayList<String>();
-		for (ModuleDefinition spec : definitions.values()) {
+		for (ModuleDefinition<M> spec : definitions.values()) {
 			for (String req : spec.getRequirements()) {
 				if (definitions.get(req) == null)
 					missing.add(req);
@@ -203,11 +211,11 @@ public class ConfigurationBuilder<C extends Configuration<M>, B extends ModuleDe
 	 * @throws ConfigurationException
 	 *             if it is impossible to compute a valid sequence
 	 */
-	protected List<M> sortDependencies(Map<String, M> definitions) {
+	protected List<D> sortDependencies(Map<String, D> definitions) {
 		// an exception during construction is a bug because the input is clean ...
 		DAG<String> dag = new DAG<String>();
 		dag.add(definitions.keySet());
-		for (ModuleDefinition spec : definitions.values()) {
+		for (ModuleDefinition<M> spec : definitions.values()) {
 			dag.addLinks(spec.getName(), spec.getRequirements());
 			dag.addLinks(spec.getName(), spec.getPredecessors());
 		}
@@ -218,7 +226,7 @@ public class ConfigurationBuilder<C extends Configuration<M>, B extends ModuleDe
 		} catch (Exception e) {
 			throw new ConfigurationException(msg(U.C09), e);
 		}
-		List<M> sorted = new ArrayList<M>(definitions.size());
+		List<D> sorted = new ArrayList<D>(definitions.size());
 		for (String name : sequence) {
 			sorted.add(definitions.get(name));
 		}

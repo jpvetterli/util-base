@@ -18,16 +18,18 @@ import java.util.Map;
  * <li>an <em>execution</em> specification.
  * </ul>
  * 
- * @param <T>
+ * @param <D>
  *            the module definition type
+ * @param <M>
+ *            the module type
  */
-public class Configuration<T extends ModuleDefinition> implements Iterable<T> {
+public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> implements Iterable<D> {
 
 	private final String configuration;
 	private final String execution;
 
 	private final Map<String, Integer> names;
-	private final List<T> modules;
+	private final List<D> modules;
 
 	/**
 	 * Constructor. The modules in the list must be in a valid dependency
@@ -40,8 +42,8 @@ public class Configuration<T extends ModuleDefinition> implements Iterable<T> {
 	 * @param execution
 	 *            the execution specification
 	 */
-	public Configuration(List<T> modules, String configuration, String execution) {
-		this.modules = new ArrayList<T>(modules);
+	public Configuration(List<D> modules, String configuration, String execution) {
+		this.modules = new ArrayList<D>(modules);
 		this.configuration = configuration;
 		this.execution = execution;
 		names = new HashMap<String, Integer>();
@@ -51,7 +53,7 @@ public class Configuration<T extends ModuleDefinition> implements Iterable<T> {
 	}
 
 	@Override
-	public Iterator<T> iterator() {
+	public Iterator<D> iterator() {
 		return modules.iterator();
 	}
 
@@ -60,8 +62,8 @@ public class Configuration<T extends ModuleDefinition> implements Iterable<T> {
 	 * 
 	 * @return a list of module definitions
 	 */
-	public List<T> getModuleDefinitions() {
-		return new ArrayList<T>(modules);
+	public List<D> getModuleDefinitions() {
+		return new ArrayList<D>(modules);
 	}
 	
 	/**
@@ -71,7 +73,7 @@ public class Configuration<T extends ModuleDefinition> implements Iterable<T> {
 	 *            the module name
 	 * @return the module specification or null if none such
 	 */
-	public ModuleDefinition get(String name) {
+	public ModuleDefinition<M> get(String name) {
 		Integer i = names.get(name);
 		return i == null ? null : modules.get(i);
 	}

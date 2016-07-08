@@ -12,14 +12,19 @@ import ch.agent.util.args.Args;
 import ch.agent.util.base.Misc;
 
 /**
- * The container helper provides a collection of stateless methods 
- * useful for implementing containers. 
- *
- * @param <C> the configuration type
- * @param <B> the module definition builder type
- * @param <M> the module definition type
+ * The container helper provides a collection of stateless methods useful for
+ * implementing containers.
+ * 
+ * @param <C>
+ *            the configuration type
+ * @param <B>
+ *            the module definition builder type
+ * @param <D>
+ *            the module definition type
+ * @param <M>
+ *            the module type
  */
-public class ContainerHelper<C extends Configuration<M>, B extends ModuleDefinitionBuilder<M>, M extends ModuleDefinition> {
+public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefinitionBuilder<D,M>, D extends ModuleDefinition<M>, M extends Module<?>> {
 
 	/**
 	 * Command registry used during module initialization.
@@ -98,12 +103,13 @@ public class ContainerHelper<C extends Configuration<M>, B extends ModuleDefinit
 	 * 
 	 * @param specification
 	 *            a string
+	 * @param moduleDefinitionBuilder the module definition builder to use
 	 * @return a configuration object
 	 * @throws ConfigurationException
 	 *             if something is wrong with the configuration
 	 */
 	public C parseConfiguration(String specification, B moduleDefinitionBuilder) {
-		ConfigurationBuilder<C,B,M> builder = new ConfigurationBuilder<C,B,M>(moduleDefinitionBuilder);
+		ConfigurationBuilder<C,B,D,M> builder = new ConfigurationBuilder<C,B,D,M>(moduleDefinitionBuilder);
 		return builder.build(specification);
 	}
 
@@ -132,17 +138,17 @@ public class ContainerHelper<C extends Configuration<M>, B extends ModuleDefinit
 	 * @throws Exception
 	 *             as soon as creating or configuring a module fails
 	 */
-	public List<Module<?>> configureModules(C configuration) throws Exception {
-		List<Module<?>> modules = new ArrayList<Module<?>>();
+	public List<M> configureModules(C configuration) throws Exception {
+		List<M> modules = new ArrayList<M>();
 		Args moduleConfig = new Args();
-		for (ModuleDefinition module : configuration.getModuleDefinitions()) {
+		for (ModuleDefinition<M> module : configuration.getModuleDefinitions()) {
 			moduleConfig.def(module.getName()).init(""); // it is okay to omit the statement
 		}
 		moduleConfig.parse(configuration.getConfiguration());
 		
-		for (ModuleDefinition spec : configuration) {
+		for (ModuleDefinition<M> spec : configuration) {
 			try {
-				Module<?> m = spec.create();
+				M m = spec.create();
 				m.configure(moduleConfig.get(spec.getName()));
 				modules.add(m);
 			} catch (Exception e) {

@@ -11,6 +11,7 @@ import ch.agent.util.args.Args;
  * override only {@link #defineSyntax(Args)} and {@link #build(Args)}.
  * <p>
  * The builder extracts the module specification from:
+ * 
  * <pre>
  * <code>
  * module=[
@@ -22,10 +23,12 @@ import ch.agent.util.args.Args;
  * </code>
  * </pre>
  * 
- * @param <T>
- *            a module definition type
+ * @param <MD>
+ *            the module definition type
+ * @param <M>
+ *            the module type
  */
-public class ModuleDefinitionBuilder<T extends ModuleDefinition> {
+public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends Module<?>> {
 	
 	public static final String MODULE_NAME = "name";
 	public static final String MODULE_CLASS = "class";
@@ -51,7 +54,7 @@ public class ModuleDefinitionBuilder<T extends ModuleDefinition> {
 	 * @throws ConfigurationException
 	 *             if something is wrong
 	 */
-	public T build(String specification) {
+	public MD build(String specification) {
 		if (parameters == null) {
 			parameters = new Args();
 			defineSyntax(parameters);
@@ -84,8 +87,8 @@ public class ModuleDefinitionBuilder<T extends ModuleDefinition> {
 	 *             if something is wrong
 	 */
 	@SuppressWarnings("unchecked")
-	protected T build(Args p) {
-		return (T) new ModuleDefinition(
+	protected MD build(Args p) {
+		return (MD) new ModuleDefinition<M>(
 				p.get(MODULE_NAME), 
 				p.get(MODULE_CLASS), 
 				p.getVal(MODULE_REQUIREMENT).stringArray(), 

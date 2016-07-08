@@ -24,8 +24,10 @@ import ch.agent.util.base.Misc;
  * Requirements are added to the module using {@link Module#add} but
  * predecessors are not.
  * 
+ * @param <M>
+ *            the module type
  */
-public class ModuleDefinition {
+public class ModuleDefinition<M extends Module<?>> {
 	
 	private final String name;
 	private final String className;
@@ -76,12 +78,12 @@ public class ModuleDefinition {
 	 * @return a module object
 	 * @throws ConfigurationException if creation fails
 	 */
-	protected Module<?> create() {
+	protected M create() {
 		try {
 			@SuppressWarnings("unchecked")
-			Class<? extends Module<?>> classe = (Class<? extends Module<?>>) Class.forName(getClassName());
-			Constructor<? extends Module<?>> constructor = classe.getConstructor(String.class);
-			return (Module<?>) constructor.newInstance(getName());
+			Class<M> classe = (Class<M>) Class.forName(getClassName());
+			Constructor<M> constructor = classe.getConstructor(String.class);
+			return constructor.newInstance(getName());
 		} catch (Exception e) {
 			throw new ConfigurationException(msg(U.C03, getName(), getClassName()), e);
 		}

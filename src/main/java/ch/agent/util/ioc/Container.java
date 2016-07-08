@@ -72,14 +72,22 @@ public class Container {
 	private List<Module<?>> sortedModules;
 	private long start; // start time of the #run method
 	
-	private ContainerHelper<Configuration<ModuleDefinition>, ModuleDefinitionBuilder<ModuleDefinition>, ModuleDefinition> helper;
+	private ContainerHelper<
+		Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
+		ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
+		ModuleDefinition<Module<?>>,
+		Module<?>> helper;
 	
 	/**
 	 * Constructor.
 	 */
 	public Container() {
 		sortedModules = new ArrayList<Module<?>>();
-		helper = new ContainerHelper<Configuration<ModuleDefinition>, ModuleDefinitionBuilder<ModuleDefinition>, ModuleDefinition>();
+		helper = new ContainerHelper<
+				Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
+				ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
+				ModuleDefinition<Module<?>>,
+				Module<?>>();
 	}
 	
 	/**
@@ -142,8 +150,9 @@ public class Container {
 		start = System.currentTimeMillis();
 		logger.info(lazymsg(U.C20, Arrays.toString((String[]) parameters)));
 		try {
-			ModuleDefinitionBuilder<ModuleDefinition> builder = new ModuleDefinitionBuilder<ModuleDefinition>();
-			Configuration<ModuleDefinition> configuration = helper.parseConfiguration(Misc.join(" ", parameters), builder);
+			ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>> builder = 
+					new ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>();
+			Configuration<ModuleDefinition<Module<?>>, Module<?>> configuration = helper.parseConfiguration(Misc.join(" ", parameters), builder);
 			sortedModules = helper.configureModules(configuration);
 			Map<String, Command<?>> commands = helper.initializeModules(configuration, sortedModules);
 			logInitializationMessage(sortedModules);

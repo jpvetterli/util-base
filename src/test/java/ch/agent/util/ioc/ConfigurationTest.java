@@ -12,7 +12,7 @@ import ch.agent.util.args.Args;
 
 public class ConfigurationTest {
 	
-	public static class FooModDef extends ModuleDefinition {
+	public static class FooModDef extends ModuleDefinition<Module<?>> {
 
 		private final boolean isFoo;
 		
@@ -27,12 +27,12 @@ public class ConfigurationTest {
 		
 	}
 
-	public static class FooModDefBldr<T extends FooModDef> extends ModuleDefinitionBuilder<T> {
+	public static class FooModDefBldr<D extends FooModDef> extends ModuleDefinitionBuilder<D, Module<?>> {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public T build(Args p) {
-			return (T) new FooModDef(
+		public D build(Args p) {
+			return (D) new FooModDef(
 					p.get(MODULE_NAME), 
 					p.getVal("foo").booleanValue(),
 					p.get(MODULE_CLASS), 
@@ -47,7 +47,7 @@ public class ConfigurationTest {
 		}
 	}
 	
-	public static class FooConf<T extends FooModDef> extends Configuration<T> {
+	public static class FooConf<T extends FooModDef> extends Configuration<T, Module<?>> {
 
 		private final String foo;
 		
@@ -62,7 +62,7 @@ public class ConfigurationTest {
 		
 	}
 	
-	public static class FooConfBldr<C extends FooConf<M>, B extends FooModDefBldr<M>, M extends FooModDef> extends ConfigurationBuilder<C, B, M> {
+	public static class FooConfBldr<C extends FooConf<D>, B extends FooModDefBldr<D>, D extends FooModDef> extends ConfigurationBuilder<C, B, D, Module<?>> {
 
 		public FooConfBldr(B builder) {
 			super(builder);
@@ -77,8 +77,8 @@ public class ConfigurationTest {
 		@SuppressWarnings("unchecked")
 		@Override
 		protected C build(Args p) {
-			Configuration<M> c = super.build(p);
-			return (C) new FooConf<M>(c.getModuleDefinitions(), c.getConfiguration(), c.getExecution(), p.get("foo"));
+			Configuration<D, Module<?>> c = super.build(p);
+			return (C) new FooConf<D>(c.getModuleDefinitions(), c.getConfiguration(), c.getExecution(), p.get("foo"));
 		}
 		
 	}
