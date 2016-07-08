@@ -38,26 +38,19 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 			commands = new HashMap<String, Command<?>>();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 * <p>
+		 * This implementation changes the command name by using the module
+		 * name and a period as prefix.
+		 */
 		@Override
 		public String register(Command<?> command) {
-			if (commands == null)
-				throw new IllegalStateException("#run not called");
-			String name = command.getName();
+			String name = command.getModule().getName() + "." + command.getName();
 			Command<?> existing = commands.get(name);
-			if (existing == null)
-				commands.put(name, command);
-			else {
-				String moduleName = command.getModule().getName();
-				if (existing.getModule().getName().equals(moduleName))
-					throw new IllegalStateException(msg(U.C12, moduleName, name));
-				else {
-					name = moduleName + "." + name;
-					if (commands.get(name) != null)
-						throw new RuntimeException("bug found " + name);
-					else
-						commands.put(name, command);
-				}
-			}
+			if (existing != null)
+				throw new IllegalStateException(msg(U.C12, command.getModule().getName(), command.getName()));
+			commands.put(name, command);
 			return name;
 		}
 	
@@ -244,7 +237,13 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 			execSyntax.defList(commandName); // a command can be executed 0 or more times
 		}
 		execSyntax.setSequenceTrackingMode(true);
-		execSyntax.parse(configuration.getExecution());
+		
+		try {
+			execSyntax.parse(configuration.getExecution());
+		} catch (Exception e) {
+			throw new Exception(msg(U.C24), e);
+		}
+		
 		List<String[]> statements = execSyntax.getSequence();
 		for (String[] statement : statements) {
 			Command<?> command = commands.get(statement[0]);

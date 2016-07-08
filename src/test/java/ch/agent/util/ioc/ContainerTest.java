@@ -173,7 +173,7 @@ public class ContainerTest {
 					"module=[name = a class=ch.agent.util.ioc.ContainerTest$AModule require=b]",
 					"module=[name = b class=ch.agent.util.ioc.ContainerTest$BModule]",
 					"config=[b=[tag=[This tag was modified.]]]",
-					"exec=[set=[exec1] changeTag=[exec2] set=[exec3]]"
+					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3]]"
 			});
 			c.shutdown();
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();

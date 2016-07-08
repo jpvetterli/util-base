@@ -7,9 +7,9 @@ public interface CommandRegistry {
 
 	/**
 	 * Register a command. The method is called by a module to register a
-	 * command. When the command name is already in use, it will be modified by
-	 * the registry to achieve uniqueness of the command name. The actual
-	 * command name is returned.
+	 * command. The registry is allowed to use a name different from
+	 * {@link Command#getName} for the command. The actual command name is
+	 * returned.
 	 * 
 	 * @param command
 	 *            a command
