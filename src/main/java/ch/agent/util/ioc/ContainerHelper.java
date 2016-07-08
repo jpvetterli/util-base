@@ -80,7 +80,7 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 * @param modules
 	 *            list of modules in original (initialization) sequence
 	 */
-	public void shutdown(List<Module<?>> modules) {
+	public void shutdown(List<M> modules) {
 		int i = modules.size();
 		while (--i >= 0) {
 			try {
@@ -134,12 +134,12 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	public List<M> configureModules(C configuration) throws Exception {
 		List<M> modules = new ArrayList<M>();
 		Args moduleConfig = new Args();
-		for (ModuleDefinition<M> module : configuration.getModuleDefinitions()) {
+		for (D module : configuration.getModuleDefinitions()) {
 			moduleConfig.def(module.getName()).init(""); // it is okay to omit the statement
 		}
 		moduleConfig.parse(configuration.getConfiguration());
 		
-		for (ModuleDefinition<M> spec : configuration) {
+		for (D spec : configuration) {
 			try {
 				M m = spec.create();
 				m.configure(moduleConfig.get(spec.getName()));
@@ -163,10 +163,10 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 * @throws Exception
 	 *             as soon as the initialization of a module fails
 	 */
-	public Map<String, Command<?>> initializeModules(C configuration, List<Module<?>> modules) throws Exception {
+	public Map<String, Command<?>> initializeModules(C configuration, List<M> modules) throws Exception {
 		SimpleCommandRegistry registry = new SimpleCommandRegistry();
-		Map<String, Module<?>> modulesByName = asMap(modules);
-		for (Module<?> module : modules) {
+		Map<String, M> modulesByName = asMap(modules);
+		for (M module : modules) {
 			initializeModule(module, configuration.get(module.getName()).getRequirements(), modulesByName, registry);
 		}
 		return registry.getCommands();
@@ -193,7 +193,7 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 * @throws Exception
 	 *             in case of failure
 	 */
-	public void initializeModule(Module<?> module, String[] requirements, Map<String, Module<?>> modulesByName, CommandRegistry registry) throws Exception {
+	public void initializeModule(M module, String[] requirements, Map<String, M> modulesByName, CommandRegistry registry) throws Exception {
 		try {
 			addRequiredModules(module, requirements, modulesByName);
 			module.registerCommands(registry);
@@ -269,7 +269,7 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 * @throws Exception
 	 *             in case of one or more failures
 	 */
-	public void addRequiredModules(Module<?> requiring, String[] required, Map<String, Module<?>> modulesByName) throws Exception {
+	public void addRequiredModules(M requiring, String[] required, Map<String, M> modulesByName) throws Exception {
 		List<String> rejected = new ArrayList<String>();
 		for (String name : required) {
 			Module<?> m = modulesByName.get(name);
@@ -289,9 +289,9 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 *            a list of modules
 	 * @return a map of modules keyed by module name
 	 */
-	public Map<String, Module<?>> asMap(List<Module<?>> modules) {
-		Map<String, Module<?>> map = new HashMap<String, Module<?>>(modules.size());
-		for (Module<?> m : modules) {
+	public Map<String, M> asMap(List<M> modules) {
+		Map<String, M> map = new HashMap<String, M>(modules.size());
+		for (M m : modules) {
 			map.put(m.getName(), m);
 		}
 		return map;
