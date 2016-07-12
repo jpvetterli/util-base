@@ -327,7 +327,7 @@ public class Args implements Iterable<String> {
 		 * @return a boolean array
 		 */
 		public boolean[] booleanArray() {
-			throw new IllegalArgumentException(msg(U.U00103, getName()));
+			throw new IllegalArgumentException(msg(U.U00102, getName()));
 		}		
 
 		/**
