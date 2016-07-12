@@ -80,7 +80,7 @@ import java.util.ResourceBundle;
  */
 public class LazyString {
 
-	private static String DEFAULT_KEY_BODY_FORMAT = "%s - %s"; 
+	private static String DEFAULT_KEY_BODY_FORMAT = "%-6s %s"; 
 	
 	private ResourceBundle bundle;
 	private String bundleName;
