@@ -82,14 +82,14 @@ public class LazyStringTest {
 	
 	@Test
 	public void testSimpleMessageWithArgs() {
-		assertEquals(M.M2 + " - This message has a parameter: foo.", 
+		assertEquals(M.M2 + "     This message has a parameter: foo.", 
 				TestMessage.msg(M.M2, "foo"));
 	}
 	
 	@Test
 	public void testSimpleMessageWithTwoArgsReversed() {
 		try {
-		assertEquals(M.M3 + " - This message has two parameters foo and \uFFFD (reversed).", 
+		assertEquals(M.M3 + "     This message has two parameters foo and \uFFFD (reversed).", 
 				TestMessage.msg(M.M3, Double.NaN, "foo"));
 		} catch (Exception e) {
 			e.printStackTrace();
