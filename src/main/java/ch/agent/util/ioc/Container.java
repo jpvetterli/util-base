@@ -148,7 +148,7 @@ public class Container {
 	public void run(String[] parameters) throws Exception {
 		reset();
 		start = System.currentTimeMillis();
-		logger.info(lazymsg(U.C20, Arrays.toString((String[]) parameters)));
+		logger.info(lazymsg(U.C20, Misc.truncate(Arrays.toString((String[]) parameters), 60, " (etc.)")));
 		try {
 			ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>> builder = 
 					new ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>();

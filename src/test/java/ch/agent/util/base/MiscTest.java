@@ -232,4 +232,63 @@ public class MiscTest {
 		}
 	}
 
+	@Test
+	public void testTruncate01() {
+		try {
+			assertEquals("hopla", Misc.truncate("hopla", 0, null));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testTruncate02() {
+		try {
+			assertEquals(null, Misc.truncate(null, 0, null));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testTruncate03() {
+		try {
+			assertEquals("0123456789", Misc.truncate("0123456789", 10, null));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testTruncate04() {
+		try {
+			assertEquals("0123456789...", Misc.truncate("0123456789A", 10, null));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testTruncate05() {
+		try {
+			assertEquals("0123456789[...]", Misc.truncate("0123456789A", 10, "[...]"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testTruncate06() {
+		try {
+			String ellipsis = "[...]";
+			assertEquals("01234[...]", Misc.truncate("0123456789A", 10 - ellipsis.length(), ellipsis));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
 }

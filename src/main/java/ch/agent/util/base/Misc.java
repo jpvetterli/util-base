@@ -129,6 +129,33 @@ public class Misc {
 	}
 	
 	/**
+	 * Return a substring of the input. If the input is longer than a given
+	 * length, remove excess characters, and append an ellipsis. If the length
+	 * is specified as 0 or less, a length of 100 will be applied. A null input
+	 * is returned as is. If the ellipsis is null, a sequence of 3 periods is
+	 * used. The length of the ellipsis is <em>not</em> counted in the length
+	 * specification.
+	 * 
+	 * @param input
+	 *            input string
+	 * @param length
+	 *            the total length not to be exceeded, including a 3-character
+	 *            ellipsis
+	 * @param ellipsis
+	 *            the ellipsis or null for "..."
+	 * @return a string
+	 */
+	public static String truncate(String input, int length, String ellipsis) {
+		if (input != null) {
+			length = length < 1 ? 100 : length;
+			int currentLength = input.length();
+			if (currentLength > length)
+				input = input.substring(0, length) + (ellipsis == null ? "..." : ellipsis);
+		}
+		return input;
+	}
+	
+	/**
 	 * Convert milliseconds into string with days, hours, minutes, and seconds.
 	 * Leading days and hours are omitted if zero.
 	 * 
