@@ -183,35 +183,7 @@ public class Container {
 	 */
 	public void shutdown() {
 		helper.shutdown(getModules());
-		logger.info(lazymsg(U.C21, dhms(System.currentTimeMillis() - start)));
+		logger.info(lazymsg(U.C21, Misc.dhms(System.currentTimeMillis() - start)));
 	}
-	
-	/**
-	 * Convert milliseconds into string with days, hours, minutes, and seconds.
-	 * Leading days and hours are omitted if zero.
-	 * 
-	 * @param millis
-	 *            milliseconds
-	 * @return a string representing days, hours, minutes, and seconds
-	 */
-	private static String dhms(long t) {
-		final int MPD = 24*60*60*1000;
-		long days = (t / MPD);
-		int s = (int) (t - days * MPD) / 1000;
-		int m = s / 60;
-		int h = m / 60;
-		s = s - m * 60;
-		m = m - h * 60;
-		String result = "";
-		if (days > 0)
-			result = String.format("%dd%dh%dm%ds", days, h, m, s);
-		else {
-			if (h > 0)
-				result = String.format("%dh%dm%ds", h, m, s);
-			else
-				result = String.format("%dm%ds", m, s);
-		}
-		return result;
-	}
-	
+		
 }
