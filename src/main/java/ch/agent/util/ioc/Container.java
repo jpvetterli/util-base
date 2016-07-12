@@ -157,6 +157,8 @@ public class Container {
 			Map<String, Command<?>> commands = helper.initializeModules(configuration, sortedModules);
 			logInitializationMessage(sortedModules);
 			helper.executeCommands(configuration, commands);
+		} catch (EscapeException e) {
+			logger.warn(msg(U.C19, e.getMessage()));
 		} catch (Exception e) {
 			logger.error(msg(U.C23, e.getClass().getSimpleName()));
 			Throwable cause = e;

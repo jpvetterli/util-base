@@ -198,6 +198,8 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 			addRequiredModules(module, requirements, modulesByName);
 			module.registerCommands(registry);
 			module.initialize();
+		} catch (EscapeException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new Exception(msg(U.C07, module.getName()), e);
 		}
@@ -249,6 +251,8 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 			Command<?> command = commands.get(statement[0]);
 			try {
 				command.execute(statement[1]);
+			} catch (EscapeException e) {
+				throw e;
 			} catch (Exception e) {
 				throw new Exception(msg(U.C22, command.getName(), command.getModule().getName(), statement[1]), e);
 			}
