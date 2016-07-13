@@ -109,8 +109,6 @@ public class Container {
 	
 	/**
 	 * Get a module by name.
-	 * <p>
-	 * This method has package visibility to support unit testing.
 	 * 
 	 * @param name
 	 *            the name of the module, non-null
@@ -118,7 +116,7 @@ public class Container {
 	 * @throws NoSuchElementException
 	 *             if no module with that name was specified
 	 */
-	Module<?> getModule(String name) {
+	protected Module<?> getModule(String name) {
 		Misc.nullIllegal(name, "name null");
 		for (Module<?> m : sortedModules) {
 			if (name.equals(m.getName()))
