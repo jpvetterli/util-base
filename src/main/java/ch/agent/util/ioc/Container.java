@@ -87,7 +87,7 @@ public class Container {
 				Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
 				ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
 				ModuleDefinition<Module<?>>,
-				Module<?>>();
+				Module<?>>(logger);
 	}
 	
 	/**

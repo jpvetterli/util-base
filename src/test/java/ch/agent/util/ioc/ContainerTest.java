@@ -91,7 +91,7 @@ public class ContainerTest {
 				@Override
 				public boolean execute(String parameters) {
 					b.changeTag(parameters);
-					return true;
+					return false;
 				}
 			});
 		registry.register(

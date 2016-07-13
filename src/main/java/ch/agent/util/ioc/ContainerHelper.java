@@ -1,5 +1,6 @@
 package ch.agent.util.ioc;
 
+import static ch.agent.util.STRINGS.lazymsg;
 import static ch.agent.util.STRINGS.msg;
 
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.Map;
 import ch.agent.util.STRINGS.U;
 import ch.agent.util.args.Args;
 import ch.agent.util.base.Misc;
+import ch.agent.util.logging.LoggerBridge;
 
 /**
  * The container helper provides a collection of stateless methods useful for
@@ -68,10 +70,15 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 		
 	}
 	
+	private LoggerBridge logger;
+	
 	/**
 	 * Constructor.
+	 * 
+	 * @param logger a logger or null
 	 */
-	public ContainerHelper() {
+	public ContainerHelper(LoggerBridge logger) {
+		this.logger = logger;
 	}
 	
 	/**
@@ -197,7 +204,10 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 		try {
 			addRequiredModules(module, requirements, modulesByName);
 			module.registerCommands(registry);
-			module.initialize();
+			if (!module.initialize()) {
+				if (logger != null)
+					logger.warn(lazymsg(U.C25, module.getName()));
+			}
 		} catch (EscapeException e) {
 			throw e;
 		} catch (Exception e) {
@@ -250,7 +260,10 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 		for (String[] statement : statements) {
 			Command<?> command = commands.get(statement[0]);
 			try {
-				command.execute(statement[1]);
+				if (!command.execute(statement[1])) {
+					if (logger != null)
+						logger.warn(lazymsg(U.C26, command.getName(), command.getModule().getName(), statement[1]));
+				}
 			} catch (EscapeException e) {
 				throw e;
 			} catch (Exception e) {
