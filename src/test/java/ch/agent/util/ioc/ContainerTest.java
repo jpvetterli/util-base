@@ -152,8 +152,8 @@ public class ContainerTest {
 		Container c = new Container();
 		try {
 			c.run(new String[]{
-					"module=[name = a class=ch.agent.util.ioc.ContainerTest$AModule require=b]",
-					"module=[name = b class=ch.agent.util.ioc.ContainerTest$BModule]",
+					String.format("module=[name = a class=%s require=b]", AModule.class.getName()),
+					String.format("module=[name = b class=%s]", BModule.class.getName()),
 					"config=[b=[tag=[This tag was modified.]]]",
 			});
 			c.shutdown();
@@ -170,8 +170,8 @@ public class ContainerTest {
 		Container c = new Container();
 		try {
 			c.run(new String[]{
-					"module=[name = a class=ch.agent.util.ioc.ContainerTest$AModule require=b]",
-					"module=[name = b class=ch.agent.util.ioc.ContainerTest$BModule]",
+					String.format("module=[name = a class=%s require=b]", AModule.class.getName()),
+					String.format("module=[name = b class=%s]", BModule.class.getName()),
 					"config=[b=[tag=[This tag was modified.]]]",
 					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3]]"
 			});
