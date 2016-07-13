@@ -46,8 +46,7 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	 * @param parameters
 	 *            the parameters object
 	 */
-	public void defineParameters(Args parameters) {
-	}
+	public abstract void defineParameters(Args parameters);
 	
 	/**
 	 * Execute the command.
@@ -55,21 +54,21 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	 * 
 	 * @param parameters
 	 *            the parameters object
-	 * @throws IllegalArgumentException
-	 *             if there is an error
+	 * @return true unless there was some error
+	 * @throws Exception
+	 *             to signal critical problems
 	 */
-	public void execute(Args parameters) {
-	}
+	public abstract boolean execute(Args parameters) throws Exception;
 
 	@Override
-	public void execute(String parameters) {
+	public boolean execute(String parameters) throws Exception {
 		if (args == null) {
 			args = new Args();
 			defineParameters(args);
 		} else
 			args.reset();
 		args.parse(parameters);
-		execute(args);
+		return execute(args);
 	}
 
 }

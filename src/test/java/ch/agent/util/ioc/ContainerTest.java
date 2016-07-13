@@ -69,9 +69,10 @@ public class ContainerTest {
 		}
 
 		@Override
-		public void initialize() {
+		public boolean initialize() {
 			b.set("This is module \"" + getName() + "\" starting");
 			b.changeTag("xyzzy");
+			return true;
 		}
 
 		@Override
@@ -88,8 +89,9 @@ public class ContainerTest {
 					return m;
 				}
 				@Override
-				public void execute(String parameters) {
+				public boolean execute(String parameters) {
 					b.changeTag(parameters);
+					return true;
 				}
 			});
 		registry.register(
@@ -103,8 +105,9 @@ public class ContainerTest {
 					return m;
 				}
 				@Override
-				public void execute(String parameters) {
+				public boolean execute(String parameters) {
 					b.set(parameters);
+					return true;
 				}
 			});
 		}

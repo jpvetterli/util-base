@@ -32,12 +32,18 @@ public interface Command<T> {
 	String getName();
 
 	/**
-	 * Execute the command with the given parameters.
+	 * Execute the command with the given parameters. The method should return
+	 * true unless there is a problem and the problem is not of a critical
+	 * nature. If there is a critical problem, which makes further work
+	 * meaningless or harmful, the method should throw an exception, checked or
+	 * unchecked.
 	 * 
 	 * @param parameters
 	 *            a string containing parameters
-	 * @throws Exception anything can happen during execution
+	 * @return true unless there was some error
+	 * @throws Exception
+	 *             to signal critical problems
 	 */
-	void execute(String parameters) throws Exception;
+	boolean execute(String parameters) throws Exception;
 
 }

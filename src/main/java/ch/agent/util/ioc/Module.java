@@ -81,16 +81,20 @@ public interface Module<T> {
 	T getObject();
 	
 	/**
-	 * Initialize the module.
+	 * Initialize the module. The method should return true unless there is a
+	 * problem and the problem is not of a critical nature. If there is a
+	 * critical problem, which makes further work meaningless or harmful, the
+	 * method should throw an exception, checked or unchecked.
 	 * <p>
 	 * This method may be called only once.
 	 * 
 	 * @throws IllegalStateException
 	 *             if called more than once
+	 * @return true unless there was some error
 	 * @throws Exception
-	 *             anything can happen during initialization
+	 *             to signal critical problems
 	 */
-	void initialize() throws Exception;
+	boolean initialize() throws Exception;
 	
 	/**
 	 * Stop execution of the underlying object implementing the module.

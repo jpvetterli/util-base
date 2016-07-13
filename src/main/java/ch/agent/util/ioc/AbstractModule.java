@@ -88,10 +88,11 @@ public abstract class AbstractModule<T> implements Module<T> {
 	}
 
 	@Override
-	public void initialize() throws Exception {
+	public boolean initialize() throws Exception {
 		if (initialize)
 			throw new RuntimeException("bug found: #initialize called again, module: " + getName());
 		initialize = true;
+		return true;
 	}
 
 	@Override
