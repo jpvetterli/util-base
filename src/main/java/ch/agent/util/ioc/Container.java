@@ -3,10 +3,7 @@ package ch.agent.util.ioc;
 import static ch.agent.util.STRINGS.lazymsg;
 import static ch.agent.util.STRINGS.msg;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 import ch.agent.util.STRINGS.U;
@@ -41,7 +38,7 @@ import ch.agent.util.logging.LoggerManager;
  * parameters is defined by the command themselves. The container passes the
  * value verbatim to the {@link Command#execute} methods.
  * <p>
- * This container uses {@link ContainerHelper} with {@link Configuration
+ * This container uses {@link ContainerToolBox} with {@link Configuration
  * <ModuleDefinition>} and {@link ModuleDefinition} as actual classes.
  * 
  */
@@ -69,7 +66,6 @@ public class Container {
 		System.exit(exit);
 	}
 
-	private List<Module<?>> sortedModules;
 	private long start; // start time of the #run method
 	
 	private ContainerHelper<
@@ -82,29 +78,18 @@ public class Container {
 	 * Constructor.
 	 */
 	public Container() {
-		sortedModules = new ArrayList<Module<?>>();
 		helper = new ContainerHelper<
 				Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
 				ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
 				ModuleDefinition<Module<?>>,
-				Module<?>>(logger);
+				Module<?>>(logger, new ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>());
 	}
 	
 	/**
 	 * Clear the data structures before a new configuration.
 	 */
 	protected void reset() {
-		sortedModules.clear();
-	}
-	
-	/**
-	 * Return the list of sorted modules. These sequence is valid with regard to
-	 * dependency constraints.
-	 * 
-	 * @return a list of modules
-	 */
-	protected List<Module<?>> getModules() {
-		return sortedModules;
+		helper.reset();
 	}
 	
 	/**
@@ -114,17 +99,12 @@ public class Container {
 	 *            the name of the module, non-null
 	 * @return a module, non-null
 	 * @throws NoSuchElementException
-	 *             if no module with that name was specified
+	 *             if there is no module with that name
 	 */
-	protected Module<?> getModule(String name) {
-		Misc.nullIllegal(name, "name null");
-		for (Module<?> m : sortedModules) {
-			if (name.equals(m.getName()))
-				return m; 
-		}
-		throw new NoSuchElementException(name);
+	public Module<?> getModule(String name) {
+		return helper.getModule(name);
 	}
-	
+ 	
 	/**
 	 * Configure and initialize modules, and execute commands. Any
 	 * {@link Exception} during processing is caught and thrown again, after
@@ -148,13 +128,10 @@ public class Container {
 		start = System.currentTimeMillis();
 		logger.info(lazymsg(U.C20, Misc.truncate(Arrays.toString((String[]) parameters), 60, " (etc.)")));
 		try {
-			ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>> builder = 
-					new ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>();
-			Configuration<ModuleDefinition<Module<?>>, Module<?>> configuration = helper.parseConfiguration(Misc.join(" ", parameters), builder);
-			sortedModules = helper.configureModules(configuration);
-			Map<String, Command<?>> commands = helper.initializeModules(configuration, sortedModules);
-			logInitializationMessage(sortedModules);
-			helper.executeCommands(configuration, commands);
+			helper.parse(Misc.join(" ", parameters));
+			helper.configure();
+			helper.initialize();
+			helper.execute();
 		} catch (EscapeException e) {
 			logger.warn(msg(U.C19, e.getMessage()));
 		} catch (Exception e) {
@@ -168,21 +145,11 @@ public class Container {
 		}
 	}
 
-	private void logInitializationMessage(List<Module<?>> modules) {
-		List<String> names = new ArrayList<String>();
-		for (Module<?> m : modules) {
-			names.add(m.getName());
-		}
-		if (names.size() > 0)
-			logger.info(msg(U.C18, Misc.join("\", \"", names)));
-	}
-	
 	/**
-	 * Shutdown all modules. The sequence is the reverse of the initialization
-	 * sequence.
+	 * Shutdown all modules in the reverse initialization sequence.
 	 */
 	public void shutdown() {
-		helper.shutdown(getModules());
+		helper.shutdown();
 		logger.info(lazymsg(U.C21, Misc.dhms(System.currentTimeMillis() - start)));
 	}
 		
