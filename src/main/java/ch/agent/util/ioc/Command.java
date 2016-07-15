@@ -25,11 +25,21 @@ public interface Command<T> {
 	Module<T> getModule();
 
 	/**
-	 * Get the command name.
+	 * Get the command name. The command name is unique within a module.
 	 * 
 	 * @return a non-null and non-empty string
 	 */
 	String getName();
+	
+	/**
+	 * Get the full name of the command. The full name combines the module name
+	 * and the command name with a separating period, to achieve uniqueness in a
+	 * system where module names are unique. Command {@code foo.bar} is the full
+	 * name of command {@code bar} in module {@code foo}.
+	 * 
+	 * @return a non-null and non-empty string
+	 */
+	String getFullName();
 
 	/**
 	 * Execute the command with the given parameters. The method should return

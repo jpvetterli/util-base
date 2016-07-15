@@ -37,6 +37,11 @@ public abstract class AbstractCommand<T> implements Command<T> {
 		return name;
 	}
 
+	@Override
+	public String getFullName() {
+		return module.getName() + "." + name;
+	}
+
 	/**
 	 * Define execution parameters.
 	 * <p>

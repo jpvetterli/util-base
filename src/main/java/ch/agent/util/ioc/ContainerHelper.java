@@ -1,6 +1,7 @@
 package ch.agent.util.ioc;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -210,6 +211,41 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 		if (module == null)
 			throw new NoSuchElementException(name);
 		return module;
+	}
+	
+	/**
+	 * Get a command by name. The name to specify is the full name of 
+	 * the command.
+	 * 
+	 * @param name
+	 *            the name of the command, non-null
+	 * @return a command, non-null
+	 * @throws NoSuchElementException
+	 *             if there is no command with that name
+	 */
+	public Command<?> getCommand(String name) {
+		Misc.nullIllegal(name, "name null");
+		Command<?> command = commandsByName.get(name);
+		if (command == null)
+			throw new NoSuchElementException(name);
+		return command;
+	}
+	
+	/**
+	 * Get all commands belonging to a module. If the module name is null, all
+	 * commands are returned.
+	 * 
+	 * @param moduleName
+	 *            the name of the module or null for all commands
+	 * @return a collection of commands, possibly empty
+	 */
+	public Collection<Command<?>> getCommands(String moduleName) {
+		Collection<Command<?>> commands = new ArrayList<Command<?>>();
+		for (Command<?> command : commandsByName.values()) {
+			if (moduleName == null || moduleName.equals(command.getModule().getName()))
+				commands.add(command);
+		}
+		return commands;
 	}
 	
 }

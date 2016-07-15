@@ -40,20 +40,13 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 			commands = new HashMap<String, Command<?>>();
 		}
 
-		/**
-		 * {@inheritDoc}
-		 * <p>
-		 * This implementation changes the command name by using the module
-		 * name and a period as prefix.
-		 */
 		@Override
-		public String register(Command<?> command) {
-			String name = command.getModule().getName() + "." + command.getName();
+		public void register(Command<?> command) {
+			String name = command.getFullName();
 			Command<?> existing = commands.get(name);
 			if (existing != null)
-				throw new IllegalStateException(msg(U.C12, command.getModule().getName(), command.getName()));
+				throw new IllegalStateException(msg(U.C12, command.getModule().getName(), command.getFullName()));
 			commands.put(name, command);
-			return name;
 		}
 	
 		/**

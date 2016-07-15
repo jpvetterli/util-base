@@ -84,7 +84,9 @@ public interface Module<T> {
 	 * Initialize the module. The method should return true unless there is a
 	 * problem and the problem is not of a critical nature. If there is a
 	 * critical problem, which makes further work meaningless or harmful, the
-	 * method should throw an exception, checked or unchecked.
+	 * method should throw an exception, checked or unchecked. In such a case,
+	 * the module should clean up after itself, as {@link #shutdown} will not be
+	 * called.
 	 * <p>
 	 * This method may be called only once.
 	 * 
@@ -97,10 +99,14 @@ public interface Module<T> {
 	boolean initialize() throws Exception;
 	
 	/**
-	 * Stop execution of the underlying object implementing the module.
+	 * Close the module and the underlying object as the system is shutting
+	 * down.
 	 * <p>
-	 * This method may be called only once. It is possible that the method will
-	 * be called even after the module has thrown an exception.
+	 * This method may be called only once. The method will not be called if
+	 * {@link #initialize} was never called, or was called, but threw an
+	 * exception. However, the method will be called, if possible, when the
+	 * module or underlying object throw an exception at a later point than
+	 * initialization.
 	 * 
 	 * @throws IllegalStateException
 	 *             if called more than once
