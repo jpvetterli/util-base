@@ -1,5 +1,7 @@
 package ch.agent.util.ioc;
 
+import static ch.agent.util.STRINGS.lazymsg;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -7,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import ch.agent.util.STRINGS.U;
 import ch.agent.util.args.Args;
 import ch.agent.util.base.Misc;
 import ch.agent.util.ioc.ContainerToolBox.SimpleCommandRegistry;
@@ -132,6 +135,7 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 			throw new IllegalStateException("cannot call #initialize twice without reset");
 		SimpleCommandRegistry registry = new SimpleCommandRegistry();
 		for (M module : modulesByName.values()) {
+			tools.logger.debug(lazymsg(U.C18, module.getName()));
 			tools.initializeModule(module, configuration.get(module.getName()).getRequirements(), modulesByName, registry);
 			initialized.add(module);
 		}
