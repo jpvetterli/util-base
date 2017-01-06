@@ -906,5 +906,59 @@ public class ArgsTest {
 		}
 	}
 
+	@Test
+	public void testSplitDouble1() {
+		try {
+			args.def("foo");
+			args.put("foo", "1, -2, 3");
+			double[] elem = args.getVal("foo").doubleSplit("\\s*,\\s*", 3);
+			assertEquals(3, elem.length);
+			assertEquals(1, elem[0], 1e-10);
+			assertEquals(-2, elem[1], 1e-10);
+			assertEquals(3, elem[2], 1e-10);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testSplitDouble2() {
+		try {
+			args.def("foo");
+			args.put("foo", "1.1, -2.2, 3.3");
+			double[] elem = args.getVal("foo").doubleSplit("\\s*,\\s*", 3);
+			assertEquals(3, elem.length);
+			assertEquals(1.1, elem[0], 1e-10);
+			assertEquals(-2.2, elem[1], 1e-10);
+			assertEquals(3.3, elem[2], 1e-10);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testSplitDouble3() {
+		try {
+			args.def("foo");
+			args.put("foo", "1, 2, x");
+			args.getVal("foo").doubleSplit("\\s*,\\s*", 3);
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith("U00118"));
+		}
+	}
+
+	@Test
+	public void testSplitDouble4() {
+		try {
+			args.def("foo");
+			args.put("foo", "");
+			double[] elem = args.getVal("foo").doubleSplit("\\s*,\\s*", -1);
+			assertEquals(0, elem.length);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
 	
 }
