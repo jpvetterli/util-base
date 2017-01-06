@@ -348,7 +348,21 @@ public class Args implements Iterable<String> {
 		 */
 		public double[] doubleArray() {
 			throw new IllegalArgumentException(msg(U.U00102, getName()));
-		}		
+		}
+		
+		/**
+		 * Return the value split into a double array. Throw an exception if the
+		 * value is not scalar or if the value cannot be converted.
+		 * 
+		 * @param separator
+		 *            a string specifying the separator pattern, not null
+		 * @param count
+		 *            the number of elements, negative for any
+		 * @return a double array
+		 */
+		public double[] doubleSplit(String separator, int count) {
+			throw new IllegalArgumentException(msg(U.U00101, getName()));
+		}
 
 		protected boolean asBoolean(String value, int index) {
 			String orig = value;
@@ -456,6 +470,20 @@ public class Args implements Iterable<String> {
 		@Override
 		public double doubleValue() {
 			return asDouble(stringValue(), -1);
+		}
+		
+		@Override
+		public double[] doubleSplit(String separator, int count) {
+			String[] parts = stringSplit(separator, count);
+			double[] result = new double[parts.length];
+			try {
+				for (int i = 0; i < result.length; i++) {
+					result[i] = Double.parseDouble(parts[i]);
+				}
+			} catch (NumberFormatException e) {
+				throw new IllegalArgumentException(msg(U.U00118, getName(), stringValue(), count, separator));
+			}
+			return result;
 		}
 
 		@Override
