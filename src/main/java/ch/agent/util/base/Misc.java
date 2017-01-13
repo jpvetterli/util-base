@@ -182,5 +182,31 @@ public class Misc {
 		}
 		return result;
 	}
+	
+	/**
+	 * Test if the absolute difference between two numbers
+	 * is larger than 1e-10.
+	 * 
+	 * @param d1 a number
+	 * @param d2 another number
+	 * @return true if the first two numbers are not close
+	 */
+	public static boolean notClose(double d1, double d2) {
+		double EPSILON = 1e-10;
+		return notClose(d1, d2, EPSILON);
+	}
+	
+	/**
+	 * Test if the absolute difference between two numbers
+	 * is larger than a threshold.
+	 * 
+	 * @param d1 a number
+	 * @param d2 another number
+	 * @param threshold a very small number
+	 * @return true if the first two numbers are not close
+	 */
+	public static boolean notClose(double d1, double d2, double threshold) {
+		return Math.abs(d1 - d2) > threshold;
+	}
 
 }

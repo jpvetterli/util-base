@@ -1,6 +1,8 @@
 package ch.agent.util.base;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
@@ -285,6 +287,46 @@ public class MiscTest {
 		try {
 			String ellipsis = "[...]";
 			assertEquals("01234[...]", Misc.truncate("0123456789A", 10 - ellipsis.length(), ellipsis));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testNotClose01() {
+		try {
+			assertTrue(Misc.notClose(1, 2));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testNotClose02() {
+		try {
+			assertFalse(Misc.notClose(1, 1));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testNotClose03() {
+		try {
+			assertTrue(Misc.notClose(1, 1+1e-9, 1e-10));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testNotClose04() {
+		try {
+			assertFalse(Misc.notClose(1, 1+1e-11, 1e-10));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("unexpected exception");
