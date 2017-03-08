@@ -321,6 +321,20 @@ public class Args implements Iterable<String> {
 		}		
 
 		/**
+		 * Return the value split into a boolean array. Throw an exception if the
+		 * value is not scalar or if the value cannot be converted.
+		 * 
+		 * @param separator
+		 *            a string specifying the separator pattern, not null
+		 * @param count
+		 *            the number of elements, negative for any
+		 * @return a boolean array
+		 */
+		public boolean[] booleanSplit(String separator, int count) {
+			throw new IllegalArgumentException(msg(U.U00101, getName()));
+		}
+
+		/**
 		 * Return the value as a boolean array. Throw an exception if the value is 
 		 * scalar or if any element cannot be converted.
 		 * 
@@ -466,6 +480,22 @@ public class Args implements Iterable<String> {
 		public boolean booleanValue() {
 			return asBoolean(stringValue(), -1);
 		}
+		
+		@Override
+		public boolean[] booleanSplit(String separator, int count) {
+			String[] parts = stringSplit(separator, count);
+			boolean[] result = new boolean[parts.length];
+			try {
+				for (int i = 0; i < result.length; i++) {
+					result[i] = asBoolean(parts[i], -1);
+				}
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException(msg(U.U00119, getName(), stringValue(), count, separator));
+			}
+			return result;
+		}
+
+
 
 		@Override
 		public double doubleValue() {

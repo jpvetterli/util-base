@@ -959,6 +959,58 @@ public class ArgsTest {
 			fail("unexpected exception");
 		}
 	}
+	@Test
+	public void testSplitBoolean1() {
+		try {
+			args.def("foo");
+			args.put("foo", "true , false,false");
+			boolean[] elem = args.getVal("foo").booleanSplit("\\s*,\\s*", 3);
+			assertEquals(3, elem.length);
+			assertEquals(true, elem[0]);
+			assertEquals(false, elem[1]);
+			assertEquals(false, elem[2]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	public void testSplitBoolean2() {
+		try {
+			args.def("foo");
+			args.put("foo", "TRUE , False,false");
+			boolean[] elem = args.getVal("foo").booleanSplit("\\s*,\\s*", 3);
+			assertEquals(3, elem.length);
+			assertEquals(true, elem[0]);
+			assertEquals(false, elem[1]);
+			assertEquals(false, elem[2]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testSplitBoolean3() {
+		try {
+			args.def("foo");
+			args.put("foo", "true, false, x");
+			args.getVal("foo").booleanSplit("\\s*,\\s*", 3);
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue(e.getMessage().startsWith("U00119"));
+		}
+	}
+
+	@Test
+	public void testSplitBoolean4() {
+		try {
+			args.def("foo");
+			args.put("foo", "");
+			boolean[] elem = args.getVal("foo").booleanSplit("\\s*,\\s*", -1);
+			assertEquals(0, elem.length);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
 
 	
 }
