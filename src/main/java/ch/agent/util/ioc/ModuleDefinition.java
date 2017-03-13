@@ -17,7 +17,7 @@ import ch.agent.util.base.Misc;
  * <li>a class name, used to create the module,
  * <li>zero or more requirements, and
  * <li>zero or more predecessors.
- * 
+ * </ul>
  * The module class must have a constructor taking the module name as parameter.
  * Requirements and predecessors are names of other modules in the system. Such
  * modules are prerequisites and must be initialized before the module itself.

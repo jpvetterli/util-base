@@ -37,10 +37,6 @@ import ch.agent.util.logging.LoggerManager;
  * name and the command name, with a period between them. The syntax of command
  * parameters is defined by the command themselves. The container passes the
  * value verbatim to the {@link Command#execute} methods.
- * <p>
- * This container uses {@link ContainerToolBox} with {@link Configuration
- * <ModuleDefinition>} and {@link ModuleDefinition} as actual classes.
- * 
  */
 public class Container {
 
