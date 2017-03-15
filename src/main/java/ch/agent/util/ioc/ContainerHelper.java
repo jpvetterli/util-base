@@ -229,7 +229,7 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 */
 	public Command<?> getCommand(String name) {
 		Misc.nullIllegal(name, "name null");
-		Command<?> command = commandsByName.get(name);
+		Command<?> command = commandsByName == null ? null : commandsByName.get(name);
 		if (command == null)
 			throw new NoSuchElementException(name);
 		return command;
@@ -245,9 +245,11 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 */
 	public Collection<Command<?>> getCommands(String moduleName) {
 		Collection<Command<?>> commands = new ArrayList<Command<?>>();
-		for (Command<?> command : commandsByName.values()) {
-			if (moduleName == null || moduleName.equals(command.getModule().getName()))
-				commands.add(command);
+		if (commandsByName != null) {
+			for (Command<?> command : commandsByName.values()) {
+				if (moduleName == null || moduleName.equals(command.getModule().getName()))
+					commands.add(command);
+			}
 		}
 		return commands;
 	}
