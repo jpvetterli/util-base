@@ -11,6 +11,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ch.agent.util.args.Args;
+import ch.agent.util.logging.LoggerBridge;
+import ch.agent.util.logging.LoggerManager;
 
 public class ContainerTest {
 	
@@ -154,6 +156,69 @@ public class ContainerTest {
 		
 	}
 
+	/**
+	 * A module without an underlying object.
+	 */
+	public static class CModule extends AbstractModule<Object>  implements Module<Object> {
+		
+		final static LoggerBridge logger = LoggerManager.getLogger(CModule.class);
+		
+		public CModule(String name) {
+			super(name);
+		}
+
+		@Override
+		public Object getObject() {
+			return null;
+		}
+
+		@Override
+		public boolean add(Module<?> module) {
+			return false;
+		}
+
+		@Override
+		public void configure(Args ignore) {
+		}
+
+		@Override
+		public boolean initialize() {
+			return true;
+		}
+
+		@Override
+		public void registerCommands(CommandRegistry registry) {
+			final Module<Object> m = this;
+			registry.register(
+				new Command<Object>() {
+				@Override
+				public String getName() {
+					return "echo";
+				}
+				@Override
+				public String getFullName() {
+					return m.getName() + "." + getName();
+				}
+				@Override
+				public Module<Object> getModule() {
+					return m;
+				}
+				@Override
+				public boolean execute(String parameters) {
+					logger.debug("* (this is " + getFullName() + ")");
+					logger.info("* " + parameters);
+					return true;
+				}
+			});
+		}
+
+		@Override
+		public void shutdown() {
+		}
+		
+	}
+
+	
 	@Before
 	public void setUp() throws Exception {
 	}
@@ -198,6 +263,29 @@ public class ContainerTest {
 		}
 	}
 
+	@Test
+	public void test12() {
+		Container c = new Container();
+		try {
+			c.run(new String[]{
+					String.format("module=[name = a class=%s require=b]", AModule.class.getName()),
+					String.format("module=[name = b class=%s]", BModule.class.getName()),
+					String.format("module=[name = c class=%s]", CModule.class.getName()),
+					"config=[b=[tag=[This tag was modified.]]]",
+					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3] c.echo=[hello world]]"
+			});
+			c.shutdown();
+			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
+			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));
+			assertEquals("B#set exec1 and tag=xyzzy", texts.get(1));
+			assertEquals("B#set exec3 and tag=exec2", texts.get(2));
+			assertEquals("B#set This is module \"a\" stopping and tag=exec2", texts.get(3));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
 	@Test
 	public void test20() {
 		Container c = new Container();
