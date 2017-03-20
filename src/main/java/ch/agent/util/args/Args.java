@@ -656,6 +656,14 @@ public class Args implements Iterable<String> {
 	}
 	
 	/**
+	 * The default name of the if parameter is simply "if".
+	 */
+	public static final String IF = "if";
+	public static final String IF_NON_EMPTY = "non-empty";
+	public static final String IF_THEN = "then";
+	public static final String IF_ELSE = "else";
+	
+	/**
 	 * The default name of the file parameter is simply "file".
 	 */
 	public static final String FILE = "file";
@@ -673,7 +681,11 @@ public class Args implements Iterable<String> {
 	
 	private static final String SEPARATOR = " ";
 	private static final String COMMENT = "#";
-	private String fileParameterName;
+	private final String fileParameterName;
+	private final String ifName;
+	private final String ifNonEmptyName;
+	private final String ifThenName;
+	private final String ifElseName;
 	private String simpleFileParameterName;
 	private String mappingSeparator;
 	private Map<String, Value> args;
@@ -687,15 +699,30 @@ public class Args implements Iterable<String> {
 	 * and will be replaced with default values. <code>Args</code> is either in
 	 * <em>strict mode</em> or in <em>loose mode</em>.
 	 * 
-	 * @param name
-	 *            the name of the file parameter, or null
+	 * @param fileName
+	 *            the name of the "file" parameter, or null
+	 * @param ifGrammar
+	 *            an array with 4 strings for the "if-nonempty-then-else" grammar
 	 * @param suffix
 	 *            the suffix used to request simple parsing
 	 * @param sep
 	 *            a regular expression used as the mapping separator, or null
 	 */
-	public Args(String name, String suffix, String sep) {
-		this.fileParameterName = (name == null ? FILE : name);
+	public Args(String fileName, String[] ifGrammar, String suffix, String sep) {
+		this.fileParameterName = (fileName == null ? FILE : fileName);
+		if (ifGrammar != null) {
+			if (ifGrammar.length != 4)
+				throw new IllegalArgumentException("ifGrammar.length != 4");
+			this.ifName = ifGrammar[0];
+			this.ifNonEmptyName = ifGrammar[1];
+			this.ifThenName = ifGrammar[2];
+			this.ifElseName = ifGrammar[3];
+		} else {
+			this.ifName = IF;
+			this.ifNonEmptyName = IF_NON_EMPTY;
+			this.ifThenName = IF_THEN;
+			this.ifElseName = IF_ELSE;
+		}
 		this.simpleFileParameterName = (suffix == null ? 
 				fileParameterName + FILE_SIMPLE_SUFFIX : fileParameterName + suffix);
 		this.mappingSeparator = (sep == null ? MAPPING_SEPARATOR : sep);
@@ -711,7 +738,7 @@ public class Args implements Iterable<String> {
 	 * {@link #MAPPING_SEPARATOR}.
 	 */
 	public Args() {
-		this(null, null, null);
+		this(null, null, null, null);
 	}
 	
 	/**
@@ -810,6 +837,8 @@ public class Args implements Iterable<String> {
 					parse(parseFileAndMapping(false, pair[0], resolve(pair[1])));
 				else if (pair[0].equals(simpleFileParameterName))
 					parse(parseFileAndMapping(true, pair[0], resolve(pair[1])));
+				else if (pair[0].equals(ifName))
+					parse(parseIf(pair[1]));
 				else
 					put(pair[0], pair[1]);
 				break;
@@ -1034,6 +1063,49 @@ public class Args implements Iterable<String> {
 		} catch (Exception e) {
 			throw new IllegalArgumentException(msg(U.U00130, fileParameterName, fileSpec), e);
 		}
+	}
+	
+	/**
+	 * Parse a specification like:
+	 * 
+	 * <pre>
+	 * <code>
+	 * non-empty=[${x}] then=[foo] else=[bar]
+	 * </pre>
+	 * 
+	 * </code> The pseudo-variables <em>non-empty</em>, <em>then</em>, and
+	 * <em>else</em> are interpreted by the system inside an <em>if</em>
+	 * statement. If the value of <em>non-empty</em> resolves to not empty the
+	 * method returns the unresolved value of <em>then</em> else it returns the
+	 * unresolved value of <em>else</em>. If <em>else</em> is omitted it returns
+	 * an empty string. The two other pseudo variables cannot be omitted.
+	 * 
+	 * @param text
+	 *            a string containing the if specification
+	 * @return either the then value or the else value or an empty value
+	 */
+	private String parseIf(String text) {
+		String result = "";
+		try {
+			Map<String, String> map = asMap(new ArgsScanner().asPairs(text));
+			String nonEmptyValue = map.get(ifNonEmptyName);
+			String thenValue = map.get(ifThenName);
+			String elseValue = map.get(ifElseName);
+			if (nonEmptyValue == null) 
+				throw new IllegalArgumentException(msg(U.U00133, ifNonEmptyName));
+			if (thenValue == null) 
+				throw new IllegalArgumentException(msg(U.U00133, ifThenName));
+			if (map.size() != (elseValue == null ? 2 : 3)) 
+				throw new IllegalArgumentException(msg(U.U00134, ifNonEmptyName, ifThenName, ifElseName));
+			String resolved = resolve(nonEmptyValue);
+			if (resolved.length() > 0)
+				result = thenValue;
+			else if (elseValue != null)
+				result = elseValue;
+		} catch (Exception e) {
+			throw new IllegalArgumentException(msg(U.U00132, ifName, text), e);
+		}
+		return result;
 	}
 	
 	private List<String[]> parseFile(boolean simple, String fileName) throws IOException {

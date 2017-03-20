@@ -16,6 +16,8 @@ import ch.agent.util.STRINGS.U;
 
 public class ArgsTest {
 
+	private static final boolean DEBUG = false;
+	
 	private static void assertMessage(Throwable e, String prefix) {
 		assertEquals(prefix, e.getMessage().substring(0, 6));
 	}
@@ -225,7 +227,7 @@ public class ArgsTest {
 			args.put("foo", "0.5");
 			assertEquals(0.5, args.getVal("foo").doubleArray()[1], 10e-10);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 			assertMessage(e, U.U00113);
 		}
@@ -244,7 +246,7 @@ public class ArgsTest {
 			assertEquals("foo", sequence.get(0)[0]);
 			assertEquals("b a]z", sequence.get(1)[0]);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -361,7 +363,121 @@ public class ArgsTest {
 			assertEquals("val1", args.get("name1"));
 			assertEquals("val2B", args.get("name2"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testIf1() {
+		try {
+			args.parse("if=[foo bar]");
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue(e.getMessage(), e.getMessage().startsWith("U00132"));
+		}
+	}
+	
+	@Test
+	public void testIf2() {
+		try {
+			args.parse("if=[non-empty=[] them=foo]");
+			fail("exception expected");
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			assertTrue(e.getMessage(), e.getCause().getMessage().startsWith("U00133"));
+		}
+	}
+	
+	@Test
+	public void testIf3a() {
+		try {
+			args.def("foo").init("0");
+			args.parse("$X=2 if=[non-empty=[${X}] then=[foo=1]]");
+			assertEquals("1", args.get("foo"));
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testIf3b() {
+		try {
+			args.def("foo").init("0");
+			args.parse("$X=[] if=[non-empty=[${X}] then=[foo=1]]");
+			assertEquals("0", args.get("foo"));
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testIf4() {
+		try {
+			args.def("foo");
+			args.parse("if=[non-empty=[x] then=[foo=bar]]");
+			assertEquals("bar", args.get("foo"));
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testIf5() {
+		try {
+			args.def("foo");
+			args.parse("if=[non-empty=[] then=[foo=bar] else=[foo=baz]]");
+			assertEquals("baz", args.get("foo"));
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testIf6() {
+		try {
+			args.def("foo");
+			args.def("nonono");
+			args.parse("if=[non-empty=[] then=[foo=bar] else=[foo=baz] nonono=42]");
+			fail("exception expected");
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			assertTrue(e.getMessage(), e.getCause().getMessage().startsWith("U00134"));
+		}
+	}
+
+	@Test
+	public void testIf7() {
+		try {
+			args.def("bar");
+			args.def("name1");
+			args.def("name2");
+			args.parse(String.format("if=[non-empty=[x] then=[file = %s] else=[bar=b name1=n1 name2=n2]", file2));
+			assertEquals("bar's value", args.get("bar"));
+			assertEquals("val1", args.get("name1"));
+			assertEquals("val2", args.get("name2"));
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testIf8() {
+		try {
+			args.def("bar");
+			args.def("name1");
+			args.def("name2");
+			args.parse(String.format("if=[non-empty=[] then=[file = %s] else=[bar=b name1=n1 name2=n2]", file2));
+			assertEquals("b", args.get("bar"));
+			assertEquals("n1", args.get("name1"));
+			assertEquals("n2", args.get("name2"));
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -377,7 +493,7 @@ public class ArgsTest {
 			assertEquals("val1", args.get("name1"));
 			assertEquals("val2", args.get("name2"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -393,7 +509,7 @@ public class ArgsTest {
 			assertEquals("val1", args.get("name1"));
 			assertEquals("val2", args.get("name2"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -409,7 +525,7 @@ public class ArgsTest {
 			assertEquals("val1", args.get("name1"));
 			assertEquals("val2", args.get("name2"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -425,7 +541,7 @@ public class ArgsTest {
 			assertEquals("val1", args.get("name1"));
 			assertEquals("val2", args.get("name2"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -516,7 +632,7 @@ public class ArgsTest {
 			args.parse("pos=foo pos = bar baf");
 			assertEquals(3, args.getVal("").stringArray().length);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -532,7 +648,7 @@ public class ArgsTest {
 			assertEquals("value", args.get("name1"));
 			assertEquals("x", args.get("name2"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -552,7 +668,7 @@ public class ArgsTest {
 			assertEquals("", args.get(""));
 			assertEquals("x", args.get("name2"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -564,7 +680,7 @@ public class ArgsTest {
 			args.parse("$a=b $c=${a} foo=${c}");
 			assertEquals("b", args.get("foo"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -575,7 +691,7 @@ public class ArgsTest {
 			args.parse("$a=525 $c=${a} foo=${c}");
 			assertEquals(525, args.getVal("foo").intValue());
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -586,7 +702,7 @@ public class ArgsTest {
 			args.parse("$a=true $c=${a} foo=${c}");
 			assertEquals(Boolean.TRUE, args.getVal("foo").booleanValue());
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -599,7 +715,7 @@ public class ArgsTest {
 			assertEquals(1, values[0]);
 			assertEquals(2, values[1]);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -610,7 +726,7 @@ public class ArgsTest {
 			args.parse("$a=b $c=${a} foo=[ ${c} ]");
 			assertEquals(" b ", args.get("foo"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -621,7 +737,7 @@ public class ArgsTest {
 			args.parse("$a=b $c=[ ${a} ] foo=[ x${c}x ]");
 			assertEquals(" x b x ", args.get("foo"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -632,7 +748,7 @@ public class ArgsTest {
 			args.parse("$a=b $c=\\${a} foo=${c}");
 			assertEquals("${a}", args.get("foo"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -643,7 +759,7 @@ public class ArgsTest {
 			args.parse("$a=b $c=${a} foo=\\${c}");
 			assertEquals("${c}", args.get("foo"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -675,7 +791,7 @@ public class ArgsTest {
 			args.parse("$a=b $a=B $c=${a} foo=${c}");
 			assertEquals("b", args.get("foo"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -718,7 +834,7 @@ public class ArgsTest {
 			assertEquals(Good.good1, res[0]);
 			assertEquals(Good.good2, res[1]);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			assertTrue(e.getMessage().startsWith("U00115"));
 		}
 	}
@@ -796,7 +912,7 @@ public class ArgsTest {
 			assertEquals("b", parts[1]);
 			assertEquals("c", parts[2]);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -820,7 +936,7 @@ public class ArgsTest {
 			args.put("foo", "");
 			assertEquals(0, args.getVal("foo").stringSplit("\\s*,\\s*", -1).length);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -835,7 +951,7 @@ public class ArgsTest {
 			assertEquals(0, scalar.length);
 			assertEquals(0, list.length);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -850,7 +966,7 @@ public class ArgsTest {
 			assertEquals(0, scalar.length);
 			assertEquals(0, list.length);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
