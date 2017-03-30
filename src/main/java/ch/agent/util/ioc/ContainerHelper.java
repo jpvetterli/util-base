@@ -1,7 +1,5 @@
 package ch.agent.util.ioc;
 
-import static ch.agent.util.STRINGS.lazymsg;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -9,7 +7,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import ch.agent.util.STRINGS.U;
 import ch.agent.util.args.Args;
 import ch.agent.util.base.Misc;
 import ch.agent.util.ioc.ContainerToolBox.ManagedModule;
@@ -167,7 +164,6 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	public void initialize(M module) throws Exception {
 		if (modules == null)
 			throw new RuntimeException("modules null, module: " + module.getName());
-		tools.logger.debug(lazymsg(U.C18, module.getName()));
 		if (commandRegistry == null)
 			commandRegistry = new SimpleCommandRegistry();
 		// next ensures that (1) module not initialized and (2) required modules initialized

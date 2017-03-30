@@ -104,13 +104,12 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 		
 	}
 	
-	protected LoggerBridge logger;
+	private LoggerBridge logger;
 	
  	/**
 	 * Constructor.
 	 * 
 	 * @param logger a logger or null
-	 * @param cb the configuration builder to use
 	 */
 	public ContainerToolBox(LoggerBridge logger) {
 		this.logger = logger;
@@ -216,6 +215,8 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 		} catch (Exception e) {
 			throw new Exception(msg(U.C07, module.getName()), e);
 		}
+		if (logger != null)
+			logger.debug(lazymsg(U.C18, module.getName()));
 	}
 
 	/**
