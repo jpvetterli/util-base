@@ -136,7 +136,25 @@ public class ModuleDefinition<M extends Module<?>> {
 	public String[] getPredecessors() {
 		return pred;
 	}
-
+	
+	/**
+	 * Return the array of all requirements and predecessors. The result is the
+	 * concatenation of the results of {@link #getRequirements} and
+	 * {@link #getPredecessors}
+	 * 
+	 * @return an array of names
+	 */
+	public String[] getPrerequisites() {
+		return concat(req,  pred);
+	}
+	
+	protected String[] concat(String[] arr1, String[] arr2) {
+		String[] c = new String[arr1.length + arr2.length];
+		System.arraycopy(arr1, 0, c, 0, arr1.length);
+		System.arraycopy(arr2, 0, c, arr1.length, arr2.length);
+		return c;
+	}
+	
 	@Override
 	public String toString() {
 		return getName();

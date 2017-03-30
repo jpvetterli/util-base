@@ -181,11 +181,7 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	protected void validatePrerequisites(Map<String, D> definitions) {
 		List<String> missing = new ArrayList<String>();
 		for (ModuleDefinition<M> spec : definitions.values()) {
-			for (String req : spec.getRequirements()) {
-				if (definitions.get(req) == null)
-					missing.add(req);
-			}
-			for (String req : spec.getPredecessors()) {
+			for (String req : spec.getPrerequisites()) {
 				if (definitions.get(req) == null)
 					missing.add(req);
 			}
@@ -216,8 +212,7 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 		DAG<String> dag = new DAG<String>();
 		dag.add(definitions.keySet());
 		for (ModuleDefinition<M> spec : definitions.values()) {
-			dag.addLinks(spec.getName(), spec.getRequirements());
-			dag.addLinks(spec.getName(), spec.getPredecessors());
+			dag.addLinks(spec.getName(), spec.getPrerequisites());
 		}
 		// ... except for a possible cycle
 		List<String> sequence;

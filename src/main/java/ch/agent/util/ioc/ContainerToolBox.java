@@ -29,6 +29,54 @@ import ch.agent.util.logging.LoggerBridge;
 public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDefinitionBuilder<D, M>, D extends ModuleDefinition<M>, M extends Module<?>> {
 
 	/**
+	 * A helper class to keep track of the life cycle of a module.
+	 *
+	 * @param <M> the module type
+	 */
+	public static class ManagedModule<D,M> {
+		private final D definition;
+		private final M module;
+		private boolean initialized;
+		private boolean shutdown;
+
+		public ManagedModule(D definition, M module) {
+			super();
+			this.definition = definition;
+			this.module = module;
+		}
+		
+		public D getModuleDefinition() {
+			return definition;
+		}
+
+		public M getModule() {
+			return module;
+		}
+
+		public boolean isInitialized() {
+			return initialized;
+		}
+		
+		public void setInitialized() {
+			this.initialized = true;
+		}
+		
+		public boolean isShutdown() {
+			return shutdown;
+		}
+		
+		public void setShutdown() {
+			this.shutdown = true;
+		}
+
+		@Override
+		public String toString() {
+			return getModule().toString();
+		}
+		
+	}
+	
+	/**
 	 * Command registry used during module initialization.
 	 *
 	 */
@@ -49,14 +97,7 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 			commands.put(name, command);
 		}
 	
-		/**
-		 * Get the command map. The keys are command names as defined by
-		 * {@link Command#getName()} if possible, or the same prefixed with
-		 * {@link Module#getName()} and a period to achieve name uniqueness
-		 * within a system.
-		 * 
-		 * @return the command map
-		 */
+		@Override
 		public Map<String, Command<?>> getCommands() {
 			return commands;
 		}
@@ -78,16 +119,20 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 	}
 	
 	/**
-	 * Shutdown all modules.
+	 * Shutdown all modules. The shutdown sequence is the reverse from
+	 * the initialization sequence.
 	 * 
 	 * @param modules
-	 *            list of modules in original (initialization) sequence
+	 *            map of managed modules in th
 	 */
-	public void shutdown(List<M> modules) {
+	public void shutdown(Map<String, ManagedModule<D,M>> modules) {
+		List<M> list = asList(modules);
 		int i = modules.size();
 		while (--i >= 0) {
 			try {
-				modules.get(i).shutdown();
+				M module = list.get(i);
+				module.shutdown();
+				modules.get(module.getName()).setShutdown();
 			} catch (Exception e) {
 				// ignore
 			}
@@ -128,12 +173,12 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 	 * 
 	 * @param configuration
 	 *            the configuration object
-	 * @return the list of modules in valid sequence
+	 * @return a sequential map of managed of modules in valid sequence
 	 * @throws Exception
 	 *             as soon as creating or configuring a module fails
 	 */
-	public List<M> configureModules(C configuration) throws Exception {
-		List<M> modules = new ArrayList<M>();
+	public Map<String, ManagedModule<D, M>> configureModules(C configuration) throws Exception {
+		Map<String, ManagedModule<D, M>> modules = new LinkedHashMap<String, ManagedModule<D, M>>();
 		Args moduleConfig = new Args();
 		for (D module : configuration.getModuleDefinitions()) {
 			moduleConfig.def(module.getName()).init(""); // it is okay to omit the statement
@@ -144,33 +189,12 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 			try {
 				M m = spec.create();
 				m.configure(moduleConfig.get(spec.getName()));
-				modules.add(m);
+				modules.put(spec.getName(), new ManagedModule<D,M>(spec, m));
 			} catch (Exception e) {
 				throw new ConfigurationException(msg(U.C14, spec.getName()), e);
 			}
 		}
 		return modules;
-	}
-
-	/**
-	 * Initialize all modules in a sequence which guarantees that required
-	 * modules are initialized before modules requiring them.
-	 * 
-	 * @param configuration
-	 *            the configuration object
-	 * @param modules
-	 *            the module list, in valid sequence
-	 * @return the map of commands keyed by command name
-	 * @throws Exception
-	 *             as soon as the initialization of a module fails
-	 */
-	public Map<String, Command<?>> initializeModules(C configuration, List<M> modules) throws Exception {
-		SimpleCommandRegistry registry = new SimpleCommandRegistry();
-		Map<String, M> modulesByName = asMap(modules);
-		for (M module : modules) {
-			initializeModule(module, configuration.get(module.getName()).getRequirements(), modulesByName, registry);
-		}
-		return registry.getCommands();
 	}
 
 	/**
@@ -185,18 +209,18 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 	 * 
 	 * @param module
 	 *            the module
-	 * @param requirements
-	 *            zero or more names of required modules
-	 * @param modulesByName
-	 *            a map of modules keyed by module name
+	 * @param modules
+	 *            map of managed modules keyed by module name
 	 * @param registry
 	 *            the command registry to use for registering module commands
 	 * @throws Exception
 	 *             in case of failure
 	 */
-	public void initializeModule(M module, String[] requirements, Map<String, M> modulesByName, CommandRegistry registry) throws Exception {
+	public void initializeModule(M module, Map<String, ManagedModule<D,M>> modules, CommandRegistry registry) throws Exception {
+		if (modules.get(module.getName()).isInitialized())
+			throw new IllegalStateException(String.format("module \"%s\" already initialized", module.getName()));
 		try {
-			addRequiredModules(module, requirements, modulesByName);
+			addRequiredModules(module, modules);
 			module.registerCommands(registry);
 			if (!module.initialize()) {
 				if (logger != null)
@@ -208,7 +232,7 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 			throw new Exception(msg(U.C07, module.getName()), e);
 		}
 	}
-	
+
 	/**
 	 * Execute all commands in the <em>execution</em> specification.
 	 * <p>
@@ -231,14 +255,15 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 	 * </pre>
 	 * 
 	 * @param configuration
-	 *            the configuration object
-	 * @param commands
-	 *            a map of commands keyed by unique command name
+	 *            the non-null configuration object
+	 * @param registry
+	 *            a non-null command registry
 	 * @throws Exception
 	 *             execution of commands can throw exceptions
 	 */
-	public void executeCommands(C configuration, Map<String, Command<?>> commands) throws Exception {
+	public void executeCommands(C configuration, CommandRegistry registry) throws Exception {
 		Args execSyntax = new Args();
+		Map<String, Command<?>> commands = registry.getCommands();
 		for (String commandName : commands.keySet()) {
 			execSyntax.defList(commandName); // a command can be executed 0 or more times
 		}
@@ -268,45 +293,101 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 	
 	/**
 	 * Add all modules required by a module. The container must guarantee that
-	 * any required module has already been created and configured. On the other
-	 * hand a required module may or may not have been initialized.
+	 * all modules declared as requirement or predecessor have already been
+	 * created and configured, and that they have been initialized.
 	 * 
 	 * @param requiring
 	 *            the requiring module
-	 * @param required
-	 *            array of required modules
-	 * @param modulesByName
-	 *            a map of modules keyed by module name
+	 * @param modules
+	 *            map of managed modules keyed by module name
 	 * @throws Exception
 	 *             in case of one or more failures
+	 * @throws IllegalStateException
+	 *             if required module missing or not initialized
 	 */
-	public void addRequiredModules(M requiring, String[] required, Map<String, M> modulesByName) throws Exception {
-		List<String> rejected = new ArrayList<String>();
-		for (String name : required) {
-			Module<?> m = modulesByName.get(name);
-			if (m == null)
-				throw new RuntimeException("bug found, a module required by \"" + requiring.getName() + "\" is missing");
-			if (!requiring.add(m))
-				rejected.add(name);
+	public void addRequiredModules(M requiring, Map<String, ManagedModule<D,M>> modules) throws Exception {
+		ModuleDefinition<M> def =  modules.get(requiring.getName()).getModuleDefinition();
+		ensureModulesInitialized(requiring.getName(), def.getPrerequisites(), modules);
+		List<String> problematic = new ArrayList<String>();
+		// requirements are a subset of prerequisites, so no need to check everything again
+		for (String name : def.getRequirements()) {
+			ManagedModule<D,M> mm = modules.get(name);
+			if (!requiring.add(mm.getModule()))
+				problematic.add(name);
 		}
-		if (rejected.size() > 0)
-			throw new Exception(msg(U.C17, requiring.getName(), Misc.join("\", \"", rejected)));
+		if (problematic.size() > 0)
+			throw new Exception(msg(U.C17, requiring.getName(), Misc.join("\", \"", problematic)));
+	}
+	
+	public void ensureAllModulesInitialized(Map<String, ManagedModule<D,M>> modules) {
+		// ensure all modules initialized
+		List<String> errors = new ArrayList<String>();
+		for (ManagedModule<D,M> mm : modules.values()) {
+			if (!mm.isInitialized())
+				errors.add(mm.getModule().getName());
+		}
+		if (errors.size() > 0)
+			throw new IllegalStateException("modules not initialized: " + Misc.join("\", \"", errors));
+	}
+	
+	/**
+	 * Ensure that the named modules have been initialized.
+	 * 
+	 * @param requiring
+	 *            the requiring module
+	 * @param names
+	 *            names of modules to check
+	 * @param modules
+	 *            map of managed modules
+	 */
+	public void ensureModulesInitialized(String requiring, String[] names, Map<String, ManagedModule<D, M>> modules) {
+		// ensure named modules initialized
+		List<String> errors = new ArrayList<String>();
+		for (String name : names) {
+			if (!modules.get(name).isInitialized())
+				errors.add(name);
+		}
+		if (errors.size() > 0)
+			throw new IllegalStateException(String.format("module \"%s\" needs the following modules to be initialized: \"%s\"", requiring, Misc.join("\", \"", errors)));
+	}
+	
+	/**
+	 * Ensure that the named modules have been shut down.
+	 * 
+	 * @param requiring
+	 *            the requiring module
+	 * @param names
+	 *            names of modules to check
+	 * @param modules
+	 *            map of managed modules
+	 */
+	public void ensureModulesShutdown(String requiring, Iterable<String> names, Map<String, ManagedModule<D, M>> modules) {
+		// ensure named modules initialized
+		List<String> errors = new ArrayList<String>();
+		for (String name : names) {
+			if (!modules.get(name).isShutdown())
+				errors.add(name);
+		}
+		if (errors.size() > 0)
+			throw new IllegalStateException(String.format("module \"%s\" needs the following modules to be shutdown: \"%s\"", requiring, Misc.join("\", \"", errors)));
 	}
 
 	/**
-	 * Produce a module map from a module list.
-	 * The map maintains a sequence compatible with dependency constraints.
+	 * Extract module list from map of managed modules. The list maintains a
+	 * sequence compatible with dependency constraints. Return an empty list on
+	 * null input.
 	 * 
 	 * @param modules
-	 *            a sorted list of modules
-	 * @return a map of modules keyed by module name, keeping the input sequence 
+	 *            a map of managed modules keyed by module name
+	 * @return a list of modules in valid sequence
 	 */
-	public Map<String, M> asMap(List<M> modules) {
-		Map<String, M> map = new LinkedHashMap<String, M>(modules.size());
-		for (M m : modules) {
-			map.put(m.getName(), m);
+	public List<M> asList(Map<String, ManagedModule<D,M>> modules) {
+		Misc.nullIllegal(modules, "modules null");
+		List<M> result = new ArrayList<M>(modules.size());
+		for (ManagedModule<D,M> mm : modules.values()) {
+			result.add(mm.getModule());
 		}
-		return map;
+		return result;
 	}
 	
 }
