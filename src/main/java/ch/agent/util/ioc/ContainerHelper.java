@@ -4,7 +4,6 @@ import static ch.agent.util.STRINGS.lazymsg;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -28,7 +27,7 @@ import ch.agent.util.logging.LoggerBridge;
  * @param <M>
  *            the module type
  */
-public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefinitionBuilder<D,M>, D extends ModuleDefinition<M>, M extends Module<?>> implements Iterable<M> {
+public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefinitionBuilder<D,M>, D extends ModuleDefinition<M>, M extends Module<?>> {
 	
 	private ContainerToolBox<C,B,D,M> tools;
 	private C configuration;
@@ -179,27 +178,17 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 		commandsGuard = true;
 	}
 
-	@Override
-	public Iterator<M> iterator() {
+	/**
+	 * Get all modules.
+	 * 
+	 * @return a collection of a modules
+	 * @throws IllegalStateException
+	 *             if #configure not called successfully
+	 */
+	public Collection<M> getModules() {
 		if (modulesByName == null)
 			throw new IllegalStateException("#configure not called successfully");
-		return new Iterator<M>() {
-			private Iterator<M> it = modulesByName.values().iterator();
-			@Override
-			public boolean hasNext() {
-				return it == null ? false : it.hasNext();
-			}
-			@Override
-			public M next() {
-				if (it == null)
-					throw new NoSuchElementException();
-				return it.next();
-			}
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException();
-			}
-		};
+		return modulesByName.values();
 	}
 	
 	/**
