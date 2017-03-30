@@ -100,7 +100,7 @@ public class ContainerTest {
 					return false;
 				}
 			});
-		registry.register(
+			registry.register(
 				new Command<ContainerTest.A>() {
 				@Override
 				public String getName() {
@@ -129,6 +129,62 @@ public class ContainerTest {
 		
 	}
 	
+	public static class DModule extends AbstractModule<Object>  implements Module<Object> {
+
+		public DModule(String name) {
+			super(name);
+		}
+
+		@Override
+		public Object getObject() {
+			return null;
+		}
+
+		@Override
+		public void registerCommands(CommandRegistry registry) {
+			final Module<Object> m = this;
+			registry.register(
+				new Command<Object>() {
+				@Override
+				public String getName() {
+					return "command";
+				}
+				@Override
+				public String getFullName() {
+					return m.getName() + "." + getName();
+				}
+				@Override
+				public Module<Object> getModule() {
+					return m;
+				}
+				@Override
+				public boolean execute(String parameters) {
+					return false;
+				}
+			});
+			registry.register(
+					new Command<Object>() {
+					@Override
+					public String getName() {
+						return "command";
+					}
+					@Override
+					public String getFullName() {
+						return m.getName() + "." + getName();
+					}
+					@Override
+					public Module<Object> getModule() {
+						return m;
+					}
+					@Override
+					public boolean execute(String parameters) {
+						return false;
+					}
+				});
+		}
+
+	}
+
 	public static class BModule extends AbstractModule<B>  implements Module<B> {
 
 		B b;
@@ -286,6 +342,34 @@ public class ContainerTest {
 		}
 	}
 	
+	@Test
+	public void test13() {
+		Container c = new Container();
+		try {
+			c.run(new String[]{
+					String.format("module=[name = x class=%s]", DModule.class.getName())
+			});
+			c.shutdown();
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue("message C12 ?",  e.getCause().getMessage().indexOf("already registered") > 0);
+		}
+	}
+	
+	@Test
+	public void test14() {
+		Container c = new Container();
+		try {
+			c.run(new String[]{
+					String.format("module=[name = [] class=%s]", DModule.class.getName())
+			});
+			c.shutdown();
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue("message C14 ?",  e.getMessage().startsWith("C14"));
+		}
+	}
+
 	@Test
 	public void test20() {
 		Container c = new Container();

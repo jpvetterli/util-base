@@ -1,5 +1,7 @@
 package ch.agent.util.ioc;
 
+import static ch.agent.util.STRINGS.msg;
+import ch.agent.util.STRINGS.U;
 import ch.agent.util.args.Args;
 import ch.agent.util.base.Misc;
 
@@ -22,7 +24,7 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	public AbstractCommand(Module<T> module, String name) {
 		Misc.nullIllegal(module, "module null");
 		if (Misc.isEmpty(name))
-			throw new IllegalArgumentException("name null or emtpy");
+			throw new ConfigurationException(msg(U.C51));
 		this.module = module;
 		this.name = name;
 	}

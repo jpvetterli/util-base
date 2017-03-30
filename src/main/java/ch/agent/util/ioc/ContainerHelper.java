@@ -278,7 +278,7 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 */
 	public Collection<Command<?>> getCommands(String moduleName) {
 		if (commandRegistry == null)
-			throw new IllegalStateException("modules not initialized");
+			throw new IllegalStateException("no #initialize method called");
 		Collection<Command<?>> commands = new ArrayList<Command<?>>();
 		for (Command<?> command : commandRegistry.getCommands().values()) {
 			if (moduleName == null || moduleName.equals(command.getModule().getName()))

@@ -1,5 +1,7 @@
 package ch.agent.util.ioc;
 
+import static ch.agent.util.STRINGS.msg;
+import ch.agent.util.STRINGS.U;
 import ch.agent.util.args.Args;
 import ch.agent.util.base.Misc;
 
@@ -33,7 +35,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	
 	public AbstractModule(String name) {
 		if (Misc.isEmpty(name))
-			throw new IllegalArgumentException("name null or emtpy");
+			throw new ConfigurationException(msg(U.C51));
 		this.name = name;
 	}
 
@@ -71,7 +73,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	@Override
 	public void configure(String specs) {
 		if (configure)
-			throw new RuntimeException("bug found: configure called again, module: " + getName());
+			throw new IllegalStateException("bug found: #configure called again, module: " + getName());
 		configure = true;
 		Args config = new Args();
 		defineParameters(config);
@@ -82,7 +84,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	@Override
 	public void registerCommands(CommandRegistry registry) {
 		if (registerCommands)
-			throw new RuntimeException("bug found: #registerCommands called again, module: " + getName());
+			throw new IllegalStateException("bug found: #registerCommands called again, module: " + getName());
 		registerCommands = true;
 	}
 
@@ -94,7 +96,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	@Override
 	public boolean initialize() throws Exception {
 		if (initialize)
-			throw new RuntimeException("bug found: #initialize called again, module: " + getName());
+			throw new IllegalStateException("bug found: #initialize called again, module: " + getName());
 		initialize = true;
 		return true;
 	}
@@ -102,7 +104,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	@Override
 	public void shutdown() {
 		if (shutdown)
-			throw new RuntimeException("bug found: #shutdown called again, module: " + getName());
+			throw new IllegalStateException("bug found: #shutdown called again, module: " + getName());
 		shutdown = true;
 	}
 

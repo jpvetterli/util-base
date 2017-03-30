@@ -3,6 +3,7 @@ package ch.agent.util.ioc;
 import static ch.agent.util.STRINGS.lazymsg;
 import static ch.agent.util.STRINGS.msg;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
@@ -146,7 +147,8 @@ public class Container {
 			logger.error(msg(U.C23, e.getClass().getSimpleName()));
 			Throwable cause = e;
 			while (cause != null) {
-				logger.error(cause.getMessage());
+				if (!(cause instanceof InvocationTargetException))
+					logger.error(cause.getMessage());
 				cause = cause == cause.getCause() ? null : cause.getCause();
 			}
 			throw e;

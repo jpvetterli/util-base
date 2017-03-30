@@ -93,7 +93,7 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 			String name = command.getFullName();
 			Command<?> existing = commands.get(name);
 			if (existing != null)
-				throw new IllegalStateException(msg(U.C12, command.getModule().getName(), command.getFullName()));
+				throw new ConfigurationException(msg(U.C12, command.getModule().getName(), command.getFullName()));
 			commands.put(name, command);
 		}
 	
@@ -272,7 +272,7 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 		try {
 			execSyntax.parse(configuration.getExecution());
 		} catch (Exception e) {
-			throw new Exception(msg(U.C24), e);
+			throw new ConfigurationException(msg(U.C24), e);
 		}
 		
 		List<String[]> statements = execSyntax.getSequence();
@@ -316,7 +316,7 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 				problematic.add(name);
 		}
 		if (problematic.size() > 0)
-			throw new Exception(msg(U.C17, requiring.getName(), Misc.join("\", \"", problematic)));
+			throw new ConfigurationException(msg(U.C17, requiring.getName(), Misc.join("\", \"", problematic)));
 	}
 	
 	public void ensureAllModulesInitialized(Map<String, ManagedModule<D,M>> modules) {

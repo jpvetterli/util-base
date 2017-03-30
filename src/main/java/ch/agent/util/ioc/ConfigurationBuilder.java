@@ -227,7 +227,7 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 		}
 		// bug detector:
 		if (sorted.size() != definitions.size())
-			throw new ConfigurationException(String.format("bug found: size before=%d, size after=%d", definitions.size(), sorted.size()));
+			throw new IllegalStateException(String.format("bug found: size before=%d, size after=%d", definitions.size(), sorted.size()));
 		return sorted;
 	}
 
