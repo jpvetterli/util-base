@@ -2,7 +2,6 @@ package ch.agent.util.ioc;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +22,7 @@ import java.util.Map;
  * @param <M>
  *            the module type
  */
-public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> implements Iterable<D> {
+public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 
 	private final String configuration;
 	private final String execution;
@@ -50,11 +49,6 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 		for (int i = 0; i < modules.size(); i++) {
 			names.put(modules.get(i).getName(), i);
 		}
-	}
-
-	@Override
-	public Iterator<D> iterator() {
-		return modules.iterator();
 	}
 
 	/**

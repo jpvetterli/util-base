@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.Iterator;
 import java.util.List;
 
 import org.junit.Test;
@@ -106,13 +105,13 @@ public class ConfigurationTest {
 			assertEquals("config stuff", c.getConfiguration());
 			assertEquals("exec stuff", c.getExecution());
 			assertEquals("foo stuff", c.getFoo());
-			Iterator<FooModDef> mdi = c.iterator();
-			FooModDef mb = mdi.next();
+			List<FooModDef> definitions = c.getModuleDefinitions();
+			FooModDef mb = definitions.get(0);
 			assertEquals("b", mb.getName());
 			assertEquals(false, mb.isFoo());
-			FooModDef ma = mdi.next();
+			FooModDef ma = definitions.get(1);
 			assertEquals(true, ma.isFoo());
-			assertEquals(false, mdi.hasNext());
+			assertEquals(2, definitions.size());
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("unexpected exception");

@@ -170,7 +170,7 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 		}
 		moduleConfig.parse(configuration.getConfiguration());
 		
-		for (D spec : configuration) {
+		for (D spec : configuration.getModuleDefinitions()) {
 			try {
 				M m = spec.create();
 				m.configure(moduleConfig.get(spec.getName()));

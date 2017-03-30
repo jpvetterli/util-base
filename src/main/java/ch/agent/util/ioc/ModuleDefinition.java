@@ -120,21 +120,25 @@ public class ModuleDefinition<M extends Module<?>> {
 	}
 
 	/**
-	 * Get the names of required modules.
+	 * Get a copy of the names of required modules.
 	 * 
 	 * @return an array of strings
 	 */
 	public String[] getRequirements() {
-		return req;
+		String[] copy = new String[req.length];
+		System.arraycopy(req, 0, copy, 0, req.length);
+		return copy;
 	}
 	
 	/**
-	 * Get the names of predecessor modules.
+	 * Get a copy of the names of predecessor modules.
 	 * 
 	 * @return an array of strings
 	 */
 	public String[] getPredecessors() {
-		return pred;
+		String[] copy = new String[pred.length];
+		System.arraycopy(pred, 0, copy, 0, pred.length);
+		return copy;
 	}
 	
 	/**
