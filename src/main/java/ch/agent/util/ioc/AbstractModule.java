@@ -44,8 +44,12 @@ public abstract class AbstractModule<T> implements Module<T> {
 
 	/**
 	 * Define configuration parameters.
+	 * <p>
+	 * Subclasses should usually call the super method first, before adding
+	 * their own definitions.
 	 * 
-	 * @param config the configuration object
+	 * @param config
+	 *            the configuration object
 	 */
 	public void defineParameters(Args config) {
 	}
