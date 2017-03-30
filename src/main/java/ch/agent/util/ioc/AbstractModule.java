@@ -106,4 +106,9 @@ public abstract class AbstractModule<T> implements Module<T> {
 		shutdown = true;
 	}
 
+	@Override
+	public String toString() {
+		return getName();
+	}
+	
 }

@@ -76,4 +76,9 @@ public abstract class AbstractCommand<T> implements Command<T> {
 		return execute(args);
 	}
 
+	@Override
+	public String toString() {
+		return getFullName();
+	}
+
 }
