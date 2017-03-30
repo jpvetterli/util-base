@@ -75,12 +75,24 @@ public class Container {
 	 */
 	public Container() {
 		helper = new ContainerHelper<
-				Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
-				ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
-				ModuleDefinition<Module<?>>,
-				Module<?>>(logger, new ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>());
+			Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
+			ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
+			ModuleDefinition<Module<?>>,
+			Module<?>
+			>(logger, 
+				new ConfigurationBuilder<
+					Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
+					ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
+					ModuleDefinition<Module<?>>,
+					Module<?>
+					>(new ModuleDefinitionBuilder<
+						ModuleDefinition<Module<?>>,
+						Module<?>
+						>()
+					)
+			);
 	}
-	
+
 	/**
 	 * Clear the data structures before a new configuration.
 	 */

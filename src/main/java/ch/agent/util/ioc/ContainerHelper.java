@@ -41,10 +41,10 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 * Constructor.
 	 * 
 	 * @param logger a logger or null
-	 * @param mdb the module definition builder to use
+	 * @param cb the configuration builder to use
 	 */
-	public ContainerHelper(LoggerBridge logger, B mdb) {
-		tools = new ContainerToolBox<C,B,D,M>(logger, mdb);
+	public ContainerHelper(LoggerBridge logger, ConfigurationBuilder<C,B,D,M> cb) {
+		tools = new ContainerToolBox<C,B,D,M>(logger, cb);
 		initialized = new ArrayList<M>();
 	}
 	
@@ -181,8 +181,10 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 
 	@Override
 	public Iterator<M> iterator() {
+		if (modulesByName == null)
+			throw new IllegalStateException("#configure not called successfully");
 		return new Iterator<M>() {
-			private Iterator<M> it = modulesByName == null ? null : modulesByName.values().iterator();
+			private Iterator<M> it = modulesByName.values().iterator();
 			@Override
 			public boolean hasNext() {
 				return it == null ? false : it.hasNext();
@@ -208,10 +210,14 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 * @return a module, non-null
 	 * @throws NoSuchElementException
 	 *             if there is no module with that name
+	 * @throws IllegalStateException
+	 *             if #configure not called successfully
 	 */
 	public M getModule(String name) {
+		if (modulesByName == null)
+			throw new IllegalStateException("#configure not called successfully");
 		Misc.nullIllegal(name, "name null");
-		M module = modulesByName == null ? null : modulesByName.get(name);
+		M module = modulesByName.get(name);
 		if (module == null)
 			throw new NoSuchElementException(name);
 		return module;

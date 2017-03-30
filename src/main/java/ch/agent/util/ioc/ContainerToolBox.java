@@ -64,17 +64,17 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 	}
 	
 	protected LoggerBridge logger;
-	private B moduleDefinitionBuilder;
+	private ConfigurationBuilder<C,B,D,M> configurationBuilder;
 	
  	/**
 	 * Constructor.
 	 * 
 	 * @param logger a logger or null
-	 * @param mdb the module definition builder to use
+	 * @param cb the configuration builder to use
 	 */
-	public ContainerToolBox(LoggerBridge logger, B mdb) {
+	public ContainerToolBox(LoggerBridge logger, ConfigurationBuilder<C,B,D,M> cb) {
 		this.logger = logger;
-		this.moduleDefinitionBuilder = mdb;
+		this.configurationBuilder = cb;
 	}
 	
 	/**
@@ -104,8 +104,7 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 	 *             if something is wrong with the configuration
 	 */
 	public C parseConfiguration(String specification) {
-		ConfigurationBuilder<C,B,D,M> builder = new ConfigurationBuilder<C,B,D,M>(moduleDefinitionBuilder);
-		return builder.build(specification);
+		return configurationBuilder.build(specification);
 	}
 
 	/**
