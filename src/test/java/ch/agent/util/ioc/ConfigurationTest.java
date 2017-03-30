@@ -1,6 +1,7 @@
 package ch.agent.util.ioc;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Iterator;
@@ -83,22 +84,25 @@ public class ConfigurationTest {
 		
 	}
 	
+	private FooConfBldr<FooConf<FooModDef>, FooModDefBldr<FooModDef>, FooModDef> getBuilder() {
+		FooModDefBldr<FooModDef> mdb = new FooModDefBldr<FooModDef>();
+		return new FooConfBldr<FooConf<FooModDef>, FooModDefBldr<FooModDef>, FooModDef>(mdb);
+	}
+	
+	
 	public void setUp() throws Exception {
 	}
-
+	
 	@Test
 	public void test1() {
 		try {
-			FooModDefBldr<FooModDef> mdb = new FooModDefBldr<FooModDef>();
-			FooConfBldr<FooConf<FooModDef>, FooModDefBldr<FooModDef>, FooModDef> cb = 
-					new FooConfBldr<FooConf<FooModDef>, FooModDefBldr<FooModDef>, FooModDef>(mdb);
 			String spec = 
 				"module=[name=a class=aclass require=b foo=true]" + 
 				"module=[name=b class=bclass foo=false]" + 
 				"config=[config stuff]" + 
 				"exec = [exec stuff]" + 
 				"foo = [foo stuff]";
-			FooConf<FooModDef> c = cb.build(spec);
+			FooConf<FooModDef> c = getBuilder().build(spec);
 			assertEquals("config stuff", c.getConfiguration());
 			assertEquals("exec stuff", c.getExecution());
 			assertEquals("foo stuff", c.getFoo());
@@ -112,6 +116,39 @@ public class ConfigurationTest {
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void test2() {
+		try {
+			String spec = 
+				"module=[name=a class=aclass require=b foo=true]" + 
+				"module=[name=a class=bclass foo=false]" + 
+				"config=[config stuff]" + 
+				"exec = [exec stuff]" + 
+				"foo = [foo stuff]";
+			getBuilder().build(spec);
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue("message C11 missing", e.getCause().getMessage().indexOf("cannot be defined twice") > 0);
+		}
+	}
+	
+	@Test
+	public void test3() {
+		try {
+			String spec = 
+				"module=[name=a class=aclass require=c foo=true]" + 
+				"module=[name=b class=bclass require=a foo=false]" + 
+				"module=[name=c class=cclass require=b foo=false]" + 
+				"config=[config stuff]" + 
+				"exec = [exec stuff]" + 
+				"foo = [foo stuff]";
+			getBuilder().build(spec);
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue("message C09 missing", e.getMessage().indexOf("no valid sequence") > 0);
 		}
 	}
 
