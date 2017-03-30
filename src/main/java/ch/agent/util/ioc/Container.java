@@ -79,18 +79,19 @@ public class Container {
 			Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
 			ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
 			ModuleDefinition<Module<?>>,
-			Module<?>
-			>(logger, 
+			Module<?>>(
 				new ConfigurationBuilder<
 					Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
 					ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
 					ModuleDefinition<Module<?>>,
-					Module<?>
-					>(new ModuleDefinitionBuilder<
+					Module<?>>(new ModuleDefinitionBuilder<
 						ModuleDefinition<Module<?>>,
-						Module<?>
-						>()
-					)
+						Module<?>>()),
+				new ContainerToolBox<
+					Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
+					ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
+					ModuleDefinition<Module<?>>,
+					Module<?>>(logger)
 			);
 	}
 

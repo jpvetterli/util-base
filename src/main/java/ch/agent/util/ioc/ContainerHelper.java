@@ -14,7 +14,6 @@ import ch.agent.util.args.Args;
 import ch.agent.util.base.Misc;
 import ch.agent.util.ioc.ContainerToolBox.ManagedModule;
 import ch.agent.util.ioc.ContainerToolBox.SimpleCommandRegistry;
-import ch.agent.util.logging.LoggerBridge;
 
 /**
  * The simple container helper provides a collection of methods useful for
@@ -31,6 +30,7 @@ import ch.agent.util.logging.LoggerBridge;
  */
 public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefinitionBuilder<D,M>, D extends ModuleDefinition<M>, M extends Module<?>> {
 	
+	private ConfigurationBuilder<C,B,D,M> builder;
 	private ContainerToolBox<C,B,D,M> tools;
 	private C configuration;
 	private Map<String, ManagedModule<D,M>> modules;
@@ -41,11 +41,12 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
  	/**
 	 * Constructor.
 	 * 
-	 * @param logger a logger or null
-	 * @param cb the configuration builder to use
+	 * @param builder the configuration builder to use
+	 * @param tools the tool box to use
 	 */
-	public ContainerHelper(LoggerBridge logger, ConfigurationBuilder<C,B,D,M> cb) {
-		tools = new ContainerToolBox<C,B,D,M>(logger, cb);
+	public ContainerHelper(ConfigurationBuilder<C,B,D,M> builder, ContainerToolBox<C,B,D,M> tools) {
+		this.builder = builder;
+		this.tools = tools;
 	}
 	
 	public void reset() {
@@ -95,7 +96,7 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	public void parse(String specification) {
 		if (configuration != null)
 			throw new IllegalStateException("cannot call #parse twice without reset");
-		configuration = tools.parseConfiguration(specification);
+		configuration = builder.build(specification);
 	}
 	
 	/**

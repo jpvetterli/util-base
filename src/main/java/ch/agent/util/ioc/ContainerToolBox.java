@@ -105,7 +105,6 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 	}
 	
 	protected LoggerBridge logger;
-	private ConfigurationBuilder<C,B,D,M> configurationBuilder;
 	
  	/**
 	 * Constructor.
@@ -113,9 +112,8 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 	 * @param logger a logger or null
 	 * @param cb the configuration builder to use
 	 */
-	public ContainerToolBox(LoggerBridge logger, ConfigurationBuilder<C,B,D,M> cb) {
+	public ContainerToolBox(LoggerBridge logger) {
 		this.logger = logger;
-		this.configurationBuilder = cb;
 	}
 	
 	/**
@@ -139,19 +137,6 @@ public class ContainerToolBox<C extends Configuration<D, M>, B extends ModuleDef
 		}
 	}
 	
-	/**
-	 * Turn a textual specification into a configuration.
-	 * 
-	 * @param specification
-	 *            a string
-	 * @return a configuration object
-	 * @throws ConfigurationException
-	 *             if something is wrong with the configuration
-	 */
-	public C parseConfiguration(String specification) {
-		return configurationBuilder.build(specification);
-	}
-
 	/**
 	 * Create and configure all modules.
 	 * <p>
