@@ -72,6 +72,19 @@ public class ModuleDefinition<M extends Module<?>> {
 	}
 	
 	/**
+	 * Constructor.
+	 * 
+	 * @param original name
+	 *            an existing module definition
+	 */
+	public ModuleDefinition(ModuleDefinition<M> original) {
+		this.name = original.name;
+		this.className = original.className;
+		this.req = original.req;
+		this.pred = original.pred;
+	}
+
+	/**
 	 * Create the module. The module is created using a constructor taking a
 	 * single argument: the module name.
 	 * 
