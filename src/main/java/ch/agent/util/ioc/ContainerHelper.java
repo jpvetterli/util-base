@@ -27,9 +27,8 @@ import ch.agent.util.ioc.ContainerToolBox.SimpleCommandRegistry;
  */
 public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefinitionBuilder<D,M>, D extends ModuleDefinition<M>, M extends Module<?>> {
 	
-	private ConfigurationBuilder<C,B,D,M> builder;
-	private ContainerToolBox<C,B,D,M> tools;
 	private C configuration;
+	private ContainerToolBox<C,B,D,M> tools;
 	private Map<String, ManagedModule<D,M>> modules;
 	private SimpleCommandRegistry commandRegistry;
 	private Map<String, Set<String>> dependents;
@@ -38,11 +37,11 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
  	/**
 	 * Constructor.
 	 * 
-	 * @param builder the configuration builder to use
+	 * @param configuration the configuration
 	 * @param tools the tool box to use
 	 */
-	public ContainerHelper(ConfigurationBuilder<C,B,D,M> builder, ContainerToolBox<C,B,D,M> tools) {
-		this.builder = builder;
+	public ContainerHelper(C configuration, ContainerToolBox<C,B,D,M> tools) {
+		this.configuration = configuration;
 		this.tools = tools;
 	}
 	
@@ -78,22 +77,6 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 			module.shutdown();
 			modules.get(module.getName()).setShutdown();
 		}
-	}
-	
-	/**
-	 * Parse the textual system specification.
-	 * 
-	 * @param specification
-	 *            a string
-	 * @throws IllegalStateException
-	 *             if the method is called twice without reset
-	 * @throws ConfigurationException
-	 *             if something is wrong with the configuration
-	 */
-	public void parse(String specification) {
-		if (configuration != null)
-			throw new IllegalStateException("cannot call #parse twice without reset");
-		configuration = builder.build(specification);
 	}
 	
 	/**

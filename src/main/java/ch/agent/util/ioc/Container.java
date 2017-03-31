@@ -65,41 +65,51 @@ public class Container {
 
 	private long start; // start time of the #run method
 	
-	private ContainerHelper<
-		Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
-		ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
-		ModuleDefinition<Module<?>>,
-		Module<?>> helper;
+	private 
+		ContainerHelper<
+			Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
+			ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
+			ModuleDefinition<Module<?>>,
+			Module<?>
+		> helper;
 	
 	/**
 	 * Constructor.
 	 */
 	public Container() {
-		helper = new ContainerHelper<
-			Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
-			ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
-			ModuleDefinition<Module<?>>,
-			Module<?>>(
-				new ConfigurationBuilder<
-					Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
-					ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
-					ModuleDefinition<Module<?>>,
-					Module<?>>(new ModuleDefinitionBuilder<
-						ModuleDefinition<Module<?>>,
-						Module<?>>()),
-				new ContainerToolBox<
-					Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
-					ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
-					ModuleDefinition<Module<?>>,
-					Module<?>>(logger)
+	}
+
+	private ConfigurationBuilder<
+		Configuration<ModuleDefinition<Module<?>>, Module<?>>,
+		ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>,
+		ModuleDefinition<Module<?>>,
+		Module<?>
+	> getBuilder() {
+		return new ConfigurationBuilder<
+				Configuration<ModuleDefinition<Module<?>>, Module<?>>,
+				ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>,
+				ModuleDefinition<Module<?>>, 
+				Module<?>
+			>(
+				new ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>()
 			);
 	}
 
+	private <
+		C extends Configuration<D,M>,
+		B extends ModuleDefinitionBuilder<D,M>,
+		D extends ModuleDefinition<M>,
+		M extends Module<?>
+	> ContainerHelper<C,B,D,M> getHelper(C configuration, LoggerBridge logger) {
+		return new ContainerHelper<C,B,D,M>(configuration, new ContainerToolBox<C,B,D,M>(logger));
+	}
+
 	/**
-	 * Clear the data structures before a new configuration.
+	 * Clear the data structures before using a new configuration.
 	 */
 	protected void reset() {
-		helper.reset();
+		if (helper != null)
+			helper.reset();
 	}
 	
 	/**
@@ -110,8 +120,12 @@ public class Container {
 	 * @return a module, non-null
 	 * @throws NoSuchElementException
 	 *             if there is no module with that name
+	 * @throws IllegalArgumentException
+	 *             if method used after configuration error
 	 */
 	public Module<?> getModule(String name) {
+		if (helper == null)
+			throw new IllegalArgumentException("Bug: #getModule used after configuration error.");
 		return helper.getModule(name);
 	}
  	
@@ -138,7 +152,7 @@ public class Container {
 		start = System.currentTimeMillis();
 		logger.info(lazymsg(U.C20, Misc.truncate(Arrays.toString((String[]) parameters), 60, " (etc.)")));
 		try {
-			helper.parse(Misc.join(" ", parameters));
+			helper = getHelper(getBuilder().build(Misc.join(" ", parameters)), logger);
 			helper.configure();
 			helper.initialize();
 			helper.execute();
@@ -157,10 +171,12 @@ public class Container {
 	}
 
 	/**
-	 * Shutdown all modules in the reverse initialization sequence.
+	 * Shutdown all modules in the reverse initialization sequence. The method does
+	 * nothing in case of configuration errors, except logging the termination.
 	 */
 	public void shutdown() {
-		helper.shutdown();
+		if (helper != null)
+			helper.shutdown();
 		logger.info(lazymsg(U.C21, Misc.dhms(System.currentTimeMillis() - start)));
 	}
 		
