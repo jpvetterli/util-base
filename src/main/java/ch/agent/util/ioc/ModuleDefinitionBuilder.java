@@ -30,12 +30,16 @@ import ch.agent.util.args.Args;
  */
 public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends Module<?>> {
 	
+	int review_javadoc; // configuration
+	
 	public static final String MODULE_NAME = "name";
 	public static final String MODULE_CLASS = "class";
 	public static final String MODULE_REQUIREMENT = "requirement";
 	public static final String MODULE_REQUIREMENT_AKA = "require";
 	public static final String MODULE_PREDECESSOR = "predecessor";
 	public static final String MODULE_PREDECESSOR_AKA = "pred";
+	public static final String MODULE_CONFIG = "configuration";
+	public static final String MODULE_CONFIG_AKA = "config";
 	
 	private Args parameters;
 	
@@ -75,6 +79,7 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 		p.def(MODULE_CLASS);
 		p.defList(MODULE_REQUIREMENT).aka(MODULE_REQUIREMENT_AKA);
 		p.defList(MODULE_PREDECESSOR).aka(MODULE_PREDECESSOR_AKA);
+		p.def(MODULE_CONFIG).aka(MODULE_CONFIG_AKA).init("");
 	}
 
 	/**
@@ -92,7 +97,8 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 				p.get(MODULE_NAME), 
 				p.get(MODULE_CLASS), 
 				p.getVal(MODULE_REQUIREMENT).stringArray(), 
-				p.getVal(MODULE_PREDECESSOR).stringArray());
+				p.getVal(MODULE_PREDECESSOR).stringArray(),
+				p.get(MODULE_CONFIG));
 	}
 
 }

@@ -34,13 +34,12 @@ import ch.agent.util.base.Misc;
  * and delegates their handling to a <em>module definition builder</em> passed
  * to the constructor.
  * <p>
- * The builder also extracts the <em>configuration</em> and <em>execution</em>
- * specifications from:
+ * The builder also extracts the <em>execution</em>
+ * specification from:
  * 
  * <pre>
  * <code>
- * configuration=[<em>config string</em>]  (abbreviated config)
- * execution=[<em>exec string</em>]  (abbreviated exec)
+ * execution=[<em>execution string</em>]  (abbreviated exec)
  * </code>
  * </pre>
  * 
@@ -56,8 +55,6 @@ import ch.agent.util.base.Misc;
 public class ConfigurationBuilder<C extends Configuration<D,M>, B extends ModuleDefinitionBuilder<D,M>, D extends ModuleDefinition<M>, M extends Module<?>> {
 
 	public static final String MODULE = "module";
-	public static final String CONFIG = "configuration";
-	public static final String CONFIG_AKA = "config";
 	public static final String EXEC = "execution";
 	public static final String EXEC_AKA = "exec";
 	
@@ -104,7 +101,6 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 */
 	protected void defineSyntax(Args p) {
 		p.defList(MODULE);
-		p.def(CONFIG).aka(CONFIG_AKA).init(""); // can be omitted
 		p.def(EXEC).aka(EXEC_AKA).init(""); // can be omitted
 	}
 
@@ -113,29 +109,28 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 * 
 	 * @param p
 	 *            the object taking parameters
-	 * @return a module specification
+	 * @return a configuration
 	 * @throws ConfigurationException
 	 *             if something is wrong
 	 */
 	@SuppressWarnings("unchecked")
 	protected C build(Args p) {
 		String[] moduleStatements = p.getVal(MODULE).stringArray();
-		String config = p.get(CONFIG);
 		String exec = p.get(EXEC);
 		List<D> sortedModules = parseModuleSpecifications(moduleStatements);
-		return (C) new Configuration<D,M>(sortedModules, config, exec);
+		return (C) new Configuration<D,M>(sortedModules, exec);
 	}
 
 	/**
 	 * Parse an array of module specifications into a list of module
-	 * definitions. The list is sorted to take dependencies into account. This
-	 * is the order to use for initializing modules and the reverse order for
+	 * definitions. The list sequence takes dependencies into account. This is
+	 * the order to use for initializing modules and the reverse order for
 	 * shutting down.
 	 * <p>
 	 * This method encapsulates some of the essential logic of the builder and
 	 * can be reused when overriding {@link #build(Args)}. Subclasses which need
 	 * to enforce constraints on dependency requirements should override
-	 * {@link #sortDependencies}.
+	 * {@link #sortDependencies} and/or {@link #validatePrerequisite}.
 	 * 
 	 * @param specifications
 	 *            an array of module specifications
@@ -144,7 +139,7 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 *             when a configuration error is detected
 	 */
 	protected List<D> parseModuleSpecifications(String[] specifications) {
-		Map<String, D> definitions = new LinkedHashMap<String, D>();
+		Map<String, D> definitions = new LinkedHashMap<String, D>(specifications.length);
 		parseModuleSpecifications(specifications, definitions);
 		validatePrerequisites(definitions);
 		return sortDependencies(definitions);
@@ -175,19 +170,47 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	/**
 	 * Validate module requirements.
 	 * 
+	 * @param definitions
+	 *            a map of module definitions keyed by name
 	 * @throws ConfigurationException
 	 *             if one or more required modules are missing
 	 */
 	protected void validatePrerequisites(Map<String, D> definitions) {
 		List<String> missing = new ArrayList<String>();
-		for (ModuleDefinition<M> spec : definitions.values()) {
-			for (String req : spec.getPrerequisites()) {
-				if (definitions.get(req) == null)
-					missing.add(req);
+		for (D def : definitions.values()) {
+			for (String name : def.getPredecessors()) {
+				D pred = definitions.get(name);
+				if (pred == null)
+					missing.add(name);
+				else
+					validatePrerequisite(def, pred, false);
+			}
+			for (String name : def.getRequirements()) {
+				D req = definitions.get(name);
+				if (req == null)
+					missing.add(name);
+				else
+					validatePrerequisite(def, req, true);
 			}
 		}
 		if (missing.size() > 0)
 			throw new ConfigurationException(msg(U.C16, Misc.join("\", \"", missing)));
+	}
+	
+	/**
+	 * Validate a prerequisite for a module. This method is a hook for
+	 * subclasses.
+	 * 
+	 * @param module
+	 *            the definition of the module which has the prerequisite
+	 * @param prerequisite
+	 *            the definition of the prerequisite
+	 * @param requirement
+	 *            true if it is a requirement, false if it is a predecessor
+	 * @throws ConfigurationException
+	 *             if the requirement is rejected
+	 */
+	protected void validatePrerequisite(D module, D prerequisite, boolean requirement) {
 	}
 	
 	/**
@@ -204,6 +227,9 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 * overriding method would call the super method, inspect the result list,
 	 * and throw a {@link ConfigurationException} if something is wrong.
 	 * 
+	 * @param definitions
+	 *            a map of module definitions keyed by name
+	 * @return a list module definitions in valid initialization sequence
 	 * @throws ConfigurationException
 	 *             if it is impossible to compute a valid sequence
 	 */

@@ -1,16 +1,21 @@
 package ch.agent.util.ioc;
 
+import static ch.agent.util.STRINGS.lazymsg;
+import static ch.agent.util.STRINGS.msg;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
+import ch.agent.util.STRINGS.U;
 import ch.agent.util.args.Args;
 import ch.agent.util.base.Misc;
-import ch.agent.util.ioc.ContainerToolBox.ManagedModule;
-import ch.agent.util.ioc.ContainerToolBox.SimpleCommandRegistry;
+import ch.agent.util.logging.LoggerBridge;
+import ch.agent.util.logging.LoggerManager;
 
 /**
  * The simple container helper provides a collection of methods useful for
@@ -27,30 +32,51 @@ import ch.agent.util.ioc.ContainerToolBox.SimpleCommandRegistry;
  */
 public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefinitionBuilder<D,M>, D extends ModuleDefinition<M>, M extends Module<?>> {
 	
+	final static LoggerBridge logger = LoggerManager.getLogger(ContainerHelper.class);
+	
+	/**
+	 * Command registry used during module initialization.
+	 *
+	 */
+	public static class SimpleCommandRegistry implements CommandRegistry {
+
+		private Map<String, Command<?>> commands; // key is the actual command name 
+		
+		public SimpleCommandRegistry() {
+			commands = new HashMap<String, Command<?>>();
+		}
+
+		@Override
+		public void register(Command<?> command) {
+			String name = command.getFullName();
+			Command<?> existing = commands.get(name);
+			if (existing != null)
+				throw new ConfigurationException(msg(U.C12, command.getModule().getName(), command.getFullName()));
+			commands.put(name, command);
+		}
+	
+		@Override
+		public Map<String, Command<?>> getCommands() {
+			return commands;
+		}
+		
+	}
+	
 	private C configuration;
-	private ContainerToolBox<C,B,D,M> tools;
-	private Map<String, ManagedModule<D,M>> modules;
+	private Map<String, M> modules;
 	private SimpleCommandRegistry commandRegistry;
-	private Map<String, Set<String>> dependents;
 	private boolean commandsGuard;
 	
  	/**
 	 * Constructor.
 	 * 
 	 * @param configuration the configuration
-	 * @param tools the tool box to use
 	 */
-	public ContainerHelper(C configuration, ContainerToolBox<C,B,D,M> tools) {
+	public ContainerHelper(C configuration) {
+		Misc.nullIllegal(configuration, "configuration null");
 		this.configuration = configuration;
-		this.tools = tools;
-	}
-	
-	public void reset() {
-		configuration = null;
-		modules = null;
-		commandRegistry = null;
-		commandsGuard = false;
-		dependents = null;
+		this.modules = new HashMap<String, M>(configuration.getModuleCount());
+		commandRegistry = new SimpleCommandRegistry();
 	}
 	
 	/**
@@ -60,43 +86,20 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 * 
 	 */
 	public void shutdown() {
-		if (modules != null)
-			tools.shutdown(modules);
-	}
-	
-	/**
-	 * Shutdown one module. It is not allowed to shutdown a module still
-	 * required by another module.
-	 * <p>
-	 * See also {@link #shutdown()}.
-	 * 
-	 */
-	public void shutdown(M module) {
-		if (modules != null) {
-			tools.ensureModulesShutdown(module.getName(), getDependents().get(module.getName()), modules);
-			module.shutdown();
-			modules.get(module.getName()).setShutdown();
+		List<M> list = new ArrayList<M>(modules.values());
+		int i = list.size();
+		while (--i >= 0) {
+			try {
+				M module = list.get(i);
+				module.shutdown();
+			} catch (Exception e) {
+				// ignore
+			}
 		}
 	}
 	
 	/**
 	 * Create and configure all modules.
-	 * <p>
-	 * The method creates a little {@link Args} language to parse the
-	 * <em>configuration</em> specification. In this language, parameter names
-	 * are the module names, their expected value is a string, and they can be
-	 * omitted. As an example, if there are three modules A, B, and C, the
-	 * following configuration will be parsed successfully:
-	 * 
-	 * <pre>
-	 * <code>
-	 * configuration=[
-	 *   B = [<em>configuration details for module B</em>]
-	 *   A = [<em>configuration details for module A</em>]
-	 *   # C is omitted
-	 * ]
-	 * </code>
-	 * </pre>
 	 * 
 	 * @throws IllegalStateException
 	 *             if #parse not called successfully
@@ -106,11 +109,19 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 *             as soon as creating or configuring a module fails
 	 */
 	public void configure() throws Exception {
-		if (configuration == null)
-			throw new IllegalStateException("#parse not called successfully");
-		if (modules != null)
-			throw new IllegalStateException("cannot call #configure twice without reset");
-		modules = tools.configureModules(configuration);
+		for (String name : configuration.getModuleNames()) {
+			configure(name);
+		}
+	}
+	
+	/**
+	 * Create and configure one module.
+	 */
+	public M configure(String name) throws Exception {
+		M module = configuration.getModuleDefinition(name).configure(modules, commandRegistry);
+		if (modules.put(name, module) != null)
+			throw new IllegalStateException(msg(U.C55, name));
+		return module;
 	}
 
 	/**
@@ -125,35 +136,14 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 *             as soon as the initialization of a module fails
 	 */
 	public void initialize() throws Exception {
-		if (modules == null)
-			throw new IllegalStateException("#configure not called successfully");
-		for (ManagedModule<D,M> memo : modules.values()) {
-			M module = memo.getModule();
-			initialize(module);
+		for (M module : modules.values()) {
+			if (!module.initialize())
+				logger.warn(lazymsg(U.C25, module.getName()));
+			else
+				logger.debug(lazymsg(U.C18, module.getName()));
 		}
 	}
 	
-	/**
-	 * Initialize one module in a sequence which guarantees that required
-	 * modules are initialized before modules requiring them.
-	 * 
-	 * @throws IllegalStateException
-	 *             if #configure not called successfully
-	 * @throws IllegalStateException
-	 *             if the method is called twice without reset
-	 * @throws Exception
-	 *             as soon as the initialization of a module fails
-	 */
-	public void initialize(M module) throws Exception {
-		if (modules == null)
-			throw new RuntimeException("modules null, module: " + module.getName());
-		if (commandRegistry == null)
-			commandRegistry = new SimpleCommandRegistry();
-		// next ensures that (1) module not initialized and (2) required modules initialized
-		tools.initializeModule(module, modules, commandRegistry);
-		modules.get(module.getName()).setInitialized();
-	}
-
 	/**
 	 * Execute all commands in the <em>execution</em> specification.
 	 * <p>
@@ -183,69 +173,43 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 *             execution of commands can throw exceptions
 	 */
 	public void execute() throws Exception {
-		if (modules == null)
-			throw new IllegalStateException("#initialize not called successfully");
 		if (commandsGuard)
 			throw new IllegalStateException("cannot call #execute twice without reset");
-		
-		tools.ensureAllModulesInitialized(modules);
 		if (commandRegistry != null)
-			tools.executeCommands(configuration, commandRegistry);
+			executeCommands(configuration, commandRegistry);
 		commandsGuard = true;
 	}
 
 	/**
-	 * Get all modules.
+	 * Get all the modules which have been already configured.
 	 * 
-	 * @return a collection of a modules
-	 * @throws IllegalStateException
-	 *             if #configure not called successfully
+	 * @return a collection of modules
 	 */
 	public Collection<M> getModules() {
-		if (modules == null)
-			throw new IllegalStateException("#configure not called successfully");
-		return tools.asList(modules);
+		return modules.values();
 	}
 	
 	/**
 	 * Get a module by name.
 	 * 
 	 * @param name
-	 *            the name of the module, non-null
-	 * @return a module, non-null
-	 * @throws NoSuchElementException
-	 *             if there is no module with that name
-	 * @throws IllegalStateException
-	 *             if #configure not called successfully
+	 *            the name of the module
+	 * @return a module or null if the module has not yet been configured (or does not exist)
 	 */
 	public M getModule(String name) {
-		if (modules == null)
-			throw new IllegalStateException("#configure not called successfully");
-		Misc.nullIllegal(name, "name null");
-		ManagedModule<D,M> mm = modules.get(name);
-		if (mm == null)
-			throw new NoSuchElementException(name);
-		return mm.getModule();
+		return modules.get(name);
 	}
 	
 	/**
-	 * Get a command by name. The name to specify is the full name of 
-	 * the command.
+	 * Get a command by name. The name to specify is the full name of the
+	 * command.
 	 * 
 	 * @param name
-	 *            the name of the command, non-null
-	 * @return a command, non-null
-	 * @throws NoSuchElementException
-	 *             if there is no command with that name
+	 *            the name of the command
+	 * @return a command or null if there is no such command in the registry
 	 */
 	public Command<?> getCommand(String name) {
-		if (commandRegistry == null)
-			throw new IllegalStateException("modules not initialized");
-		Misc.nullIllegal(name, "name null");
-		Command<?> command = commandRegistry.getCommands().get(name);
-		if (command == null)
-			throw new NoSuchElementException(name);
-		return command;
+		return commandRegistry.getCommands().get(name);
 	}
 	
 	/**
@@ -268,6 +232,64 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	}
 	
 	/**
+	 * Execute all commands in the <em>execution</em> specification.
+	 * <p>
+	 * The method creates a little {@link Args} language to parse the
+	 * <em>execution</em> specification. In this language, parameter names are
+	 * the command names (possibly prefixed for uniqueness by the module name),
+	 * their expected value is a string, and they are repeatable (and can be
+	 * omitted). As an example, if there are three commands A.X, B.X, and Y, the
+	 * following configuration will be parsed successfully:module
+	 * 
+	 * <pre>
+	 * <code>
+	 * execution=[
+	 *   A.X = [<em>execution details for command A.X</em>]
+	 *   A.X = [<em>possibly different execution details for command A.X</em>]
+	 *   Y = [<em>execution details for command Y</em>]
+	 *   # B.X is omitted
+	 * ]
+	 * </code>
+	 * </pre>
+	 * 
+	 * @param configuration
+	 *            the non-null configuration object
+	 * @param registry
+	 *            a non-null command registry
+	 * @throws Exception
+	 *             execution of commands can throw exceptions
+	 */
+	public void executeCommands(C configuration, CommandRegistry registry) throws Exception {
+		Args execSyntax = new Args();
+		Map<String, Command<?>> commands = registry.getCommands();
+		for (String commandName : commands.keySet()) {
+			execSyntax.defList(commandName); // a command can be executed 0 or more times
+		}
+		execSyntax.setSequenceTrackingMode(true);
+		
+		try {
+			execSyntax.parse(configuration.getExecution());
+		} catch (Exception e) {
+			throw new ConfigurationException(msg(U.C24), e);
+		}
+		
+		List<String[]> statements = execSyntax.getSequence();
+		for (String[] statement : statements) {
+			Command<?> command = commands.get(statement[0]);
+			try {
+				if (!command.execute(statement[1])) {
+					if (logger != null)
+						logger.warn(lazymsg(U.C26, command.getName(), command.getModule().getName(), statement[1]));
+				}
+			} catch (EscapeException e) {
+				throw e;
+			} catch (Exception e) {
+				throw new Exception(msg(U.C22, command.getName(), command.getModule().getName(), statement[1]), e);
+			}
+		}
+	}
+	
+	/**
 	 * Return dependents. This is a map of module names to set of module names.
 	 * Values identify modules which have the module named in the key as a
 	 * requirement or a predecessor.
@@ -275,24 +297,21 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 	 * @return a map of module name to set of module name
 	 */
 	public Map<String, Set<String>> getDependents() {
-		if (modules == null)
-			throw new IllegalStateException("#configure not called successfully");
-		if (dependents == null) {
-			for (ManagedModule<D,M> mm : modules.values()) {
-				addDependents(dependents, mm.getModule().getName(), mm.getModuleDefinition().getPrerequisites());
-			}
+		Map<String, Set<String>> dependents = new HashMap<String, Set<String>>();
+		for (D def : configuration.getModuleDefinitions()) {
+			addDependents(dependents, def.getName(), def.getPrerequisites());
 		}
 		return dependents;
 	}
 	
-	protected void addDependents(Map<String, Set<String>> map, String key, String[] values) {
-		for (String value : values) {
-			Set<String> deps = map.get(value);
+	protected void addDependents(Map<String, Set<String>> map, String module, String[] prereqs) {
+		for (String prereq : prereqs) {
+			Set<String> deps = map.get(prereq);
 			if (deps == null) {
 				deps = new HashSet<String>();
-				map.put(value, deps);
+				map.put(prereq, deps);
 			}
-			deps.add(key);
+			deps.add(module);
 		}
 	}
 	

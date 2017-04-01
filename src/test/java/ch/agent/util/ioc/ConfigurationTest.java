@@ -16,8 +16,8 @@ public class ConfigurationTest {
 
 		private final boolean isFoo;
 		
-		public FooModDef(String name, boolean isFoo, String className, String[] required, String[] predecessors) {
-			super(name, className, required, predecessors);
+		public FooModDef(String name, boolean isFoo, String className, String[] required, String[] predecessors, String config) {
+			super(name, className, required, predecessors, config);
 			this.isFoo = isFoo;
 		}
 
@@ -37,7 +37,8 @@ public class ConfigurationTest {
 					p.getVal("foo").booleanValue(),
 					p.get(MODULE_CLASS), 
 					p.getVal(MODULE_REQUIREMENT).stringArray(), 
-					p.getVal(MODULE_PREDECESSOR).stringArray());
+					p.getVal(MODULE_PREDECESSOR).stringArray(),
+					p.get(MODULE_CONFIG));
 		}
 
 		@Override
@@ -51,8 +52,8 @@ public class ConfigurationTest {
 
 		private final String foo;
 		
-		public FooConf(List<T> modules, String config, String exec, String foo) {
-			super(modules, config, exec);
+		public FooConf(List<T> modules, String exec, String foo) {
+			super(modules, exec);
 			this.foo = foo;
 		}
 
@@ -78,7 +79,7 @@ public class ConfigurationTest {
 		@Override
 		protected C build(Args p) {
 			Configuration<D, Module<?>> c = super.build(p);
-			return (C) new FooConf<D>(c.getModuleDefinitions(), c.getConfiguration(), c.getExecution(), p.get("foo"));
+			return (C) new FooConf<D>(c.getModuleDefinitions(), c.getExecution(), p.get("foo"));
 		}
 		
 	}
@@ -96,13 +97,11 @@ public class ConfigurationTest {
 	public void test1() {
 		try {
 			String spec = 
-				"module=[name=a class=aclass require=b foo=true]" + 
+				"module=[name=a class=aclass require=b config=[config stuff] foo=true]" + 
 				"module=[name=b class=bclass foo=false]" + 
-				"config=[config stuff]" + 
 				"exec = [exec stuff]" + 
 				"foo = [foo stuff]";
 			FooConf<FooModDef> c = getBuilder().build(spec);
-			assertEquals("config stuff", c.getConfiguration());
 			assertEquals("exec stuff", c.getExecution());
 			assertEquals("foo stuff", c.getFoo());
 			List<FooModDef> definitions = c.getModuleDefinitions();
@@ -111,6 +110,7 @@ public class ConfigurationTest {
 			assertEquals(false, mb.isFoo());
 			FooModDef ma = definitions.get(1);
 			assertEquals(true, ma.isFoo());
+			assertEquals("config stuff", ma.getConfiguration());
 			assertEquals(2, definitions.size());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -124,7 +124,6 @@ public class ConfigurationTest {
 			String spec = 
 				"module=[name=a class=aclass require=b foo=true]" + 
 				"module=[name=a class=bclass foo=false]" + 
-				"config=[config stuff]" + 
 				"exec = [exec stuff]" + 
 				"foo = [foo stuff]";
 			getBuilder().build(spec);
@@ -138,10 +137,9 @@ public class ConfigurationTest {
 	public void test3() {
 		try {
 			String spec = 
-				"module=[name=a class=aclass require=c foo=true]" + 
+				"module=[name=a class=aclass require=c config=[config stuff] foo=true]" + 
 				"module=[name=b class=bclass require=a foo=false]" + 
 				"module=[name=c class=cclass require=b foo=false]" + 
-				"config=[config stuff]" + 
 				"exec = [exec stuff]" + 
 				"foo = [foo stuff]";
 			getBuilder().build(spec);

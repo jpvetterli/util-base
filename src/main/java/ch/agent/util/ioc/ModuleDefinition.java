@@ -3,7 +3,10 @@ package ch.agent.util.ioc;
 import static ch.agent.util.STRINGS.msg;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import ch.agent.util.STRINGS.U;
@@ -29,10 +32,13 @@ import ch.agent.util.base.Misc;
  */
 public class ModuleDefinition<M extends Module<?>> {
 	
+	int review_javadoc; // configuration string
+	
 	private final String name;
 	private final String className;
 	private final String[] req; // module names required by this module
 	private final String[] pred; // module names preceding but not required
+	private final String configuration;
 	
 	/**
 	 * Constructor.
@@ -45,10 +51,12 @@ public class ModuleDefinition<M extends Module<?>> {
 	 *            array of required modules
 	 * @param predecessors
 	 *            array of predecessor modules
+	 * @param configuration
+	 *            a configuration string or null
 	 * @throws ConfigurationException
 	 *             if something is wrong
 	 */
-	public ModuleDefinition(String name, String className, String[] required, String[] predecessors) {
+	public ModuleDefinition(String name, String className, String[] required, String[] predecessors, String configuration) {
 		Misc.nullIllegal(name, "name null");
 		Misc.nullIllegal(className, "className null");
 		Set<String> duplicates = new HashSet<String>();
@@ -69,6 +77,7 @@ public class ModuleDefinition<M extends Module<?>> {
 		this.className = className;
 		this.req = required;
 		this.pred = predecessors;
+		this.configuration = Misc.isEmpty(configuration) ? null : configuration;
 	}
 	
 	/**
@@ -82,6 +91,7 @@ public class ModuleDefinition<M extends Module<?>> {
 		this.className = original.className;
 		this.req = original.req;
 		this.pred = original.pred;
+		this.configuration = original.configuration;
 	}
 
 	/**
@@ -103,6 +113,33 @@ public class ModuleDefinition<M extends Module<?>> {
 	}
 	
 	/**
+	 * Create and configure the module using this definition. The module map
+	 * provides all required modules. The steps performed are:
+	 * <ul>
+	 * <li>a new module is created
+	 * <li>all required modules are added 
+	 * <li>the module is configured with the configuration string, if any
+	 * <li>zero or more commands are registered
+	 * </ul>
+	 * 
+	 * @param modules
+	 *            name to module map
+	 * @param registry
+	 *            the command registry used to register module commands
+	 * @return the module
+	 * @throws ConfigurationException
+	 *             in case of configuration failure
+	 */
+	public M configure(Map<String, M> modules, CommandRegistry registry) {
+		M module = create();
+		addRequiredModules(module, modules);
+		if (getConfiguration() != null)
+			module.configure(getConfiguration());
+		module.registerCommands(registry);
+		return module;
+	}
+	
+	/**
 	 * Get the module name.
 	 * 
 	 * @return a non-null string
@@ -117,6 +154,15 @@ public class ModuleDefinition<M extends Module<?>> {
 	 */
 	public String getClassName() {
 		return className;
+	}
+
+	/**
+	 * Get the configuration string.
+	 * 
+	 * @return the configuration string or null
+	 */
+	public String getConfiguration() {
+		return configuration;
 	}
 
 	/**
@@ -152,6 +198,42 @@ public class ModuleDefinition<M extends Module<?>> {
 		return concat(req,  pred);
 	}
 	
+	/**
+	 * Add all modules required. Required modules must be available in the map.
+	 * The map can contain other modules, it is not used to decide if a module
+	 * is required.
+	 * 
+	 * @param requiring
+	 *            the requiring module
+	 * @param modules
+	 *            map with at least the required modules
+	 * @throws ConfigurationException
+	 *             if required modules are missing or are rejected
+	 */
+	protected void addRequiredModules(M requiring, Map<String, M> modules) {
+		List<String> missing = new ArrayList<String>();
+		List<String> rejected = new ArrayList<String>();
+		for (String name : getRequirements()) {
+			M required = modules.get(name);
+			if (required == null)
+				missing.add(name);
+			else {
+				if (!requiring.add(required))
+					rejected.add(name);
+			}
+		}
+		if (missing.size() > 0 || rejected.size() > 0) {
+			String message;
+			if (missing.size() == 0)
+				message = msg(U.C52, requiring.getName(), Misc.join("\", \"", rejected));
+			else if (rejected.size() == 0)
+				message = msg(U.C53, requiring.getName(), Misc.join("\", \"", missing));
+			else	
+				message = msg(U.C54, requiring.getName(), Misc.join("\", \"", rejected), Misc.join("\", \"", missing));
+			throw new ConfigurationException(message);
+		}
+	}
+
 	protected String[] concat(String[] arr1, String[] arr2) {
 		String[] c = new String[arr1.length + arr2.length];
 		System.arraycopy(arr1, 0, c, 0, arr1.length);

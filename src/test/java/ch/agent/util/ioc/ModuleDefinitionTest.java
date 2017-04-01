@@ -12,8 +12,8 @@ public class ModuleDefinitionTest {
 
 		private final boolean isFoo;
 		
-		public FooModuleDefinition(String name, boolean isFoo, String className, String[] required, String[] predecessors) {
-			super(name, className, required, predecessors);
+		public FooModuleDefinition(String name, boolean isFoo, String className, String[] required, String[] predecessors, String config) {
+			super(name, className, required, predecessors, config);
 			this.isFoo = isFoo;
 		}
 
@@ -27,8 +27,8 @@ public class ModuleDefinitionTest {
 
 		private final boolean isBar;
 		
-		public FooBarModuleDefinition(String name, boolean isFoo, boolean isBar, String className, String[] required, String[] predecessors) {
-			super(name, isFoo, className, required, predecessors);
+		public FooBarModuleDefinition(String name, boolean isFoo, boolean isBar, String className, String[] required, String[] predecessors, String config) {
+			super(name, isFoo, className, required, predecessors, config);
 			this.isBar = isBar;
 		}
 
@@ -49,7 +49,8 @@ public class ModuleDefinitionTest {
 					p.getVal("foo").booleanValue(),
 					p.get(MODULE_CLASS), 
 					p.getVal(MODULE_REQUIREMENT).stringArray(), 
-					p.getVal(MODULE_PREDECESSOR).stringArray());
+					p.getVal(MODULE_PREDECESSOR).stringArray(),
+					p.get(MODULE_CONFIG));
 		}
 
 		@Override
@@ -71,7 +72,8 @@ public class ModuleDefinitionTest {
 					p.getVal("bar").booleanValue(),
 					md.getClassName(), 
 					md.getRequirements(), 
-					md.getPredecessors());
+					md.getPredecessors(),
+					md.getConfiguration());
 		}
 		
 		@Override

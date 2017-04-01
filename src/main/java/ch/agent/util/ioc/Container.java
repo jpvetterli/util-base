@@ -1,7 +1,6 @@
 package ch.agent.util.ioc;
 
 import static ch.agent.util.STRINGS.lazymsg;
-import static ch.agent.util.STRINGS.msg;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -101,17 +100,9 @@ public class Container {
 		D extends ModuleDefinition<M>,
 		M extends Module<?>
 	> ContainerHelper<C,B,D,M> getHelper(C configuration, LoggerBridge logger) {
-		return new ContainerHelper<C,B,D,M>(configuration, new ContainerToolBox<C,B,D,M>(logger));
+		return new ContainerHelper<C,B,D,M>(configuration);
 	}
 
-	/**
-	 * Clear the data structures before using a new configuration.
-	 */
-	protected void reset() {
-		if (helper != null)
-			helper.reset();
-	}
-	
 	/**
 	 * Get a module by name.
 	 * 
@@ -148,7 +139,6 @@ public class Container {
 	 *             anything can happen during execution
 	 */
 	public void run(String[] parameters) throws Exception {
-		reset();
 		start = System.currentTimeMillis();
 		logger.info(lazymsg(U.C20, Misc.truncate(Arrays.toString((String[]) parameters), 60, " (etc.)")));
 		try {
@@ -157,9 +147,9 @@ public class Container {
 			helper.initialize();
 			helper.execute();
 		} catch (EscapeException e) {
-			logger.warn(msg(U.C19, e.getMessage()));
+			logger.warn(lazymsg(U.C19, e.getMessage()));
 		} catch (Exception e) {
-			logger.error(msg(U.C23, e.getClass().getSimpleName()));
+			logger.error(lazymsg(U.C23, e.getClass().getSimpleName()));
 			Throwable cause = e;
 			while (cause != null) {
 				if (!(cause instanceof InvocationTargetException))

@@ -1,7 +1,7 @@
 package ch.agent.util.ioc;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +13,6 @@ import java.util.Map;
  * <ul>
  * <li>a list of module definitions in a sequence compatible with dependency
  * constraints,
- * <li>a <em>configuration</em> specification, and
  * <li>an <em>execution</em> specification.
  * </ul>
  * 
@@ -24,40 +23,52 @@ import java.util.Map;
  */
 public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 
-	private final String configuration;
+	int review_javadoc; // configuration
+	
 	private final String execution;
-
-	private final Map<String, Integer> names;
-	private final List<D> modules;
+	private final Map<String, D> modules;
 
 	/**
-	 * Constructor. The modules in the list must be in a valid dependency
-	 * sequence.
+	 * Constructor. Modules must be provided in a valid dependency sequence.
 	 * 
-	 * @param modules
-	 *            list of module definitions
-	 * @param configuration
-	 *            the configuration specification
+	 * @param definitions
+	 *            the list of module definitions in valid initialization sequence
 	 * @param execution
 	 *            the execution specification
 	 */
-	public Configuration(List<D> modules, String configuration, String execution) {
-		this.modules = new ArrayList<D>(modules);
-		this.configuration = configuration;
+	public Configuration(List<D> definitions, String execution) {
 		this.execution = execution;
-		names = new HashMap<String, Integer>();
-		for (int i = 0; i < modules.size(); i++) {
-			names.put(modules.get(i).getName(), i);
+		this.modules = new LinkedHashMap<String, D>();
+		for (D def : definitions) {
+			this.modules.put(def.getName(), def);
 		}
 	}
 
 	/**
-	 * Get a copy of the module definitions list.
+	 * Get a copy of all module names in valid initialization sequence.
+	 * 
+	 * @return a list of module names
+	 */
+	public List<String> getModuleNames() {
+		return new ArrayList<String>(modules.keySet());
+	}
+	
+	/**
+	 * Get a copy of all module definitions in valid initialization sequence.
 	 * 
 	 * @return a list of module definitions
 	 */
 	public List<D> getModuleDefinitions() {
-		return new ArrayList<D>(modules);
+		return new ArrayList<D>(modules.values());
+	}
+
+	/**
+	 * Return the number of module definitions.
+	 * 
+	 * @return a non-negative number
+	 */
+	public int getModuleCount() {
+		return modules.size();
 	}
 	
 	/**
@@ -67,24 +78,10 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 	 *            the module name
 	 * @return the module specification or null if none such
 	 */
-	public ModuleDefinition<M> get(String name) {
-		Integer i = names.get(name);
-		return i == null ? null : modules.get(i);
+	public ModuleDefinition<M> getModuleDefinition(String name) {
+		return modules.get(name);
 	}
 	
-	/**
-	 * Return the <em>configuration</em> specification. The configuration
-	 * specification is an opaque block of text which contains configuration
-	 * details for all modules. The configuration for a given module can be
-	 * extracted using the module name. The details of how to perform
-	 * this extraction is not the responsibility of this object.
-	 * 
-	 * @return a string, possibly empty, not null
-	 */
-	public String getConfiguration() {
-		return configuration;
-	}
-
 	/**
 	 * Return the <em>execution</em> specification. The execution specification
 	 * is an opaque block of text which contains instructions on module commands

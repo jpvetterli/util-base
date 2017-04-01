@@ -285,8 +285,7 @@ public class ContainerTest {
 		try {
 			c.run(new String[]{
 					String.format("module=[name = a class=%s require=b]", AModule.class.getName()),
-					String.format("module=[name = b class=%s]", BModule.class.getName()),
-					"config=[b=[tag=[This tag was modified.]]]",
+					String.format("module=[name = b class=%s config=[tag=[This tag was modified.]]]", BModule.class.getName()),
 			});
 			c.shutdown();
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
@@ -303,8 +302,7 @@ public class ContainerTest {
 		try {
 			c.run(new String[]{
 					String.format("module=[name = a class=%s require=b]", AModule.class.getName()),
-					String.format("module=[name = b class=%s]", BModule.class.getName()),
-					"config=[b=[tag=[This tag was modified.]]]",
+					String.format("module=[name = b class=%s config=[tag=[This tag was modified.]]]", BModule.class.getName()),
 					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3]]"
 			});
 			c.shutdown();
@@ -325,9 +323,8 @@ public class ContainerTest {
 		try {
 			c.run(new String[]{
 					String.format("module=[name = a class=%s require=b]", AModule.class.getName()),
-					String.format("module=[name = b class=%s]", BModule.class.getName()),
+					String.format("module=[name = b class=%s config=[tag=[This tag was modified.]]]", BModule.class.getName()),
 					String.format("module=[name = c class=%s]", CModule.class.getName()),
-					"config=[b=[tag=[This tag was modified.]]]",
 					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3] c.echo=[hello world]]"
 			});
 			c.shutdown();
@@ -352,7 +349,7 @@ public class ContainerTest {
 			c.shutdown();
 			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue("message C12 ?",  e.getCause().getMessage().indexOf("already registered") > 0);
+			assertTrue("message C12 ?",  e.getMessage().indexOf("already registered") > 0);
 		}
 	}
 	
@@ -366,7 +363,7 @@ public class ContainerTest {
 			c.shutdown();
 			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue("message C14 ?",  e.getMessage().startsWith("C14"));
+			assertTrue("message C03 ?",  e.getMessage().startsWith("C03"));
 		}
 	}
 
@@ -390,7 +387,8 @@ public class ContainerTest {
 			c.run(new String[]{"module=[name = foo class=foo]"});
 			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith("C14"));
+			e.printStackTrace();
+			assertTrue("message C03 ?", e.getMessage().startsWith("C03"));
 		} finally {
 			c.shutdown();
 		}
@@ -403,7 +401,7 @@ public class ContainerTest {
 			c.run(new String[]{"module=[name = foo class=java.lang.String]"});
 			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith("C14"));
+			assertTrue(e.getMessage().startsWith("C03"));
 		} finally {
 			c.shutdown();
 		}
