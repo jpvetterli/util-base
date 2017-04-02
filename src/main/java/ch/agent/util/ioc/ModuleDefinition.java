@@ -117,15 +117,15 @@ public class ModuleDefinition<M extends Module<?>> {
 	 * provides all required modules. The steps performed are:
 	 * <ul>
 	 * <li>a new module is created
-	 * <li>all required modules are added 
-	 * <li>the module is configured with the configuration string, if any
-	 * <li>zero or more commands are registered
+	 * <li>all required modules are added to the module
+	 * <li>the configuration specification, if any, is passed to the module
+	 * <li>the module registers zero or more commands
 	 * </ul>
 	 * 
 	 * @param modules
 	 *            name to module map
 	 * @param registry
-	 *            the command registry used to register module commands
+	 *            the registry used to register module commands
 	 * @return the module
 	 * @throws ConfigurationException
 	 *             in case of configuration failure
@@ -157,7 +157,10 @@ public class ModuleDefinition<M extends Module<?>> {
 	}
 
 	/**
-	 * Get the configuration string.
+	 * Return the <em>configuration</em> specification. The configuration
+	 * specification is an opaque block of text which contains instructions
+	 * understood by the module. The configuration is used by the
+	 * {@link #configure} method.
 	 * 
 	 * @return the configuration string or null
 	 */
