@@ -149,5 +149,53 @@ public class ConfigurationTest {
 		}
 	}
 
+	@Test
+	public void test10() {
+		try {
+			String spec = 
+				"module=[name=a class=a require=c] " + 
+				"module=[name=b class=b require=a] " + 
+				"module=[name=c class=c require=b] " + 
+				"";
+			Container c = new Container();
+			c.getBuilder().build(spec);
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue("message C09 missing", e.getMessage().indexOf("no valid sequence") > 0);
+		}
+	}
+	
+	@Test
+	public void test11() {
+		try {
+			String spec = 
+				"module=[name=a class=a require=b] " + 
+				"module=[name=b class=b require=c] " + 
+				"module=[name=c class=c] " + 
+				"module=[name=d class=d require=e] " + 
+				"module=[name=e class=e require=c] " + 
+				"module=[name=f class=f require=e predecessor=d] " + 
+				"module=[name=g class=g require=f require=c] " + 
+				"module=[name=h class=h require=c] " + 
+				"";
+			Container c = new Container();
+			Configuration<ModuleDefinition<Module<?>>, Module<?>> config = c.getBuilder().build(spec);
+			StringBuilder b = new StringBuilder();
+			for(ModuleDefinition<Module<?>> def : config.getModuleDefinitions()) {
+				b.append(def.getName());
+			}
+			assertEquals("cbaedfgh", b.toString());
+			Configuration<ModuleDefinition<Module<?>>, Module<?>> sub = config.extract("g");
+			b.setLength(0);
+			for(ModuleDefinition<Module<?>> def : sub.getModuleDefinitions()) {
+				b.append(def.getName());
+			}
+			assertEquals("cedfg", b.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
 
 }

@@ -1,9 +1,13 @@
 package ch.agent.util.ioc;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import ch.agent.util.base.Misc;
 
 /**
  * A configuration is an immutable object encapsulating the information
@@ -34,10 +38,10 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 	 * @param definitions
 	 *            the list of module definitions in valid initialization sequence
 	 * @param execution
-	 *            the execution specification
+	 *            the execution specification or null
 	 */
 	public Configuration(List<D> definitions, String execution) {
-		this.execution = execution;
+		this.execution = Misc.isEmpty(execution) ? null : execution;
 		this.modules = new LinkedHashMap<String, D>();
 		for (D def : definitions) {
 			this.modules.put(def.getName(), def);
@@ -78,7 +82,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 	 *            the module name
 	 * @return the module specification or null if none such
 	 */
-	public ModuleDefinition<M> getModuleDefinition(String name) {
+	public D getModuleDefinition(String name) {
 		return modules.get(name);
 	}
 	
@@ -90,10 +94,40 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 	 * of how to perform this extraction is not the responsibility of this
 	 * object.
 	 * 
-	 * @return a string, possibly empty, not null
+	 * @return the execution string or null
 	 */
 	public String getExecution() {
 		return execution;
 	}
+	
+	/**
+	 * Extract sub-configuration for a module. The sub-configuration includes
+	 * the module and all its direct and indirect prerequisites. The execution
+	 * specification, which belongs to the top-level configuration, is not
+	 * included.
+	 * 
+	 * @param base
+	 *            name of the base module of the sub-configuration
+	 * @return a configuration
+	 */
+	public Configuration<D,M> extract(String base) {
+		Set<String> scope = new HashSet<String>(); 
+		add(getModuleDefinition(base), scope);
+		List<D> extract = new ArrayList<D>(scope.size());
+		for (D def : getModuleDefinitions()) {
+			if (scope.contains(def.getName()))
+				extract.add(def);
+		}
+		return new Configuration<D,M>(extract, null);
+	}
+	
+	private void add(D def, Set<String> scope) {
+		// no risk of stack overflow because original configuration has no cycle
+		scope.add(def.getName());
+		for (String pre : def.getPrerequisites()) {
+			add(getModuleDefinition(pre), scope);
+		}
+	}
+
 
 }
