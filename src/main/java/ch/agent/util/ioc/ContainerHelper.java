@@ -268,7 +268,8 @@ public class ContainerHelper<C extends Configuration<D,M>, B extends ModuleDefin
 		execSyntax.setSequenceTrackingMode(true);
 		
 		try {
-			execSyntax.parse(configuration.getExecution());
+			if (configuration.getExecution() != null)
+				execSyntax.parse(configuration.getExecution());
 		} catch (Exception e) {
 			throw new ConfigurationException(msg(U.C24), e);
 		}
