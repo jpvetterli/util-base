@@ -78,7 +78,12 @@ public class Container {
 	public Container() {
 	}
 
-	private ConfigurationBuilder<
+	/**
+	 * Get a new configuration builder.
+	 * 
+	 * @return a configuration builder
+	 */
+	public ConfigurationBuilder<
 		Configuration<ModuleDefinition<Module<?>>, Module<?>>,
 		ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>,
 		ModuleDefinition<Module<?>>,
@@ -94,7 +99,12 @@ public class Container {
 			);
 	}
 
-	private <
+	/**
+	 * Get a new container helper.
+	 * 
+	 * @return a container helper
+	 */
+	public <
 		C extends Configuration<D,M>,
 		B extends ModuleDefinitionBuilder<D,M>,
 		D extends ModuleDefinition<M>,
