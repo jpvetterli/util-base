@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import ch.agent.util.base.Misc;
@@ -101,18 +102,24 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 	}
 	
 	/**
-	 * Extract sub-configuration for a module. The sub-configuration includes
-	 * the module and all its direct and indirect prerequisites. The execution
-	 * specification, which belongs to the top-level configuration, is not
-	 * included.
+	 * Extract sub-configuration for a selection of modules. The
+	 * sub-configuration includes the modules and all their direct and indirect
+	 * prerequisites. The execution specification, which belongs to the
+	 * top-level configuration, is not included.
 	 * 
-	 * @param base
-	 *            name of the base module of the sub-configuration
+	 * @param module
+	 *            names of zero or more top modules to include in the
+	 *            sub-configuration
 	 * @return a configuration
 	 */
-	public Configuration<D,M> extract(String base) {
+	public Configuration<D,M> extract(String... module) {
 		Set<String> scope = new HashSet<String>(); 
-		add(getModuleDefinition(base), scope);
+		for (String name : module) {
+			D def = getModuleDefinition(name);
+			if (def == null)
+				throw new NoSuchElementException(name);
+			add(def, scope);
+		}
 		List<D> extract = new ArrayList<D>(scope.size());
 		for (D def : getModuleDefinitions()) {
 			if (scope.contains(def.getName()))

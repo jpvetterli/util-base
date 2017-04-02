@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.junit.Test;
 
@@ -191,11 +192,39 @@ public class ConfigurationTest {
 				b.append(def.getName());
 			}
 			assertEquals("cedfg", b.toString());
+			sub = config.extract("a", "h");
+			b.setLength(0);
+			for(ModuleDefinition<Module<?>> def : sub.getModuleDefinitions()) {
+				b.append(def.getName());
+			}
+			assertEquals("cbah", b.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
 
+	@Test
+	public void test12() {
+		try {
+			String spec = 
+				"module=[name=a class=a require=b] " + 
+				"module=[name=b class=b require=c] " + 
+				"module=[name=c class=c] " + 
+				"module=[name=d class=d require=e] " + 
+				"module=[name=e class=e require=c] " + 
+				"module=[name=f class=f require=e predecessor=d] " + 
+				"module=[name=g class=g require=f require=c] " + 
+				"module=[name=h class=h require=c] " + 
+				"";
+			Container c = new Container();
+			Configuration<ModuleDefinition<Module<?>>, Module<?>> config = c.getBuilder().build(spec);
+			config = config.extract("ah");
+			fail("exception expected");
+		} catch (Exception e) {
+			e.printStackTrace();
+			assertEquals(NoSuchElementException.class.getSimpleName(), e.getClass().getSimpleName());
+		}
+	}
 
 }
