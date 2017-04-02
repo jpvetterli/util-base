@@ -71,16 +71,15 @@ public class ContainerTest {
 		}
 
 		@Override
-		public boolean initialize() {
+		public void initialize() {
 			b.set("This is module \"" + getName() + "\" starting");
 			b.changeTag("xyzzy");
-			return true;
 		}
 
 		@Override
-		public void registerCommands(CommandRegistry registry) {
+		public void registerCommands(ConfigurationRegistry<?> registry) {
 			final Module<A> m = this;
-			registry.register(
+			registry.addUnique(
 				new Command<ContainerTest.A>() {
 				@Override
 				public String getName() {
@@ -95,12 +94,11 @@ public class ContainerTest {
 					return m;
 				}
 				@Override
-				public boolean execute(String parameters) {
+				public void execute(String parameters) {
 					b.changeTag(parameters);
-					return false;
 				}
 			});
-			registry.register(
+			registry.addUnique(
 				new Command<ContainerTest.A>() {
 				@Override
 				public String getName() {
@@ -115,9 +113,8 @@ public class ContainerTest {
 					return m;
 				}
 				@Override
-				public boolean execute(String parameters) {
+				public void execute(String parameters) {
 					b.set(parameters);
-					return true;
 				}
 			});
 		}
@@ -141,9 +138,9 @@ public class ContainerTest {
 		}
 
 		@Override
-		public void registerCommands(CommandRegistry registry) {
+		public void registerCommands(ConfigurationRegistry<?> registry) {
 			final Module<Object> m = this;
-			registry.register(
+			registry.addUnique(
 				new Command<Object>() {
 				@Override
 				public String getName() {
@@ -158,11 +155,10 @@ public class ContainerTest {
 					return m;
 				}
 				@Override
-				public boolean execute(String parameters) {
-					return false;
+				public void execute(String parameters) {
 				}
 			});
-			registry.register(
+			registry.addUnique(
 					new Command<Object>() {
 					@Override
 					public String getName() {
@@ -177,8 +173,7 @@ public class ContainerTest {
 						return m;
 					}
 					@Override
-					public boolean execute(String parameters) {
-						return false;
+					public void execute(String parameters) {
 					}
 				});
 		}
@@ -229,23 +224,9 @@ public class ContainerTest {
 		}
 
 		@Override
-		public boolean add(Module<?> module) {
-			return false;
-		}
-
-		@Override
-		public void configure(Args ignore) {
-		}
-
-		@Override
-		public boolean initialize() {
-			return true;
-		}
-
-		@Override
-		public void registerCommands(CommandRegistry registry) {
+		public void registerCommands(ConfigurationRegistry<?> registry) {
 			final Module<Object> m = this;
-			registry.register(
+			registry.addUnique(
 				new Command<Object>() {
 				@Override
 				public String getName() {
@@ -260,10 +241,9 @@ public class ContainerTest {
 					return m;
 				}
 				@Override
-				public boolean execute(String parameters) {
+				public void execute(String parameters) {
 					logger.debug("* (this is " + getFullName() + ")");
 					logger.info("* " + parameters);
-					return true;
 				}
 			});
 		}

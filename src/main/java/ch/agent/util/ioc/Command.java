@@ -42,18 +42,15 @@ public interface Command<T> {
 	String getFullName();
 
 	/**
-	 * Execute the command with the given parameters. The method should return
-	 * true unless there is a problem and the problem is not of a critical
-	 * nature. If there is a critical problem, which makes further work
-	 * meaningless or harmful, the method should throw an exception, checked or
-	 * unchecked.
+	 * Execute the command with the given parameters. If there is a critical
+	 * problem, which makes further work meaningless or harmful, the method
+	 * should throw an exception, checked or unchecked.
 	 * 
 	 * @param parameters
 	 *            a string containing parameters
-	 * @return true unless there was some error
 	 * @throws Exception
 	 *             to signal critical problems
 	 */
-	boolean execute(String parameters) throws Exception;
+	void execute(String parameters) throws Exception;
 
 }

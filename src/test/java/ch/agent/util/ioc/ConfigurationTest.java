@@ -192,12 +192,17 @@ public class ConfigurationTest {
 				b.append(def.getName());
 			}
 			assertEquals("cedfg", b.toString());
+			
 			sub = config.extract("a", "h");
 			b.setLength(0);
 			for(ModuleDefinition<Module<?>> def : sub.getModuleDefinitions()) {
 				b.append(def.getName());
 			}
 			assertEquals("cbah", b.toString());
+			
+			sub = config.extract();
+			assertEquals(0, sub.getModuleCount());
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("unexpected exception");

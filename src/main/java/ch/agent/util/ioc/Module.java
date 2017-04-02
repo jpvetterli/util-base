@@ -1,6 +1,7 @@
 package ch.agent.util.ioc;
 
 
+
 /**
  * A module is an adapter allowing an underlying object to be manipulated in a
  * standard way. Modules are created and managed by a {@link Container}. The
@@ -58,7 +59,7 @@ public interface Module<T> {
 	 * @throws IllegalStateException
 	 *             if called more than once
 	 */
-	void registerCommands(CommandRegistry registry);
+	void registerCommands(ConfigurationRegistry<?> registry);
 	
 	/**
 	 * Add a required module. This method is used to add any prerequisite 
@@ -81,22 +82,19 @@ public interface Module<T> {
 	T getObject();
 	
 	/**
-	 * Initialize the module. The method should return true unless there is a
-	 * problem and the problem is not of a critical nature. If there is a
-	 * critical problem, which makes further work meaningless or harmful, the
-	 * method should throw an exception, checked or unchecked. In such a case,
-	 * the module should clean up after itself, as {@link #shutdown} will not be
-	 * called.
+	 * Initialize the module. If there is a critical problem, which makes
+	 * further work meaningless or harmful, the method should throw an
+	 * exception, checked or unchecked. In such a case, the module should clean
+	 * up after itself, as {@link #shutdown} will not be called.
 	 * <p>
 	 * This method may be called only once.
 	 * 
 	 * @throws IllegalStateException
 	 *             if called more than once
-	 * @return true unless there was some error
 	 * @throws Exception
 	 *             to signal critical problems
 	 */
-	boolean initialize() throws Exception;
+	void initialize() throws Exception;
 	
 	/**
 	 * Close the module and the underlying object as the system is shutting

@@ -4,6 +4,7 @@ import static ch.agent.util.STRINGS.lazymsg;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.NoSuchElementException;
 
 import ch.agent.util.STRINGS.U;
@@ -63,14 +64,8 @@ public class Container {
 	}
 
 	private long start; // start time of the #run method
-	
-	private 
-		ContainerHelper<
-			Configuration<ModuleDefinition<Module<?>>, Module<?>>, 
-			ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, 
-			ModuleDefinition<Module<?>>,
-			Module<?>
-		> helper;
+	private ConfigurationRegistry<Module<?>> registry;
+	private Configuration<ModuleDefinition<Module<?>>, Module<?>> configuration;
 	
 	/**
 	 * Constructor.
@@ -100,20 +95,6 @@ public class Container {
 	}
 
 	/**
-	 * Get a new container helper.
-	 * 
-	 * @return a container helper
-	 */
-	public <
-		C extends Configuration<D,M>,
-		B extends ModuleDefinitionBuilder<D,M>,
-		D extends ModuleDefinition<M>,
-		M extends Module<?>
-	> ContainerHelper<C,B,D,M> getHelper(C configuration, LoggerBridge logger) {
-		return new ContainerHelper<C,B,D,M>(configuration);
-	}
-
-	/**
 	 * Get a module by name.
 	 * 
 	 * @param name
@@ -125,11 +106,11 @@ public class Container {
 	 *             if method used after configuration error
 	 */
 	public Module<?> getModule(String name) {
-		if (helper == null)
+		if (registry == null)
 			throw new IllegalArgumentException("Bug: #getModule used after configuration error.");
-		return helper.getModule(name);
+		return registry.getModules().get(name);
 	}
- 	
+	
 	/**
 	 * Configure and initialize modules, and execute commands. Any
 	 * {@link Exception} during processing is caught and thrown again, after
@@ -152,10 +133,10 @@ public class Container {
 		start = System.currentTimeMillis();
 		logger.info(lazymsg(U.C20, Misc.truncate(Arrays.toString((String[]) parameters), 60, " (etc.)")));
 		try {
-			helper = getHelper(getBuilder().build(Misc.join(" ", parameters)), logger);
-			helper.configure();
-			helper.initialize();
-			helper.execute();
+			configuration = getBuilder().build(Misc.join(" ", parameters));
+			registry = configuration.configure();
+			logger.debug(lazymsg(U.C18, concatModuleNames(registry.getModules().keySet())));
+			configuration.executeCommands(configuration.parseCommands(registry));
 		} catch (EscapeException e) {
 			logger.warn(lazymsg(U.C19, e.getMessage()));
 		} catch (Exception e) {
@@ -170,13 +151,17 @@ public class Container {
 		}
 	}
 
+	private String concatModuleNames(Collection<String> names) {
+		return Misc.join("\", \"", names.toArray(new String[names.size()]));
+	}
+	
 	/**
 	 * Shutdown all modules in the reverse initialization sequence. The method does
 	 * nothing in case of configuration errors, except logging the termination.
 	 */
 	public void shutdown() {
-		if (helper != null)
-			helper.shutdown();
+		if (configuration != null && registry != null)
+			configuration.shutdown(registry);
 		logger.info(lazymsg(U.C21, Misc.dhms(System.currentTimeMillis() - start)));
 	}
 		

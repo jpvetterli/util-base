@@ -18,8 +18,9 @@ import ch.agent.util.base.Misc;
  * <ul>
  * <li>a name, used to identify the module within a system of modules,
  * <li>a class name, used to create the module,
- * <li>zero or more requirements, and
- * <li>zero or more predecessors.
+ * <li>zero or more requirements,
+ * <li>zero or more predecessors, and
+ * <li>a configuration string.
  * </ul>
  * The module class must have a constructor taking the module name as parameter.
  * Requirements and predecessors are names of other modules in the system. Such
@@ -119,23 +120,22 @@ public class ModuleDefinition<M extends Module<?>> {
 	 * <li>a new module is created
 	 * <li>all required modules are added to the module
 	 * <li>the configuration specification, if any, is passed to the module
-	 * <li>the module registers zero or more commands
+	 * <li>the module registers zero or more commands if a registry is provided
 	 * </ul>
 	 * 
-	 * @param modules
-	 *            name to module map
-	 * @param registry
-	 *            the registry used to register module commands
+	 * @param registry 
+	 *            configuration registry
 	 * @return the module
 	 * @throws ConfigurationException
 	 *             in case of configuration failure
 	 */
-	public M configure(Map<String, M> modules, CommandRegistry registry) {
+	public M configure(ConfigurationRegistry<M> registry) {
 		M module = create();
-		addRequiredModules(module, modules);
+		addRequiredModules(module, registry.getModules());
 		if (getConfiguration() != null)
 			module.configure(getConfiguration());
-		module.registerCommands(registry);
+		if (registry != null)
+			module.registerCommands(registry);
 		return module;
 	}
 	

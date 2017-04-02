@@ -68,14 +68,14 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	public abstract boolean execute(Args parameters) throws Exception;
 
 	@Override
-	public boolean execute(String parameters) throws Exception {
+	public void execute(String parameters) throws Exception {
 		if (args == null) {
 			args = new Args();
 			defineParameters(args);
 		} else
 			args.reset();
 		args.parse(parameters);
-		return execute(args);
+		execute(args);
 	}
 
 	@Override

@@ -82,7 +82,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	}
 
 	@Override
-	public void registerCommands(CommandRegistry registry) {
+	public void registerCommands(ConfigurationRegistry<?> registry) {
 		if (registerCommands)
 			throw new IllegalStateException("bug found: #registerCommands called again, module: " + getName());
 		registerCommands = true;
@@ -94,11 +94,10 @@ public abstract class AbstractModule<T> implements Module<T> {
 	}
 
 	@Override
-	public boolean initialize() throws Exception {
+	public void initialize() throws Exception {
 		if (initialize)
 			throw new IllegalStateException("bug found: #initialize called again, module: " + getName());
 		initialize = true;
-		return true;
 	}
 
 	@Override

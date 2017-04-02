@@ -1,5 +1,7 @@
 package ch.agent.util.ioc;
 
+import static ch.agent.util.STRINGS.msg;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -8,6 +10,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import ch.agent.util.STRINGS.U;
+import ch.agent.util.args.Args;
 import ch.agent.util.base.Misc;
 
 /**
@@ -46,6 +50,93 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 		this.modules = new LinkedHashMap<String, D>();
 		for (D def : definitions) {
 			this.modules.put(def.getName(), def);
+		}
+	}
+	
+	/**
+	 * Create and configure all modules. The result is a registry with all the
+	 * configured modules and all commands registered by them.
+	 * 
+	 * @return configuration registry with all modules and commands
+	 * @throws Exception
+	 *             thrown by the module initialize method
+	 */
+	public ConfigurationRegistry<M> configure() throws Exception {
+		ConfigurationRegistry<M> registry = new ConfigurationRegistry<M>();
+		for (D def : getModuleDefinitions()) {
+			M module = def.configure(registry);
+			if (registry.getModules().put(def.getName(), module) != null)
+				throw new IllegalStateException(msg(U.C55, def.getName()));
+			module.initialize();
+		}
+		return registry;
+	}
+	
+	/**
+	 * Parse the execution statement of the configuration into a list of
+	 * commands and parameters.
+	 * 
+	 * @param registry
+	 *            the configuration registry with all commands
+	 * @return a list of command specifications
+	 */
+	public List<CommandSpecification> parseCommands(ConfigurationRegistry<M> registry) {
+		List<CommandSpecification> specifications = new ArrayList<CommandSpecification>(); 
+		Args syntax = new Args();
+		Map<String, Command<?>> commands = registry.getCommands();
+		for (String commandName : commands.keySet()) {
+			syntax.defList(commandName); // a command can be executed 0 or more times
+		}
+		syntax.setSequenceTrackingMode(true);
+		try {
+			if (getExecution() != null)
+				syntax.parse(getExecution());
+		} catch (Exception e) {
+			throw new ConfigurationException(msg(U.C24), e);
+		}
+		for (String[] statement : syntax.getSequence()) {
+			specifications.add(new CommandSpecification(commands.get(statement[0]), statement[1]));
+		}
+		return specifications;
+	}
+	
+	/**
+	 * Execute all commands in a list of specifications.
+	 * 
+	 * @param specifications
+	 *            a list of commands and parameters
+	 * @throws Exception
+	 *             thrown by the command execute method
+	 */
+	public void executeCommands(List<CommandSpecification> specifications) throws Exception {
+		for (CommandSpecification spec : specifications) {
+			try {
+				spec.getCommand().execute(spec.getParameters());
+			} catch (EscapeException e) {
+				throw e;
+			} catch (Exception e) {
+				throw new Exception(msg(U.C22, spec.getCommand().getName(), spec.getCommand().getModule().getName(), spec.getParameters()), e);
+			}
+		}
+	}
+	
+	/**
+	 * Shutdown all modules in the registry. The sequence is the reverse from
+	 * the initialization sequence.
+	 * 
+	 * @param registry
+	 *            a configuration registry
+	 */
+	public void shutdown(ConfigurationRegistry<M> registry) {
+		List<M> list = new ArrayList<M>(registry.getModules().values());
+		int i = list.size();
+		while (--i >= 0) {
+			try {
+				M module = list.get(i);
+				module.shutdown();
+			} catch (Exception e) {
+				// ignore
+			}
 		}
 	}
 
@@ -104,15 +195,18 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 	/**
 	 * Extract sub-configuration for a selection of modules. The
 	 * sub-configuration includes the modules and all their direct and indirect
-	 * prerequisites. The execution specification, which belongs to the
-	 * top-level configuration, is not included.
+	 * prerequisites.
+	 * <p>
+	 * The execution specification, which belongs to the top-level
+	 * configuration, is not included.
 	 * 
 	 * @param module
 	 *            names of zero or more top modules to include in the
 	 *            sub-configuration
 	 * @return a configuration
 	 */
-	public Configuration<D,M> extract(String... module) {
+	@SuppressWarnings("unchecked")
+	public <T extends Configuration<D,M>> T extract(String... module) {
 		Set<String> scope = new HashSet<String>(); 
 		for (String name : module) {
 			D def = getModuleDefinition(name);
@@ -125,7 +219,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 			if (scope.contains(def.getName()))
 				extract.add(def);
 		}
-		return new Configuration<D,M>(extract, null);
+		return (T) new Configuration<D,M>(extract, null);
 	}
 	
 	private void add(D def, Set<String> scope) {
