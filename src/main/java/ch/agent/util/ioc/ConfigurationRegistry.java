@@ -30,7 +30,7 @@ public class ConfigurationRegistry<M extends Module<?>> {
 	}
 	
 	/**
-	 * Get the module map.
+	 * Get the module map. The map is keyed by {@link Module#getName}.
 	 * 
 	 * @return a name-to-module map
 	 */
@@ -39,7 +39,7 @@ public class ConfigurationRegistry<M extends Module<?>> {
 	}
 
 	/**
-	 * Get the command map.
+	 * Get the command map. The map is keyed by {@link Command#getFullName}.
 	 * 
 	 * @return a name-to-command map
 	 */

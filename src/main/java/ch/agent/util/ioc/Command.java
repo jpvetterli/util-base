@@ -13,7 +13,7 @@ package ch.agent.util.ioc;
  * command.
  * 
  * @param <T>
- *            the type of the underlying object
+ *            the type of the underlying module object
  */
 public interface Command<T> {
 
