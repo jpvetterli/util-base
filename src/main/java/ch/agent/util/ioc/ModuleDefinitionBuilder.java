@@ -18,7 +18,8 @@ import ch.agent.util.args.Args;
  *   name=<em>module name</em> 
  *   class=<em>class name</em> 
  *   requirement*=<em>module name</em> (abbreviated require)
- *   predecessor*=<em>module name</em> (abbreviated pred)
+ *   predecessor*=<em>module name</em> (abb. pred)
+ *   configuration?=<em>configuration string</em> (abb. config)
  * ]
  * </code>
  * </pre>
