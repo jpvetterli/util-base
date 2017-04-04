@@ -4,7 +4,6 @@ import static ch.agent.util.STRINGS.lazymsg;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.NoSuchElementException;
 
 import ch.agent.util.STRINGS.U;
@@ -135,7 +134,7 @@ public class Container {
 		try {
 			configuration = getBuilder().build(Misc.join(" ", parameters));
 			registry = configuration.configure();
-			logger.debug(lazymsg(U.C18, concatModuleNames(registry.getModules().keySet())));
+			logger.debug(lazymsg(U.C18, Misc.join("\", \"", registry.getModules().keySet())));
 			configuration.executeCommands(configuration.parseCommands(registry));
 		} catch (EscapeException e) {
 			logger.warn(lazymsg(U.C19, e.getMessage()));
@@ -150,11 +149,6 @@ public class Container {
 			throw e;
 		}
 	}
-
-	private String concatModuleNames(Collection<String> names) {
-		return Misc.join("\", \"", names.toArray(new String[names.size()]));
-	}
-	
 	/**
 	 * Shutdown all modules in the reverse initialization sequence. The method does
 	 * nothing in case of configuration errors, except logging the termination.
