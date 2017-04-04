@@ -1,8 +1,11 @@
 package ch.agent.util.ioc;
 
+import static ch.agent.util.STRINGS.lazymsg;
 import static ch.agent.util.STRINGS.msg;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,6 +16,8 @@ import java.util.Set;
 import ch.agent.util.STRINGS.U;
 import ch.agent.util.args.Args;
 import ch.agent.util.base.Misc;
+import ch.agent.util.logging.LoggerBridge;
+import ch.agent.util.logging.LoggerManager;
 
 /**
  * A configuration is an immutable object encapsulating the information
@@ -32,8 +37,8 @@ import ch.agent.util.base.Misc;
  */
 public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 
-	int review_javadoc; // configuration
-	
+	private static LoggerBridge logger = LoggerManager.getLogger(Configuration.class);
+
 	private final String execution;
 	private final Map<String, D> modules;
 
@@ -69,23 +74,25 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 				throw new IllegalStateException(msg(U.C55, def.getName()));
 			module.initialize();
 		}
+		logger.debug(lazymsg(U.C18, Misc.join("\", \"", registry.getModules().keySet())));
 		return registry;
 	}
 	
 	/**
-	 * Parse the execution statement of the configuration into a list of
-	 * commands and parameters.
+	 * Parse the execution statement of the configuration. Command
+	 * specifications must have already been initialized.
 	 * 
-	 * @param registry
-	 *            the configuration registry with all commands
-	 * @return a list of command specifications
+	 * @param specifications
+	 *            a collection of command specifications
+	 * @return a collection of executable command specifications
 	 */
-	public List<CommandSpecification> parseCommands(ConfigurationRegistry<M> registry) {
-		List<CommandSpecification> specifications = new ArrayList<CommandSpecification>(); 
+	public Collection<ExecutableCommandSpecification> parseCommands(Collection<CommandSpecification> specifications) {
+		List<ExecutableCommandSpecification> executables = new ArrayList<ExecutableCommandSpecification>();
+		Map<String, CommandSpecification> map = new HashMap<String, CommandSpecification>(specifications.size());
 		Args syntax = new Args();
-		Map<String, Command<?>> commands = registry.getCommands();
-		for (String commandName : commands.keySet()) {
-			syntax.defList(commandName); // a command can be executed 0 or more times
+		for (CommandSpecification spec : specifications) {
+			syntax.defList(spec.getName());
+			map.put(spec.getName(), spec);
 		}
 		syntax.setSequenceTrackingMode(true);
 		try {
@@ -95,27 +102,29 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 			throw new ConfigurationException(msg(U.C24), e);
 		}
 		for (String[] statement : syntax.getSequence()) {
-			specifications.add(new CommandSpecification(commands.get(statement[0]), statement[1]));
+			CommandSpecification spec = map.get(statement[0]);
+			executables.add(new ExecutableCommandSpecification(spec.getModule(), spec.getCommand(), statement[1]));
 		}
-		return specifications;
+		return executables;
 	}
 	
 	/**
-	 * Execute all commands in a list of specifications.
+	 * Execute commands. 
 	 * 
-	 * @param specifications
-	 *            a list of commands and parameters
+	 * @param registry
+	 *            the configuration registry
+	 * @param executables
+	 *            a collection of executable command specifications
 	 * @throws Exception
-	 *             thrown by the command execute method
 	 */
-	public void executeCommands(List<CommandSpecification> specifications) throws Exception {
-		for (CommandSpecification spec : specifications) {
+	public void executeCommands(ConfigurationRegistry<M> registry, Collection<ExecutableCommandSpecification> executables) throws Exception {
+		for (ExecutableCommandSpecification spec : executables) {
 			try {
-				spec.getCommand().execute(spec.getParameters());
+				registry.getModules().get(spec.getModule()).execute(spec.getCommand(), spec.getParameters());
 			} catch (EscapeException e) {
 				throw e;
 			} catch (Exception e) {
-				throw new Exception(msg(U.C22, spec.getCommand().getName(), spec.getCommand().getModule().getName(), spec.getParameters()), e);
+				throw new Exception(msg(U.C22, spec.getCommand(), spec.getModule(), spec.getParameters()), e);
 			}
 		}
 	}

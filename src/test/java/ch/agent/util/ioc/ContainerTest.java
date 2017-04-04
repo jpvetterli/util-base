@@ -67,10 +67,6 @@ public class ContainerTest {
 		}
 
 		@Override
-		public void configure(Args ignore) {
-		}
-
-		@Override
 		public void initialize() {
 			b.set("This is module \"" + getName() + "\" starting");
 			b.changeTag("xyzzy");
@@ -78,45 +74,27 @@ public class ContainerTest {
 
 		@Override
 		public void registerCommands(ConfigurationRegistry<?> registry) {
-			final Module<A> m = this;
-			registry.addUnique(
-				new Command<ContainerTest.A>() {
+			add(new Command<A>() {
 				@Override
 				public String getName() {
 					return "changeTag";
-				}
-				@Override
-				public String getFullName() {
-					return m.getName() + "." + getName();
-				}
-				@Override
-				public Module<A> getModule() {
-					return m;
 				}
 				@Override
 				public void execute(String parameters) {
 					b.changeTag(parameters);
 				}
 			});
-			registry.addUnique(
-				new Command<ContainerTest.A>() {
+			add(new Command<A>() {
 				@Override
 				public String getName() {
 					return "set";
-				}
-				@Override
-				public String getFullName() {
-					return m.getName() + "." + getName();
-				}
-				@Override
-				public Module<A> getModule() {
-					return m;
 				}
 				@Override
 				public void execute(String parameters) {
 					b.set(parameters);
 				}
 			});
+			super.registerCommands(registry);
 		}
 
 		@Override
@@ -130,52 +108,31 @@ public class ContainerTest {
 
 		public DModule(String name) {
 			super(name);
+			addCommands();
 		}
 
-		@Override
-		public Object getObject() {
-			return null;
-		}
-
-		@Override
-		public void registerCommands(ConfigurationRegistry<?> registry) {
-			final Module<Object> m = this;
-			registry.addUnique(
-				new Command<Object>() {
+		private void addCommands() {
+			add(new Command<Object>() {
 				@Override
 				public String getName() {
 					return "command";
 				}
 				@Override
-				public String getFullName() {
-					return m.getName() + "." + getName();
-				}
-				@Override
-				public Module<Object> getModule() {
-					return m;
-				}
-				@Override
-				public void execute(String parameters) {
-				}
+				public void execute(String parameters) {}
 			});
-			registry.addUnique(
-					new Command<Object>() {
-					@Override
-					public String getName() {
-						return "command";
-					}
-					@Override
-					public String getFullName() {
-						return m.getName() + "." + getName();
-					}
-					@Override
-					public Module<Object> getModule() {
-						return m;
-					}
-					@Override
-					public void execute(String parameters) {
-					}
+			add(new Command<Object>() {
+				@Override
+				public String getName() {
+					return "command";
+				}
+				@Override
+					public void execute(String parameters) {}
 				});
+		}
+		
+		@Override
+		public Object getObject() {
+			return null;
 		}
 
 	}
@@ -216,40 +173,28 @@ public class ContainerTest {
 		
 		public CModule(String name) {
 			super(name);
+			addCommands();
 		}
-
-		@Override
-		public Object getObject() {
-			return null;
-		}
-
-		@Override
-		public void registerCommands(ConfigurationRegistry<?> registry) {
+		
+		private void addCommands() {
 			final Module<Object> m = this;
-			registry.addUnique(
+			add(
 				new Command<Object>() {
 				@Override
 				public String getName() {
 					return "echo";
 				}
 				@Override
-				public String getFullName() {
-					return m.getName() + "." + getName();
-				}
-				@Override
-				public Module<Object> getModule() {
-					return m;
-				}
-				@Override
 				public void execute(String parameters) {
-					logger.debug("* (this is " + getFullName() + ")");
+					logger.debug("* (this is command " + getName() + " in module " + m.getName() + ")");
 					logger.info("* " + parameters);
 				}
 			});
 		}
 
 		@Override
-		public void shutdown() {
+		public Object getObject() {
+			return null;
 		}
 		
 	}
@@ -329,7 +274,7 @@ public class ContainerTest {
 			c.shutdown();
 			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue("message C12 ?",  e.getMessage().indexOf("already registered") > 0);
+			assertTrue("message C14 ?",  e.getCause().getCause().getMessage().indexOf("Duplicate command") > 0);
 		}
 	}
 	

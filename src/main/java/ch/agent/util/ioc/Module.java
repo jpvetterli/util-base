@@ -48,6 +48,24 @@ public interface Module<T> {
 	 *             if there are errors during configuration
 	 */
 	void configure(String specs);
+	
+	/**
+	 * Execute a module command.
+	 * <p>
+	 * This method can be called many times.
+	 * 
+	 * @param name
+	 *            the simple command name
+	 * @param parameters
+	 *            an opaque string containing command parameters
+	 * @throws ConfigurationException
+	 *             if the command is unknown
+	 * @throws IllegalArgumentException
+	 *             if there is an error when parsing parameters
+	 * @throws Exception
+	 *             if there is an error when executing the command
+	 */
+	void execute(String name, String parameters) throws Exception;
 
 	/**
 	 * Register module commands with the registry.

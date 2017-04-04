@@ -1,6 +1,10 @@
 package ch.agent.util.ioc;
 
 import static ch.agent.util.STRINGS.msg;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import ch.agent.util.STRINGS.U;
 import ch.agent.util.args.Args;
 import ch.agent.util.base.Misc;
@@ -30,13 +34,15 @@ public abstract class AbstractModule<T> implements Module<T> {
 	private String name;
 	private boolean configure;
 	private boolean initialize;
-	private boolean registerCommands;
+	private boolean register;
 	private boolean shutdown;
+	private Map<String, Command<?>> commandTable;
 	
 	public AbstractModule(String name) {
 		if (Misc.isEmpty(name))
 			throw new ConfigurationException(msg(U.C51));
 		this.name = name;
+		this.commandTable = new HashMap<String, Command<?>>();
 	}
 
 	@Override
@@ -53,8 +59,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	 * @param config
 	 *            the configuration object
 	 */
-	public void defineParameters(Args config) {
-	}
+	public void defineParameters(Args config) {}
 	
 	/**
 	 * Configure the module.
@@ -67,8 +72,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	 * @throws IllegalArgumentException
 	 *             if there is an error
 	 */
-	public void configure(Args config) {
-	}
+	public void configure(Args config) {}
 
 	@Override
 	public void configure(String specs) {
@@ -80,12 +84,30 @@ public abstract class AbstractModule<T> implements Module<T> {
 		config.parse(specs);
 		configure(config);
 	}
+	
+	@Override
+	public void execute(String name, String parameters) throws Exception {
+		Command<?> command = commandTable.get(name);
+		if (command == null)
+			throw new ConfigurationException(msg(U.C17, name, getName()));
+		command.execute(parameters);
+	}
 
+	public void add(Command<?> command) {
+		if (register)
+			throw new IllegalStateException(msg(U.C56, command.getName(), getName()));
+		if (commandTable.put(command.getName(), command) != null)
+			throw new ConfigurationException(msg(U.C14, command.getName(), getName()));
+
+	}
+	
 	@Override
 	public void registerCommands(ConfigurationRegistry<?> registry) {
-		if (registerCommands)
+		if (register)
 			throw new IllegalStateException("bug found: #registerCommands called again, module: " + getName());
-		registerCommands = true;
+		for (Command<?> command : commandTable.values())
+			registry.addUnique(getName(), command.getName());
+		register = true;
 	}
 
 	@Override
@@ -109,7 +131,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 
 	@Override
 	public String toString() {
-		return getName();
+		return "module " + getName();
 	}
 	
 }

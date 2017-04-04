@@ -13,20 +13,27 @@ import ch.agent.util.STRINGS.U;
  * the result returned by {@link Configuration#configure}. It provides a map of
  * all modules configured and a map of all commands registered by the modules.
  * The iteration order of the module map in which modules have been added.
+ * <p>
+ * Modules and commands are added directly to the maps returned by
+ * {@link ConfigurationRegistry#getModules} and {@link #getCommands}. The
+ * {@link #addUnique} method can be used to attempt to add command with an
+ * exception thrown if the command already exists.
  * 
- * @param <M> the module type
+ * 
+ * @param <M>
+ *            the module type
  */
 public class ConfigurationRegistry<M extends Module<?>> {
 	
 	private Map<String, M> modules;
-	private Map<String, Command<?>> commands;
+	private Map<String, CommandSpecification> commands;
 	
 	/**
 	 * Constructor.
 	 */
 	public ConfigurationRegistry() {
 		modules = new LinkedHashMap<String, M>();
-		commands = new HashMap<String, Command<?>>();
+		commands = new HashMap<String, CommandSpecification>();
 	}
 	
 	/**
@@ -39,11 +46,13 @@ public class ConfigurationRegistry<M extends Module<?>> {
 	}
 
 	/**
-	 * Get the command map. The map is keyed by {@link Command#getFullName}.
+	 * Get the command map. The map is keyed by
+	 * {@link CommandSpecification#getName} which combines the module and
+	 * command names.
 	 * 
 	 * @return a name-to-command map
 	 */
-	public Map<String, Command<?>> getCommands() {
+	public Map<String, CommandSpecification> getCommands() {
 		return commands;
 	}
 
@@ -53,12 +62,12 @@ public class ConfigurationRegistry<M extends Module<?>> {
 	 * @param command a command
 	 * @throws ConfigurationException if the command is already in the registry
 	 */
-	public void addUnique(Command<?> command) {
-		String name = command.getFullName();
-		Command<?> existing = commands.get(name);
+	public void addUnique(String module, String command) {
+		CommandSpecification spec = new CommandSpecification(module, command);
+		CommandSpecification existing = commands.get(spec.getName());
 		if (existing != null)
-			throw new ConfigurationException(msg(U.C12, command.getModule().getName(), command.getFullName()));
-		commands.put(name, command);
+			throw new ConfigurationException(msg(U.C12, module, command));
+		commands.put(spec.getName(), spec);
 	}
 	
 }

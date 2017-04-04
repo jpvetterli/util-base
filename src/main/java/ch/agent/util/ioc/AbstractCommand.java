@@ -7,8 +7,8 @@ import ch.agent.util.base.Misc;
 
 /**
  * A minimal abstract implementation of the {@link Command} interface. It
- * provides a useful implementation of {@link #getModule}, {@link #getName}, and
- * {@link #execute}. It adds two methods to be overridden by actual commands:
+ * provides a useful implementation of {@link #getName} and {@link #execute}. It
+ * adds two methods to be overridden by actual commands:
  * {@link #defineParameters}, which is called only once and
  * {@link #execute(Args)}.
  * 
@@ -17,31 +17,18 @@ import ch.agent.util.base.Misc;
  */
 public abstract class AbstractCommand<T> implements Command<T> {
 
-	private Module<T> module;
 	private String name;
 	private Args args;
 	
-	public AbstractCommand(Module<T> module, String name) {
-		Misc.nullIllegal(module, "module null");
+	public AbstractCommand(String name) {
 		if (Misc.isEmpty(name))
 			throw new ConfigurationException(msg(U.C51));
-		this.module = module;
 		this.name = name;
-	}
-
-	@Override
-	public Module<T> getModule() {
-		return module;
 	}
 
 	@Override
 	public String getName() {
 		return name;
-	}
-
-	@Override
-	public String getFullName() {
-		return module.getName() + "." + name;
 	}
 
 	/**
@@ -80,7 +67,7 @@ public abstract class AbstractCommand<T> implements Command<T> {
 
 	@Override
 	public String toString() {
-		return getFullName();
+		return "command " + getName();
 	}
 
 }
