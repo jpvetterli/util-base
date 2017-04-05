@@ -40,7 +40,7 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	 * @param parameters
 	 *            the parameters object
 	 */
-	public abstract void defineParameters(Args parameters);
+	public void defineParameters(Args parameters) {}
 	
 	/**
 	 * Execute the command.
@@ -48,11 +48,10 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	 * 
 	 * @param parameters
 	 *            the parameters object
-	 * @return true unless there was some error
 	 * @throws Exception
 	 *             to signal critical problems
 	 */
-	public abstract boolean execute(Args parameters) throws Exception;
+	public void execute(Args parameters) throws Exception {}
 
 	@Override
 	public void execute(String parameters) throws Exception {
