@@ -134,6 +134,7 @@ public class Container {
 		try {
 			configuration = getBuilder().build(Misc.join(" ", parameters));
 			registry = configuration.configure();
+			configuration.initialize(registry);
 			configuration.executeCommands(registry, configuration.parseCommands(registry.getCommands().values()));
 		} catch (EscapeException e) {
 			logger.warn(lazymsg(U.C19, e.getMessage()));

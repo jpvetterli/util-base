@@ -72,10 +72,21 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 			M module = def.configure(registry);
 			if (registry.getModules().put(def.getName(), module) != null)
 				throw new IllegalStateException(msg(U.C55, def.getName()));
-			module.initialize();
 		}
 		logger.debug(lazymsg(U.C18, Misc.join("\", \"", registry.getModules().keySet())));
 		return registry;
+	}
+	
+	/**
+	 * Initialize all modules.
+	 * 
+	 * @param registry a configuration registry
+	 * @throws Exception by a module initialize method
+	 */
+	public void initialize(ConfigurationRegistry<M> registry) throws Exception {
+		for (M module : registry.getModules().values()) {
+			module.initialize();
+		}
 	}
 	
 	/**
@@ -90,6 +101,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 		List<ExecutableCommandSpecification> executables = new ArrayList<ExecutableCommandSpecification>();
 		Map<String, CommandSpecification> map = new HashMap<String, CommandSpecification>(specifications.size());
 		Args syntax = new Args();
+		syntax.setLoose(logger);
 		for (CommandSpecification spec : specifications) {
 			syntax.defList(spec.getName());
 			map.put(spec.getName(), spec);
