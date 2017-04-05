@@ -49,6 +49,11 @@ public abstract class AbstractModule<T> implements Module<T> {
 	public String getName() {
 		return name;
 	}
+	
+	@Override
+	public T getObject() {
+		return null;
+	}
 
 	/**
 	 * Define configuration parameters.
