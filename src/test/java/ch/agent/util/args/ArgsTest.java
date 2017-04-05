@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ch.agent.util.STRINGS.U;
+import ch.agent.util.logging.LoggerManager;
 
 public class ArgsTest {
 
@@ -72,6 +73,27 @@ public class ArgsTest {
 			fail("expected an exception");
 		} catch (Exception e) {
 			assertMessage(e, U.U00103);
+		}
+	}
+	
+	@Test
+	public void testMissingPut() {
+		try {
+			args.put("foo", "bar");
+			fail("expected an exception");
+		} catch (Exception e) {
+			assertMessage(e, U.U00103);
+		}
+	}
+	
+	@Test
+	public void testMissingPutLoose() {
+		try {
+			args.setLoose(LoggerManager.getLogger(this.getClass()));
+			args.put("foo", "bar");
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception ");
 		}
 	}
 	

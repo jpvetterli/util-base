@@ -1,5 +1,6 @@
 package ch.agent.util.args;
 
+import static ch.agent.util.STRINGS.lazymsg;
 import static ch.agent.util.STRINGS.msg;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.util.Map;
 import ch.agent.util.STRINGS.U;
 import ch.agent.util.base.Misc;
 import ch.agent.util.file.TextFile;
+import ch.agent.util.logging.LoggerBridge;
 
 /**
  * Support for parameter lists and parameter files. A parameter list is a
@@ -76,7 +78,8 @@ import ch.agent.util.file.TextFile;
  * someone else.
  * <p>
  * Except in <em>loose mode</em> parameter names must have been defined before
- * parsing.
+ * parsing. Loose mode is activated by {@link #setLoose} and deactivated by
+ * {@link #setStrict}.
  * 
  * @author Jean-Paul Vetterli
  * 
@@ -693,6 +696,8 @@ public class Args implements Iterable<String> {
 	private boolean namelessAllowed;
 	private TextFile textFile; // use only one for duplicate detection to work
 	private List<String[]> sequence;
+	private boolean loose;
+	private LoggerBridge logger;
 
 	/**
 	 * Construct a custom <code>Args</code> object. Nulls are valid arguments
@@ -729,6 +734,26 @@ public class Args implements Iterable<String> {
 		args = new HashMap<String, Args.Value>();
 		vars = new HashMap<String, String>();
 		textFile = new TextFile();
+	}
+	
+	/**
+	 * Enable loose mode and optionally set a logger. If available the logger is
+	 * used to log unresolved names at log level "debug".
+	 * 
+	 * @param logger
+	 *            logger
+	 */
+	public void setLoose(LoggerBridge logger) {
+		loose = true;
+		this.logger = logger;
+	}
+	
+	/**
+	 * Disable loose mode and clear the logger.
+	 */
+	public void setStrict() {
+		loose = false;
+		logger = null;
 	}
 	
 	/**
@@ -908,8 +933,13 @@ public class Args implements Iterable<String> {
 			if (name.startsWith(VAR_PREFIX)) {
 				String variable = name.substring(VAR_PREFIX.length());
 				putVariable(variable, value);
-			} else
-				throw new IllegalArgumentException(msg(U.U00103, name));
+			} else {
+				if (loose) {
+					if (logger != null)
+						logger.debug(lazymsg(U.U00165, name));
+				} else
+					throw new IllegalArgumentException(msg(U.U00103, name));
+			}
 		}
 		else {
 			String resolved = resolve(value);

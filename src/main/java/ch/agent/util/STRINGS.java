@@ -45,6 +45,7 @@ public class STRINGS extends LazyString {
 		public static final String U00159 = "U00159";
 		public static final String U00163 = "U00163";
 		public static final String U00164 = "U00164";
+		public static final String U00165 = "U00165";
 		public static final String U00201 = "U00201";
 		public static final String U00202 = "U00202";
 		public static final String U00205 = "U00205";
