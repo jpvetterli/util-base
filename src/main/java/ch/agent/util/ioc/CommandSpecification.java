@@ -12,7 +12,7 @@ public class CommandSpecification {
 	 * Constructor.
 	 * 
 	 * @param module
-	 *            the module name
+	 *            the module name or null for a built-in command
 	 * @param command
 	 *            the command name
 	 */
@@ -26,18 +26,19 @@ public class CommandSpecification {
 	 * Get the name of the command. The name combines the module name and the
 	 * command name with a separating period, to achieve uniqueness in a system
 	 * where module names are unique. Command {@code foo.bar} is the full name
-	 * of command {@code bar} in module {@code foo}.
+	 * of command {@code bar} in module {@code foo}. For built-in commands the
+	 * method returns only the command name because there is no module name.
 	 * 
 	 * @return a non-null and non-empty string
 	 */
 	public String getName() {
-		return module + "." + command;
+		return module == null ? command : module + "." + command;
 	}
 
 	/**
 	 * Get the module name.
 	 * 
-	 * @return a string
+	 * @return a string or null for a built-in command
 	 */
 	public String getModule() {
 		return module;
