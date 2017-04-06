@@ -27,11 +27,6 @@ import ch.agent.util.base.Misc;
  * modules are prerequisites and must be initialized before the module itself.
  * Requirements are added to the module using {@link Module#add} but
  * predecessors are not.
- * <p>
- * CAUTION: This class is <em>in principle</em> immutable. However, there is a
- * "however": if {@link #configure} is called twice, a {@link RuntimeException}
- * is thrown. So the class is immutable but includes a bug detection device
- * requiring modifiable state.
  * 
  * @param <M>
  *            the module type
@@ -45,7 +40,6 @@ public class ModuleDefinition<M extends Module<?>> {
 	private final String[] req; // module names required by this module
 	private final String[] pred; // module names preceding but not required
 	private final String configuration;
-	private boolean bugDetector;
 	
 	/**
 	 * Constructor.
@@ -102,16 +96,6 @@ public class ModuleDefinition<M extends Module<?>> {
 	}
 
 	/**
-	 * Detect if called more than once. Except for #bugDetector the object is
-	 * immutable.
-	 */
-	private void detectRepeatedConfigureBug() {
-		if (bugDetector)
-			throw new RuntimeException("(bug) already configured: " + getName());
-		bugDetector = true;
-	}
-	
-	/**
 	 * Create the module. The module is created using a constructor taking a
 	 * single argument: the module name.
 	 * 
@@ -148,7 +132,6 @@ public class ModuleDefinition<M extends Module<?>> {
 	 *             in case of configuration failure
 	 */
 	public M configure(ConfigurationRegistry<M> registry) {
-		detectRepeatedConfigureBug();
 		M module = create();
 		addRequiredModules(module, registry.getModules());
 		if (getConfiguration() != null)
