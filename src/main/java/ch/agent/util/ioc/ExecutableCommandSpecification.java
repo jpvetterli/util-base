@@ -61,6 +61,11 @@ public class ExecutableCommandSpecification extends CommandSpecification {
 		return true;
 	}
 
-	
+	@Override
+	public String toString() {
+		return parameters.length() < 50 ? 
+			String.format("%s %s", getName(), parameters) :
+			String.format("%s %s...", getName(), parameters.substring(0,  50));
+	}
 	
 }

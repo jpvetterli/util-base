@@ -84,4 +84,9 @@ public class CommandSpecification {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return getName();
+	}
+
 }
