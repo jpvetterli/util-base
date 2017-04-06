@@ -5,6 +5,8 @@ package ch.agent.util.ioc;
  */
 public class CommandSpecification {
 
+	public static final String NAME_SEPARATOR = "."; 
+	
 	private final String command;
 	private final String module;
 
@@ -32,7 +34,7 @@ public class CommandSpecification {
 	 * @return a non-null and non-empty string
 	 */
 	public String getName() {
-		return module == null ? command : module + "." + command;
+		return module == null ? command : module + NAME_SEPARATOR + command;
 	}
 
 	/**

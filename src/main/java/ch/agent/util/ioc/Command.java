@@ -25,6 +25,14 @@ public interface Command<T> {
 	String getName();
 	
 	/**
+	 * Rename the command.
+	 * 
+	 * @param name
+	 *            the new name
+	 */
+	void rename(String name);
+	
+	/**
 	 * Execute the command with the given parameters. If there is a critical
 	 * problem, which makes further work meaningless or harmful, the method
 	 * should throw an exception, checked or unchecked.

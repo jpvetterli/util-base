@@ -2,6 +2,7 @@ package ch.agent.util.ioc;
 
 import static ch.agent.util.STRINGS.msg;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,31 +11,21 @@ import ch.agent.util.args.Args;
 import ch.agent.util.base.Misc;
 
 /**
- * A minimal abstract implementation of the {@link Module} interface. It
- * provides a useful implementation of {@link #getName} and
- * {@link #configure(String)}, leaves {@link #getObject} to subclasses, and
- * provides dummy implementations of all other methods. It adds two methods to
- * be overriden by actual modules: {@link #defineParameters} and
- * {@link #configure(Args)}.
- * <p>
- * When subclassing, the default implementation of {@link #configure(String)},
- * {@link #initialize}, {@link #registerCommands}, and {@link #shutdown} perform
- * a check that the method is called only once. Method
- * {@link #configure(String)} does not need itself to be subclassed, since it
- * splits the work into two easier methods, which need to be subclassed in 
- * modules with configuration parameters:
- * {@link #defineParameters(Args)} and {@link #configure(Args)}.
- * 
+ * A useful abstract implementation of the {@link Module} interface. It provides
+ * implementations of most methods. Most subclasses probably need to provide
+ * implementations {@link #getObject()}, {@link #add(Module)},
+ * {@link #defineParameters(Args)} and {@link #configure(Args)} with either a
+ * complete override or by extending the functionality.
  * 
  * @param <T>
  *            the type of the underlying object
  */
 public abstract class AbstractModule<T> implements Module<T> {
 
-	private String name;
+	private final String name;
 	private boolean configure;
 	private boolean initialize;
-	private boolean register;
+	private boolean commandsLocked;
 	private boolean shutdown;
 	private Map<String, Command<?>> commandTable;
 	
@@ -98,8 +89,9 @@ public abstract class AbstractModule<T> implements Module<T> {
 		command.execute(parameters);
 	}
 
+	@Override
 	public void add(Command<?> command) {
-		if (register)
+		if (commandsLocked)
 			throw new IllegalStateException(msg(U.C56, command.getName(), getName()));
 		if (commandTable.put(command.getName(), command) != null)
 			throw new ConfigurationException(msg(U.C14, command.getName(), getName()));
@@ -107,17 +99,30 @@ public abstract class AbstractModule<T> implements Module<T> {
 	}
 	
 	@Override
-	public void registerCommands(ConfigurationRegistry<?> registry) {
-		if (register)
-			throw new IllegalStateException("bug found: #registerCommands called again, module: " + getName());
-		for (Command<?> command : commandTable.values())
-			registry.addUnique(getName(), command.getName());
-		register = true;
+	public Collection<Command<?>> getCommands() {
+		commandsLocked = true;
+		return commandTable.values();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * This implementation adds all commands of the module specified and returns
+	 * true, which means the module has been accepted as a requirement.
+	 * <p>
+	 * As a consequence, when a subclass does not provide an implementation for
+	 * {@link #add(Module)} all requirements are accepted and all their commands
+	 * become available. If this is not the intention, the subclass must
+	 * override the method to return false.
+	 * 
+	 */
 	@Override
 	public boolean add(Module<?> module) {
-		return false;
+		for (Command<?> command : module.getCommands()) {
+			command.rename(module.getName() + CommandSpecification.NAME_SEPARATOR + command.getName());
+			add(command);
+		}
+		return true;
 	}
 
 	@Override

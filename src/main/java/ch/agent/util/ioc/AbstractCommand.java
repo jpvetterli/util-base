@@ -7,8 +7,8 @@ import ch.agent.util.base.Misc;
 
 /**
  * A minimal abstract implementation of the {@link Command} interface. It
- * provides a useful implementation of {@link #getName} and {@link #execute}. It
- * adds two methods to be overridden by actual commands:
+ * provides a useful implementation of {@link #getName}, {@link #rename}, and
+ * {@link #execute}. It adds two methods to be overridden by actual commands:
  * {@link #defineParameters}, which is called only once and
  * {@link #execute(Args)}.
  * 
@@ -20,15 +20,33 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	private String name;
 	private Args args;
 	
+	/**
+	 * Constructor. The original name cannot be empty and may not contain a
+	 * period. However it is possible to rename the command with a name
+	 * containing one or more periods. This feature is used by the
+	 * implementation of
+	 * 
+	 * @link {@link AbstractModule#add(Module)}.
+	 * 
+	 * @param name
+	 *            command name
+	 */
 	public AbstractCommand(String name) {
-		if (Misc.isEmpty(name))
-			throw new ConfigurationException(msg(U.C51));
+		if (Misc.isEmpty(name) || name.indexOf(CommandSpecification.NAME_SEPARATOR) >= 0)
+			throw new ConfigurationException(msg(U.C50));
 		this.name = name;
 	}
 
 	@Override
 	public String getName() {
 		return name;
+	}
+
+	@Override
+	public void rename(String name) {
+		if (Misc.isEmpty(name))
+			throw new ConfigurationException(msg(U.C51));
+		this.name = name;
 	}
 
 	/**

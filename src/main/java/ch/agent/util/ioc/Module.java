@@ -1,5 +1,7 @@
 package ch.agent.util.ioc;
 
+import java.util.Collection;
+
 
 
 /**
@@ -12,15 +14,15 @@ package ch.agent.util.ioc;
  * <ul>
  * <li>The constructor.
  * <li>{@link #configure}, exactly once
- * <li>{@link #add}, zero or more times
- * <li>{@link #registerCommands}, exactly once
+ * <li>{@link #add(Module)}, zero or more times
  * <li>{@link #initialize}, exactly once
  * <li>commands, zero or more times
  * <li>{@link #shutdown}, exactly once
  * </ul>
+ * Commands are added with {@link #add(Command)}.
  * <p>
  * <b>IMPORTANT:</b> An actual module should carefully document in the comment of
- * its {@link #add} method the module types that it requires and whether they
+ * its {@link #add(Module)} method the module types that it requires and whether they
  * are mandatory or optional.
  * 
  * 
@@ -68,20 +70,28 @@ public interface Module<T> {
 	void execute(String name, String parameters) throws Exception;
 
 	/**
-	 * Register module commands with the registry.
-	 * <p>
-	 * This method may be called only once.
+	 * Add a command. Command names are unique within a module.
+	 * Commands are executed by calling {@link #execute} with
+	 * the command name and an opaque parameter string. 
 	 * 
-	 * @param registry
-	 *            the command registry
-	 * @throws IllegalStateException
-	 *             if called more than once
+	 * @param command a command
 	 */
-	void registerCommands(ConfigurationRegistry<?> registry);
+	void add(Command<?> command);
 	
 	/**
-	 * Add a required module. This method is used to add any prerequisite 
-	 * module.
+	 * Return all commands. Once this method has been used, adding more commands
+	 * with {@link #add(Command)} is forbidden.
+	 * 
+	 * @return a collection of commands, possibly empty but never null
+	 */
+	Collection<Command<?>> getCommands();
+	
+	/**
+	 * Add a required module. This method is used to add any prerequisite
+	 * module. All commands of the added module will be added to this module
+	 * with the name of the added module prefixed to the command names. For
+	 * example if adding a module named <em>foo</em> which has a command named
+	 * <em>bar</em>, this module will have a command named <em>foo.bar</em>.
 	 * 
 	 * @param module
 	 *            a module, initialized

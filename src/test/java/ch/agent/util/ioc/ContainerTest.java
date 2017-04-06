@@ -53,6 +53,7 @@ public class ContainerTest {
 		
 		public AModule(String name) {
 			super(name);
+			addCommands();
 		}
 
 		@Override
@@ -62,8 +63,11 @@ public class ContainerTest {
 
 		@Override
 		public boolean add(Module<?> module) {
-			b = (B) module.getObject();
-			return true;
+			if (module instanceof BModule) {
+				b = (B) module.getObject();
+				return true;
+			} else
+				return super.add(module);
 		}
 
 		@Override
@@ -72,12 +76,16 @@ public class ContainerTest {
 			b.changeTag("xyzzy");
 		}
 
-		@Override
-		public void registerCommands(ConfigurationRegistry<?> registry) {
+		private void addCommands() {
 			add(new Command<A>() {
+				private String name = "changeTag";
 				@Override
 				public String getName() {
-					return "changeTag";
+					return name;
+				}
+				@Override
+				public void rename(String name) {
+					this.name = name;
 				}
 				@Override
 				public void execute(String parameters) {
@@ -85,16 +93,20 @@ public class ContainerTest {
 				}
 			});
 			add(new Command<A>() {
+				private String name = "set";
 				@Override
 				public String getName() {
-					return "set";
+					return name;
+				}
+				@Override
+				public void rename(String name) {
+					this.name = name;
 				}
 				@Override
 				public void execute(String parameters) {
 					b.set(parameters);
 				}
 			});
-			super.registerCommands(registry);
 		}
 
 		@Override
@@ -113,17 +125,27 @@ public class ContainerTest {
 
 		private void addCommands() {
 			add(new Command<Object>() {
+				private String name = "command";
 				@Override
 				public String getName() {
-					return "command";
+					return name;
+				}
+				@Override
+				public void rename(String name) {
+					this.name = name;
 				}
 				@Override
 				public void execute(String parameters) {}
 			});
 			add(new Command<Object>() {
+				private String name = "command";
 				@Override
 				public String getName() {
-					return "command";
+					return name;
+				}
+				@Override
+				public void rename(String name) {
+					this.name = name;
 				}
 				@Override
 					public void execute(String parameters) {}
@@ -180,9 +202,14 @@ public class ContainerTest {
 			final Module<Object> m = this;
 			add(
 				new Command<Object>() {
+					private String name = "echo";
 				@Override
 				public String getName() {
-					return "echo";
+					return name;
+				}
+				@Override
+				public void rename(String name) {
+					this.name = name;
 				}
 				@Override
 				public void execute(String parameters) {
@@ -251,6 +278,28 @@ public class ContainerTest {
 					String.format("module=[name = b class=%s config=[tag=[This tag was modified.]]]", BModule.class.getName()),
 					String.format("module=[name = c class=%s]", CModule.class.getName()),
 					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3] c.echo=[hello world]]"
+			});
+			c.shutdown();
+			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
+			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));
+			assertEquals("B#set exec1 and tag=xyzzy", texts.get(1));
+			assertEquals("B#set exec3 and tag=exec2", texts.get(2));
+			assertEquals("B#set This is module \"a\" stopping and tag=exec2", texts.get(3));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void test12A() {
+		Container c = new Container();
+		try {
+			c.run(new String[]{
+					String.format("module=[name = a class=%s require=b require=c]", AModule.class.getName()),
+					String.format("module=[name = b class=%s config=[tag=[This tag was modified.]]]", BModule.class.getName()),
+					String.format("module=[name = c class=%s]", CModule.class.getName()),
+					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3] c.echo=[hello world] a.c.echo=[helloworld]]"
 			});
 			c.shutdown();
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
