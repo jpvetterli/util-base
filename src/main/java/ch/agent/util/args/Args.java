@@ -37,7 +37,7 @@ import ch.agent.util.logging.LoggerBridge;
  * 
  * <pre>
  * <code>
- * Tokenizer.MetaCharacters = '':\ foo: bar 'qu ux'='[what = ever]' foo: '2nd val'
+ * Tokenizer.MetaCharacters = '':\ foo: bar 'qu ux':'[what = ever]' foo: '2nd val'
  * </code>
  * </pre>
  * 
@@ -87,8 +87,9 @@ import ch.agent.util.logging.LoggerBridge;
 public class Args implements Iterable<String> {
 
 	public final static char EQ = '=';
-	
 	public final static String VAR_PREFIX = "$";
+	public final static String TRUE = "true";
+	public final static String FALSE = "false";
 	
 	/**
 	 * A definition object is used to write code in method chaining style.
@@ -165,12 +166,18 @@ public class Args implements Iterable<String> {
 			this.canonical = canonical;
 		}
 		
+		public abstract boolean isScalar();
+		
 		protected String getName() {
 			return canonical;
 		}
 
 		public abstract void set(String value);
 		
+		public String getDefault() {
+			return null;
+		}
+
 		public void setDefault(String value) {
 			throw new IllegalStateException(msg(U.U00106, getName()));
 		}
@@ -384,8 +391,8 @@ public class Args implements Iterable<String> {
 		protected boolean asBoolean(String value, int index) {
 			String orig = value;
 			value = value.toLowerCase();
-			boolean result = value.equals("true");
-			if (!result && !value.equals("false")) {
+			boolean result = value.equals(TRUE);
+			if (!result && !value.equals(FALSE)) {
 				String name = index >= 0 ? String.format("%s[%d]", getName(), index) : getName();
 				throw new IllegalArgumentException(msg(U.U00112, name, orig));
 			}
@@ -428,6 +435,16 @@ public class Args implements Iterable<String> {
 
 		public ScalarValue(String canonical) {
 			super(canonical);
+		}
+		
+		@Override
+		public boolean isScalar() {
+			return true;
+		}
+
+		@Override
+		public String getDefault() {
+			return defaultValue;
 		}
 
 		@Override
@@ -537,6 +554,11 @@ public class Args implements Iterable<String> {
 		public ListValue(String canonical) {
 			super(canonical);
 			this.values = new ArrayList<String>();
+		}
+
+		@Override
+		public boolean isScalar() {
+			return false;
 		}
 
 		@Override
@@ -684,6 +706,7 @@ public class Args implements Iterable<String> {
 	
 	private static final String SEPARATOR = " ";
 	private static final String COMMENT = "#";
+	private final boolean keywords;
 	private final String fileParameterName;
 	private final String ifName;
 	private final String ifNonEmptyName;
@@ -693,7 +716,6 @@ public class Args implements Iterable<String> {
 	private String mappingSeparator;
 	private Map<String, Value> args;
 	private Map<String, String> vars;
-	private boolean namelessAllowed;
 	private TextFile textFile; // use only one for duplicate detection to work
 	private List<String[]> sequence;
 	private boolean loose;
@@ -704,6 +726,8 @@ public class Args implements Iterable<String> {
 	 * and will be replaced with default values. <code>Args</code> is either in
 	 * <em>strict mode</em> or in <em>loose mode</em>.
 	 * 
+	 * @param keywords
+	 *            if true support also keywords, else name-values only
 	 * @param fileName
 	 *            the name of the "file" parameter, or null
 	 * @param ifGrammar
@@ -713,7 +737,8 @@ public class Args implements Iterable<String> {
 	 * @param sep
 	 *            a regular expression used as the mapping separator, or null
 	 */
-	public Args(String fileName, String[] ifGrammar, String suffix, String sep) {
+	public Args(boolean keywords, String fileName, String[] ifGrammar, String suffix, String sep) {
+		this.keywords = keywords;
 		this.fileParameterName = (fileName == null ? FILE : fileName);
 		if (ifGrammar != null) {
 			if (ifGrammar.length != 4)
@@ -737,6 +762,29 @@ public class Args implements Iterable<String> {
 	}
 	
 	/**
+	 * Construct an Args object using defaults. Keywords are not supported. The
+	 * default values for the name of the file parameter, the suffix, and the
+	 * mapping separator are taken from {@link #FILE},
+	 * {@link Args#FILE_SIMPLE_SUFFIX} and {@link #MAPPING_SEPARATOR}.
+	 */
+	public Args() {
+		this(true, null, null, null, null);
+	}
+	
+	/**
+	 * Construct an Args object using defaults.The default values for the name
+	 * of the file parameter, the suffix, and the mapping separator are taken
+	 * from {@link #FILE}, {@link Args#FILE_SIMPLE_SUFFIX} and
+	 * {@link #MAPPING_SEPARATOR}.
+	 * 
+	 * @param keywords
+	 *            if true support also keywords, else name-values only
+	 */
+	public Args(boolean keywords) {
+		this(keywords, null, null, null, null);
+	}
+
+	/**
 	 * Enable loose mode and optionally set a logger. If available the logger is
 	 * used to log unresolved names at log level "debug".
 	 * 
@@ -754,16 +802,6 @@ public class Args implements Iterable<String> {
 	public void setStrict() {
 		loose = false;
 		logger = null;
-	}
-	
-	/**
-	 * Construct an Args object using defaults. The default values for the name
-	 * of the file parameter, the suffix, and the mapping separator are taken
-	 * from {@link #FILE}, {@link Args#FILE_SIMPLE_SUFFIX} and
-	 * {@link #MAPPING_SEPARATOR}.
-	 */
-	public Args() {
-		this(null, null, null, null);
 	}
 	
 	/**
@@ -842,7 +880,7 @@ public class Args implements Iterable<String> {
 	public void parse(String string) {
 		if (sequence != null)
 			sequence.clear();
-		parse(new ArgsScanner('[', ']', EQ, '\\').asValuesAndPairs(string, !namelessAllowed));
+		parse(new ArgsScanner('[', ']', EQ, '\\').asValuesAndPairs(string, !keywords));
 	}
 	
 	/**
@@ -915,10 +953,21 @@ public class Args implements Iterable<String> {
 	 * null, all values are cleared.
 	 * <p>
 	 * If the name is prefixed with {@link Args#VAR_PREFIX} it is a substitution
-	 * variable, which is defined on the fly. If an existing substitution variable
-	 * is set a second time it is ignored. This allows to set substitution variables
-	 * with default values in parameter files and override them on the command line
-	 * <b>before</b> the file. 
+	 * variable, which is defined on the fly. If an existing substitution
+	 * variable is set a second time it is ignored. This allows to set
+	 * substitution variables with default values in parameter files and
+	 * override them on the command line <b>before</b> the file.
+	 * <p>
+	 * Standalone keywords and values without a name are put with this method by
+	 * using the convention of using an empty name. the following heuristic is
+	 * used:
+	 * <ol>
+	 * <li>If a scalar is defined with a name equal to the value parameter and
+	 * with a default value of "false", the value of the scalar is set to true.
+	 * No resolution is done.
+	 * <li>Else, if a scalar or a list is defined with a empty name, the value
+	 * is resolved and used for the scalar or list.
+	 * </ol>
 	 * 
 	 * @param name
 	 *            the name of the parameter
@@ -927,6 +976,42 @@ public class Args implements Iterable<String> {
 	 * @throws IllegalArgumentException
 	 */
 	public void put(String name, String value) {
+		Misc.nullIllegal(name, "name null");
+		if (!putKeyword(name, value)) {
+			Value v = args.get(name);
+			if (v == null) {
+				if (name.startsWith(VAR_PREFIX)) {
+					String variable = name.substring(VAR_PREFIX.length());
+					putVariable(variable, value);
+				} else {
+					if (loose) {
+						if (logger != null)
+							logger.debug(lazymsg(U.U00165, name));
+					} else
+						throw new IllegalArgumentException(msg(U.U00103, name));
+				}
+			} else {
+				String resolved = resolve(value);
+				v.set(resolved);
+				if (sequence != null)
+					sequence.add(new String[] { name, resolved });
+			}
+		}
+	}
+	
+	private boolean putKeyword(String name, String value) {
+		boolean keyword = false;
+		if (name.length() == 0) {
+			Value v = args.get(value); // value, not name
+			if (v != null && v.isScalar() && v.getDefault().equals(FALSE)) {
+				v.set(TRUE);
+				keyword = true;
+			}
+		}
+		return keyword;
+	}
+	
+	public void ORIGput(String name, String value) {
 		Misc.nullIllegal(name, "name null");
 		Value v = args.get(name);
 		if (v == null) {
@@ -1050,12 +1135,8 @@ public class Args implements Iterable<String> {
 	}
 	
 	private void put(String name, Value value) {
-		if (name.length() == 0)
-			namelessAllowed = true; // once set remains set forever
-		else {
-			if (name.startsWith(VAR_PREFIX))
-				throw new IllegalArgumentException(msg(U.U00121, name, VAR_PREFIX));
-		}
+		if (name.startsWith(VAR_PREFIX))
+			throw new IllegalArgumentException(msg(U.U00121, name, VAR_PREFIX));
 		args.put(name, value);
 	}
 
@@ -1117,7 +1198,7 @@ public class Args implements Iterable<String> {
 	private String parseIf(String text) {
 		String result = "";
 		try {
-			Map<String, String> map = asMap(new ArgsScanner().asPairs(text));
+			Map<String, String> map = asMap(new ArgsScanner().asValuesAndPairs(text, false));
 			String nonEmptyValue = map.get(ifNonEmptyName);
 			String thenValue = map.get(ifThenName);
 			String elseValue = map.get(ifElseName);
@@ -1141,12 +1222,12 @@ public class Args implements Iterable<String> {
 	private List<String[]> parseFile(boolean simple, String fileName) throws IOException {
 		ArgsFileVisitor visitor = new ArgsFileVisitor(simple, SEPARATOR);
 		textFile.read(fileName, visitor);
-		return new ArgsScanner().asPairs(visitor.getContent());
+		return new ArgsScanner().asValuesAndPairs(visitor.getContent(), !keywords);
 	}
 	
 	private List<String[]> parseFile(boolean simple, String fileName, String mappings) throws IOException {
 		List<String[]> pairs = parseFile(simple, fileName);
-		Map<String, String> map = asMap(new ArgsScanner().asPairs(mappings));
+		Map<String, String> map = asMap(new ArgsScanner().asValuesAndPairs(mappings, false));
 		Iterator<String[]> it = pairs.iterator();
 		while(it.hasNext()) {
 			String[] pair = it.next();

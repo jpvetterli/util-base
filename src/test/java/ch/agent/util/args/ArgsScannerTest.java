@@ -277,6 +277,17 @@ public class ArgsScannerTest {
 	}
 	
 	@Test
+	public void testNameValuePairsMixed8() {
+		List<String[]> result = scanner.asValuesAndPairs("one=1 foo two = 2 three= 3 bar baz four=4 done ", false);
+		assertEquals(8, result.size());
+		assertEquals("1", result.get(0)[1]);
+		assertEquals("1", result.get(0)[1]);
+		assertEquals("four", result.get(6)[0]);
+		assertEquals("4", result.get(6)[1]);
+		assertEquals("done", result.get(7)[0]);
+	}
+	
+	@Test
 	public void testMetaChars1() {
 		try {
 			List<String[]> result = scanner.asValuesAndPairs("OOPS [f =[o] o] = [b\\ar [w h a t] b\\ar]");

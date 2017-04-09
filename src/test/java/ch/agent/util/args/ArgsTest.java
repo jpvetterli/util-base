@@ -92,7 +92,8 @@ public class ArgsTest {
 			args.setLoose(LoggerManager.getLogger(this.getClass()));
 			args.put("foo", "bar");
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) 
+				e.printStackTrace();
 			fail("unexpected exception ");
 		}
 	}
@@ -359,6 +360,42 @@ public class ArgsTest {
 		}
 	}
 	
+	@Test
+	public void testNameless3() {
+		try {
+			args.def("exit").init("false");
+			args.def("name").init("default");
+			args.defList("");
+			args.parse("exit name=value bar baf");
+			String[] values = args.getVal("").stringArray();
+			assertEquals(2, values.length);
+			assertEquals("value", args.get("name"));
+			assertEquals(true, args.getVal("exit").booleanValue());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testNameless4() {
+		try {
+			args.def("exit").init("false");
+			args.def("name").init("default");
+			args.defList("");
+			args.parse("$EXIT=exit $FOO=BAR exit name=value ${EXIT} ${FOO}");
+			String[] values = args.getVal("").stringArray();
+			assertEquals(2, values.length);
+			assertEquals("exit", values[0]);
+			assertEquals("BAR", values[1]);
+			assertEquals("value", args.get("name"));
+			assertEquals(true, args.getVal("exit").booleanValue());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
 	@Test
 	public void testEmptyValue() {
 		try {
