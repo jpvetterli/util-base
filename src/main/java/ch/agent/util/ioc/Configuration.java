@@ -103,7 +103,10 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 		Args syntax = new Args();
 		syntax.setLoose(logger);
 		for (CommandSpecification spec : specifications) {
-			syntax.defList(spec.getName());
+			if (spec.isParameterless())
+				syntax.def(spec.getName()).init(Args.FALSE);
+			else
+				syntax.defList(spec.getName());
 			map.put(spec.getName(), spec);
 		}
 		syntax.setSequenceTrackingMode(true);
@@ -115,7 +118,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 		}
 		for (String[] statement : syntax.getSequence()) {
 			CommandSpecification spec = map.get(statement[0]);
-			executables.add(new ExecutableCommandSpecification(spec.getModule(), spec.getCommand(), statement[1]));
+			executables.add(new ExecutableCommandSpecification(spec, spec.isParameterless() ? "" : statement[1]));
 		}
 		return executables;
 	}

@@ -25,6 +25,13 @@ public interface Command<T> {
 	String getName();
 	
 	/**
+	 * Test if it is a parameterless command.
+	 * 
+	 * @return true if it is a parameterless command
+	 */
+	boolean isParameterless();
+	
+	/**
 	 * Rename the command.
 	 * 
 	 * @param name

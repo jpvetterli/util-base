@@ -14,15 +14,13 @@ public class ExecutableCommandSpecification extends CommandSpecification {
 	 * Constructor for an executable command definition. The command is only
 	 * executable if the parameters argument is not null.
 	 * 
-	 * @param module
-	 *            the module name
-	 * @param command
-	 *            the command name
+	 * @param spec 
+	 *            a command specification
 	 * @param parameters
 	 *            command parameters
 	 */
-	public ExecutableCommandSpecification(String module, String command, String parameters) {
-		super(module, command);
+	public ExecutableCommandSpecification(CommandSpecification spec, String parameters) {
+		super(spec.getModule(), spec.getCommand(), spec.isParameterless());
 		Misc.nullIllegal(parameters, "parameters null");
 		this.parameters = parameters;
 	}

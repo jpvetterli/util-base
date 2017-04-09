@@ -137,7 +137,7 @@ public class ModuleDefinition<M extends Module<?>> {
 		if (getConfiguration() != null)
 			module.configure(getConfiguration());
 		for(Command<?> command : module.getCommands()) {
-			registry.addUnique(module.getName(), command.getName());
+			registry.addUnique(new CommandSpecification(module.getName(), command.getName(), command.isParameterless()));
 		}
 		return module;
 	}

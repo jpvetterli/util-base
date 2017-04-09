@@ -9,6 +9,7 @@ public class CommandSpecification {
 	
 	private final String command;
 	private final String module;
+	private final boolean parmeterless; // irrelevant for equals and hashCode
 
 	/**
 	 * Constructor.
@@ -17,11 +18,14 @@ public class CommandSpecification {
 	 *            the module name or null for a built-in command
 	 * @param command
 	 *            the command name
+	 * @param parameterless
+	 *            if true, it is a parameterless command
 	 */
-	public CommandSpecification(String module, String command) {
+	public CommandSpecification(String module, String command, boolean parameterless) {
 		super();
 		this.module = module;
 		this.command = command;
+		this.parmeterless = parameterless;
 	}
 
 	/**
@@ -53,6 +57,15 @@ public class CommandSpecification {
 	 */
 	public String getCommand() {
 		return command;
+	}
+	
+	/**
+	 * Test if it is a parameterless command.
+	 * 
+	 * @return true if it is parameterless command
+	 */
+	public boolean isParameterless() {
+		return parmeterless;
 	}
 
 	@Override

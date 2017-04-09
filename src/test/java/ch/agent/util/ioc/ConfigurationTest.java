@@ -12,7 +12,9 @@ import org.junit.Test;
 import ch.agent.util.args.Args;
 
 public class ConfigurationTest {
-	
+
+	private static final boolean DEBUG = false;
+
 	public static class FooModDef extends ModuleDefinition<Module<?>> {
 
 		private final boolean isFoo;
@@ -227,7 +229,7 @@ public class ConfigurationTest {
 			config = config.extract("ah");
 			fail("exception expected");
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			assertEquals(NoSuchElementException.class.getSimpleName(), e.getClass().getSimpleName());
 		}
 	}

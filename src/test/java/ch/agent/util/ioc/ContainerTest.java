@@ -16,6 +16,8 @@ import ch.agent.util.logging.LoggerManager;
 
 public class ContainerTest {
 	
+	private static final boolean DEBUG = false;
+	
 	public static class A {
 		
 		void set(String s) {
@@ -84,6 +86,10 @@ public class ContainerTest {
 					return name;
 				}
 				@Override
+				public boolean isParameterless() {
+					return false;
+				}
+				@Override
 				public void rename(String name) {
 					this.name = name;
 				}
@@ -97,6 +103,10 @@ public class ContainerTest {
 				@Override
 				public String getName() {
 					return name;
+				}
+				@Override
+				public boolean isParameterless() {
+					return false;
 				}
 				@Override
 				public void rename(String name) {
@@ -131,6 +141,10 @@ public class ContainerTest {
 					return name;
 				}
 				@Override
+				public boolean isParameterless() {
+					return false;
+				}
+				@Override
 				public void rename(String name) {
 					this.name = name;
 				}
@@ -142,6 +156,10 @@ public class ContainerTest {
 				@Override
 				public String getName() {
 					return name;
+				}
+				@Override
+				public boolean isParameterless() {
+					return false;
 				}
 				@Override
 				public void rename(String name) {
@@ -206,6 +224,10 @@ public class ContainerTest {
 				@Override
 				public String getName() {
 					return name;
+				}
+				@Override
+				public boolean isParameterless() {
+					return false;
 				}
 				@Override
 				public void rename(String name) {
@@ -361,7 +383,7 @@ public class ContainerTest {
 			c.run(new String[]{"module=[name = foo class=foo]"});
 			fail("exception expected");
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			assertTrue("message C03 ?", e.getMessage().startsWith("C03"));
 		} finally {
 			c.shutdown();

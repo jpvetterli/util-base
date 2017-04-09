@@ -43,6 +43,11 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	}
 
 	@Override
+	public boolean isParameterless() {
+		return false;
+	}
+
+	@Override
 	public void rename(String name) {
 		if (Misc.isEmpty(name))
 			throw new ConfigurationException(msg(U.C51));

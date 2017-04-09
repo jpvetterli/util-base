@@ -986,15 +986,15 @@ public class Args implements Iterable<String> {
 				} else {
 					if (loose) {
 						if (logger != null)
-							logger.debug(lazymsg(U.U00165, name));
+							logger.debug(lazymsg(U.U00165, name.length() == 0 ? value : name));
 					} else
-						throw new IllegalArgumentException(msg(U.U00103, name));
+						throw new IllegalArgumentException(msg(U.U00103, name.length() == 0 ? value : name));
 				}
 			} else {
 				String resolved = resolve(value);
 				v.set(resolved);
 				if (sequence != null)
-					sequence.add(new String[] { name, resolved });
+					sequence.add(new String[] {name, resolved});
 			}
 		}
 	}
@@ -1006,32 +1006,11 @@ public class Args implements Iterable<String> {
 			if (v != null && v.isScalar() && v.getDefault().equals(FALSE)) {
 				v.set(TRUE);
 				keyword = true;
+				if (sequence != null)
+					sequence.add(new String[] {value, ""});
 			}
 		}
 		return keyword;
-	}
-	
-	public void ORIGput(String name, String value) {
-		Misc.nullIllegal(name, "name null");
-		Value v = args.get(name);
-		if (v == null) {
-			if (name.startsWith(VAR_PREFIX)) {
-				String variable = name.substring(VAR_PREFIX.length());
-				putVariable(variable, value);
-			} else {
-				if (loose) {
-					if (logger != null)
-						logger.debug(lazymsg(U.U00165, name));
-				} else
-					throw new IllegalArgumentException(msg(U.U00103, name));
-			}
-		}
-		else {
-			String resolved = resolve(value);
-			v.set(resolved);
-			if (sequence != null)
-				sequence.add(new String[]{name , resolved});
-		}
 	}
 
 	private String resolve(String value) {
