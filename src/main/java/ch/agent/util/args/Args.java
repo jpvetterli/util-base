@@ -783,6 +783,10 @@ public class Args implements Iterable<String> {
 	public Args(boolean keywords) {
 		this(keywords, null, null, null, null);
 	}
+	
+	private ArgsScanner getScanner() {
+		return new ArgsScanner('[', ']', EQ, '\\');
+	}
 
 	/**
 	 * Enable loose mode and optionally set a logger. If available the logger is
@@ -880,7 +884,7 @@ public class Args implements Iterable<String> {
 	public void parse(String string) {
 		if (sequence != null)
 			sequence.clear();
-		parse(new ArgsScanner('[', ']', EQ, '\\').asValuesAndPairs(string, !keywords));
+		parse(getScanner().asValuesAndPairs(string, !keywords));
 	}
 	
 	/**
@@ -1177,7 +1181,7 @@ public class Args implements Iterable<String> {
 	private String parseIf(String text) {
 		String result = "";
 		try {
-			Map<String, String> map = asMap(new ArgsScanner().asValuesAndPairs(text, false));
+			Map<String, String> map = asMap(getScanner().asValuesAndPairs(text, false));
 			String nonEmptyValue = map.get(ifNonEmptyName);
 			String thenValue = map.get(ifThenName);
 			String elseValue = map.get(ifElseName);
@@ -1201,12 +1205,12 @@ public class Args implements Iterable<String> {
 	private List<String[]> parseFile(boolean simple, String fileName) throws IOException {
 		ArgsFileVisitor visitor = new ArgsFileVisitor(simple, SEPARATOR);
 		textFile.read(fileName, visitor);
-		return new ArgsScanner().asValuesAndPairs(visitor.getContent(), !keywords);
+		return getScanner().asValuesAndPairs(visitor.getContent(), !keywords);
 	}
 	
 	private List<String[]> parseFile(boolean simple, String fileName, String mappings) throws IOException {
 		List<String[]> pairs = parseFile(simple, fileName);
-		Map<String, String> map = asMap(new ArgsScanner().asValuesAndPairs(mappings, false));
+		Map<String, String> map = asMap(getScanner().asValuesAndPairs(mappings, false));
 		Iterator<String[]> it = pairs.iterator();
 		while(it.hasNext()) {
 			String[] pair = it.next();
@@ -1236,8 +1240,7 @@ public class Args implements Iterable<String> {
 		for (Value v : args.values()) {
 			v.set(null);
 		}
+		vars.clear();
 	}
 	
-	
-
 }

@@ -947,6 +947,18 @@ public class ArgsTest {
 	}
 	
 	@Test
+	public void testVariables1A() {
+		try {
+			args.def("foo");
+			args.parse("$ = hop foo = [${} la boum]");
+			assertEquals("hop la boum", args.get("foo"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
 	public void testVariables2() {
 		try {
 			args.putVariable("HOP", "hop");
@@ -956,6 +968,54 @@ public class ArgsTest {
 			assertEquals("hop la boum", args.get("foo"));
 			assertFalse(result);
 		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testVariables3() {
+		try {
+			// infinite recursion?
+			args.putVariable("HOP", "${HOP}");
+			args.def("foo");
+			args.parse("foo = [${HOP} la boum]");
+			fail("exception expected");
+		} catch (Exception e) {
+			assertTrue("U00122", e.getMessage().indexOf("no variable named \"HOP\" found") > 0);
+		}
+	}
+	
+	@Test
+	public void testSubroutines1() {
+		try {
+			args.def("foox");
+			args.def("fooa");
+			args.parse(
+				"$BODY = [arg1=\\${ARG1} arg2=\\${ARG2}] " + 
+				"foox=[$ARG1=x $ARG2=y ${BODY}] " + 
+				"fooa=[$ARG1=a $ARG2=b ${BODY}]");
+			assertEquals("$ARG1=x $ARG2=y arg1=${ARG1} arg2=${ARG2}", args.get("foox"));
+			assertEquals("$ARG1=a $ARG2=b arg1=${ARG1} arg2=${ARG2}", args.get("fooa"));
+
+			Args args2 = new Args();
+			args2.def("arg1");
+			args2.def("arg2");
+			args2.parse(args.get("foox"));
+			assertEquals("x", args2.get("arg1"));
+			assertEquals("y", args2.get("arg2"));
+			
+			// without reset, the values are still x and y because "the first wins"
+			args2.parse(args.get("fooa"));
+			assertEquals("x", args2.get("arg1"));
+			assertEquals("y", args2.get("arg2"));
+
+			// after reset, all $variables have disappeated
+			args2.reset();
+			args2.parse(args.get("fooa"));
+			assertEquals("a", args2.get("arg1"));
+			assertEquals("b", args2.get("arg2"));
+		} catch (Exception e) {
+			e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
