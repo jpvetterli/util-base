@@ -239,6 +239,20 @@ public class ContainerTest {
 					logger.info("* " + parameters);
 				}
 			});
+			add(
+			new AbstractCommand<Object>("demo-keyword") {
+				
+				@Override
+				public boolean isParameterless() {
+					return true;
+				}
+
+				@Override
+				public void execute(String parameters) {
+					logger.debug("* (this is command " + getName() + " in module " + m.getName() + ")");
+					logger.info("* (parameters=" + parameters + ")");
+				}
+		});
 		}
 
 		@Override
@@ -324,6 +338,36 @@ public class ContainerTest {
 					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3] c.echo=[hello world] a.c.echo=[helloworld]]"
 			});
 			c.shutdown();
+			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
+			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));
+			assertEquals("B#set exec1 and tag=xyzzy", texts.get(1));
+			assertEquals("B#set exec3 and tag=exec2", texts.get(2));
+			assertEquals("B#set This is module \"a\" stopping and tag=exec2", texts.get(3));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void test12B() {
+		LogBuffer log = new LogBuffer();
+		log.capture();
+		Container c = new Container();
+		try {
+			c.run(new String[]{
+					String.format("module=[name = a class=%s require=b require=c]", AModule.class.getName()),
+					String.format("module=[name = b class=%s config=[tag=[This tag was modified.]]]", BModule.class.getName()),
+					String.format("module=[name = c class=%s]", CModule.class.getName()),
+					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3] c.demo-keyword]"
+			});
+			c.shutdown();
+			log.reset();
+			String logged = log.toString();
+			if (DEBUG)
+				System.err.println(logged);
+			assertTrue("keyword command missing", logged.indexOf("* (this is command c.demo-keyword in module c)") > 0);
+			assertTrue("keyword command parameters missing", logged.indexOf("* (parameters=)") > 0);
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
 			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));
 			assertEquals("B#set exec1 and tag=xyzzy", texts.get(1));
