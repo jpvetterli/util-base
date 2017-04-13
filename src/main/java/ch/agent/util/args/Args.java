@@ -897,7 +897,12 @@ public class Args implements Iterable<String> {
 		for (String[] pair : pairs) {
 			switch (pair.length) {
 			case 1:
-				put("", pair[0]);
+				// resolve ${FOO} which can be anything, multiple name-value pairs, etc.
+				String resolved = resolve(pair[0]);
+				if (!resolved.equals(pair[0]))
+					parse(getScanner().asValuesAndPairs(resolved, !keywords));
+				else
+					put("", pair[0]);
 				break;
 			case 2:
 				if (pair[0].equals(fileParameterName))

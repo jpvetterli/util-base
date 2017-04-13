@@ -385,9 +385,8 @@ public class ArgsTest {
 			args.defList("");
 			args.parse("$EXIT=exit $FOO=BAR exit name=value ${EXIT} ${FOO}");
 			String[] values = args.getVal("").stringArray();
-			assertEquals(2, values.length);
-			assertEquals("exit", values[0]);
-			assertEquals("BAR", values[1]);
+			assertEquals(1, values.length);
+			assertEquals("BAR", values[0]);
 			assertEquals("value", args.get("name"));
 			assertEquals(true, args.getVal("exit").booleanValue());
 		} catch (Exception e) {
