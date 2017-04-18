@@ -118,6 +118,8 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 		}
 		for (String[] statement : syntax.getSequence()) {
 			CommandSpecification spec = map.get(statement[0]);
+			if (spec.isParameterless() && statement[1].length() > 0)
+				throw new ConfigurationException(msg(U.C25, statement[0], statement[1]));
 			executables.add(new ExecutableCommandSpecification(spec, spec.isParameterless() ? "" : statement[1]));
 		}
 		return executables;
