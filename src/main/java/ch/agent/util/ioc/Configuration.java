@@ -101,7 +101,6 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 		List<ExecutableCommandSpecification> executables = new ArrayList<ExecutableCommandSpecification>();
 		Map<String, CommandSpecification> map = new HashMap<String, CommandSpecification>(specifications.size());
 		Args syntax = new Args();
-		syntax.setLoose(logger);
 		for (CommandSpecification spec : specifications) {
 			if (spec.isParameterless())
 				syntax.def(spec.getName()).init(Args.FALSE);
