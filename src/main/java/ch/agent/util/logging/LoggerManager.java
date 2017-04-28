@@ -17,7 +17,7 @@ import ch.agent.util.STRINGS.U;
  */
 public class LoggerManager {
 
-	private static final String PROP = "LoggerBridgeFactory";
+	public static final String LOGGER_BRIDGE_FACTORY = "LoggerBridgeFactory";
 	private static final String INSTANCE_METHOD = "getInstance";
 	
 	private static LoggerBridgeFactory factory;
@@ -30,7 +30,7 @@ public class LoggerManager {
 	 */
 	public static synchronized LoggerBridgeFactory getFactory() {
 		if (factory == null) {
-			String className = System.getProperty(PROP);
+			String className = System.getProperty(LOGGER_BRIDGE_FACTORY);
 			if (className == null)
 				factory = DefaultLoggerBridgeFactory.getInstance();
 			else {
@@ -39,7 +39,7 @@ public class LoggerManager {
 					Method getI = c.getMethod(INSTANCE_METHOD);
 					factory = (LoggerBridgeFactory) getI.invoke(null);
 				} catch (Exception e) {
-					throw new IllegalStateException(msg(U.U00300, PROP, className));
+					throw new IllegalStateException(msg(U.U00300, LOGGER_BRIDGE_FACTORY, className));
 				}
 			}
 		}
