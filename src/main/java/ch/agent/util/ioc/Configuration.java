@@ -146,22 +146,17 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 	}
 	
 	/**
-	 * Shutdown all modules in the registry. The sequence is the reverse from
-	 * the initialization sequence.
+	 * Shutdown all modules in the registry. The shutdown sequence is the
+	 * reverse of the initialization sequence.
 	 * 
 	 * @param registry
 	 *            a configuration registry
 	 */
 	public void shutdown(ConfigurationRegistry<M> registry) {
-		List<M> list = new ArrayList<M>(registry.getModules().values());
-		int i = list.size();
-		while (--i >= 0) {
-			try {
-				M module = list.get(i);
-				module.shutdown();
-			} catch (Exception e) {
-				// ignore
-			}
+		Collection<M> coll = registry.getModules().values();
+		Module<?>[] array = coll.toArray(new Module<?>[coll.size()]);
+		for (int i = array.length - 1; i >= 0; i--) {
+			array[i].shutdown();
 		}
 	}
 
