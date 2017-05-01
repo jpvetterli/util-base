@@ -188,21 +188,21 @@ public class ConfigurationTest {
 				b.append(def.getName());
 			}
 			assertEquals("cbaedfgh", b.toString());
-			Configuration<ModuleDefinition<Module<?>>, Module<?>> sub = config.extract("g");
+			Configuration<ModuleDefinition<Module<?>>, Module<?>> sub = config.extract(null, "g");
 			b.setLength(0);
 			for(ModuleDefinition<Module<?>> def : sub.getModuleDefinitions()) {
 				b.append(def.getName());
 			}
 			assertEquals("cedfg", b.toString());
 			
-			sub = config.extract("a", "h");
+			sub = config.extract(null, "a", "h");
 			b.setLength(0);
 			for(ModuleDefinition<Module<?>> def : sub.getModuleDefinitions()) {
 				b.append(def.getName());
 			}
 			assertEquals("cbah", b.toString());
 			
-			sub = config.extract();
+			sub = config.extract(null);
 			assertEquals(0, sub.getModuleCount());
 
 		} catch (Exception e) {
@@ -226,7 +226,7 @@ public class ConfigurationTest {
 				"";
 			Container c = new Container();
 			Configuration<ModuleDefinition<Module<?>>, Module<?>> config = c.getBuilder().build(spec);
-			config = config.extract("ah");
+			config = config.extract(null, "ah");
 			fail("exception expected");
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();

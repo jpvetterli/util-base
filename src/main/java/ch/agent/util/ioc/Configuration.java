@@ -36,9 +36,13 @@ import ch.agent.util.logging.LoggerManager;
  *            the module type
  */
 public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
-
+	
+	public static interface ExtractFilter {
+		boolean include(ModuleDefinition<?> def);
+	}
+	
 	private static LoggerBridge logger = LoggerManager.getLogger(Configuration.class);
-
+	
 	private final String execution;
 	private final Map<String, D> modules;
 
@@ -220,13 +224,14 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 	 * The execution specification, which belongs to the top-level
 	 * configuration, is not included.
 	 * 
+	 * @param filter extraction filter or null
 	 * @param module
 	 *            names of zero or more top modules to include in the
 	 *            sub-configuration
 	 * @return a configuration
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends Configuration<D,M>> T extract(String... module) {
+	public <T extends Configuration<D,M>> T extract(ExtractFilter filter, String... module) {
 		Set<String> scope = new HashSet<String>(); 
 		for (String name : module) {
 			D def = getModuleDefinition(name);
@@ -236,7 +241,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 		}
 		List<D> extract = new ArrayList<D>(scope.size());
 		for (D def : getModuleDefinitions()) {
-			if (scope.contains(def.getName()))
+			if (scope.contains(def.getName()) && (filter == null || filter.include(def)))
 				extract.add(def);
 		}
 		return (T) new Configuration<D,M>(extract, null);
