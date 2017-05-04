@@ -102,7 +102,7 @@ public class ModuleDefinition<M extends Module<?>> {
 	 * @return a module object
 	 * @throws ConfigurationException if creation fails
 	 */
-	protected M create() {
+	public M create() {
 		try {
 			@SuppressWarnings("unchecked")
 			Class<M> classe = (Class<M>) Class.forName(getClassName());
@@ -114,32 +114,30 @@ public class ModuleDefinition<M extends Module<?>> {
 	}
 	
 	/**
-	 * Create and configure the module using this definition. The module map
+	 * Configure the module using this definition. The registry
 	 * provides all required modules. The steps performed are:
 	 * <ul>
-	 * <li>a new module is created
 	 * <li>all required modules are added to the module
-	 * <li>the configuration specification, if any, is passed to the module
-	 * <li>the module registers zero or more commands if a registry is provided
+	 * <li>the module is configured using the configuration string
+	 * <li>the module inserts zero or more commands into the registry.
 	 * </ul>
 	 * <p>
 	 * IMPORTANT: this method can be called only once.
 	 * 
+	 * @param module
+	 *            the module to configure
 	 * @param registry
 	 *            configuration registry
-	 * @return the module
 	 * @throws ConfigurationException
 	 *             in case of configuration failure
 	 */
-	public M configure(ConfigurationRegistry<M> registry) {
-		M module = create();
+	public void configure(M module, ConfigurationRegistry<M> registry) {
 		addRequiredModules(module, registry.getModules());
 		if (getConfiguration() != null)
 			module.configure(getConfiguration());
 		for(Command<?> command : module.getCommands()) {
 			registry.addUnique(new CommandSpecification(module.getName(), command.getName(), command.isParameterless()));
 		}
-		return module;
 	}
 	
 	/**

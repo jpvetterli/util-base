@@ -31,8 +31,6 @@ import ch.agent.util.args.Args;
  */
 public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends Module<?>> {
 	
-	int review_javadoc; // configuration
-	
 	public static final String MODULE_NAME = "name";
 	public static final String MODULE_CLASS = "class";
 	public static final String MODULE_REQUIREMENT = "requirement";

@@ -65,7 +65,6 @@ public class STRINGS extends LazyString {
 		public static final String C15 = "C15";
 		public static final String C16 = "C16";
 		public static final String C17 = "C17";
-		public static final String C18 = "C18";
 		public static final String C19 = "C19";
 		public static final String C20 = "C20";
 		public static final String C21 = "C21";
@@ -73,6 +72,9 @@ public class STRINGS extends LazyString {
 		public static final String C23 = "C23";
 		public static final String C24 = "C24";
 		public static final String C25 = "C25";
+		public static final String C30 = "C30";
+		public static final String C31 = "C31";
+		public static final String C32 = "C32";
 		public static final String C50 = "C50";
 		public static final String C51 = "C51";
 		public static final String C52 = "C52";
@@ -80,6 +82,9 @@ public class STRINGS extends LazyString {
 		public static final String C54 = "C54";
 		public static final String C55 = "C55";
 		public static final String C56 = "C56";
+		public static final String C61 = "C61";
+		public static final String C62 = "C62";
+		public static final String C63 = "C63";
 
 	}
 

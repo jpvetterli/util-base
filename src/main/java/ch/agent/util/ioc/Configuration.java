@@ -63,22 +63,33 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 	}
 	
 	/**
-	 * Create and configure all modules. The result is a registry with all the
-	 * configured modules and all commands registered by them.
+	 * Create all modules. The result is a registry with all modules.
 	 * 
-	 * @return configuration registry with all modules and commands
-	 * @throws Exception
-	 *             thrown by the module initialize method
+	 * @return configuration registry with all modules
 	 */
-	public ConfigurationRegistry<M> configure() throws Exception {
+	public ConfigurationRegistry<M> create() {
 		ConfigurationRegistry<M> registry = new ConfigurationRegistry<M>();
 		for (D def : getModuleDefinitions()) {
-			M module = def.configure(registry);
+			M module = def.create();
 			if (registry.getModules().put(def.getName(), module) != null)
 				throw new IllegalStateException(msg(U.C55, def.getName()));
 		}
-		logger.debug(lazymsg(U.C18, Misc.join("\", \"", registry.getModules().keySet())));
+		logger.debug(lazymsg(U.C30, Misc.join("\", \"", registry.getModules().keySet())));
 		return registry;
+	}
+	
+	/**
+	 * Configure all modules in the registry. See
+	 * {@link ModuleDefinition#configure}.
+	 * 
+	 * @param registry
+	 *            configuration registry
+	 */
+	public void configure(ConfigurationRegistry<M> registry) {
+		for (M module : registry.getModules().values()) {
+			getModuleDefinition(module.getName()).configure(module, registry);
+		}
+		logger.debug(lazymsg(U.C31, Misc.join("\", \"", registry.getModules().keySet())));
 	}
 	
 	/**
@@ -91,6 +102,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
 		for (M module : registry.getModules().values()) {
 			module.initialize();
 		}
+		logger.debug(lazymsg(U.C32, Misc.join("\", \"", registry.getModules().keySet())));
 	}
 	
 	/**

@@ -73,7 +73,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	@Override
 	public void configure(String specs) {
 		if (configure)
-			throw new IllegalStateException("bug found: #configure called again, module: " + getName());
+			throw new IllegalStateException(msg(U.C61, getName()));
 		configure = true;
 		Args config = new Args();
 		defineParameters(config);
@@ -128,14 +128,14 @@ public abstract class AbstractModule<T> implements Module<T> {
 	@Override
 	public void initialize() throws Exception {
 		if (initialize)
-			throw new IllegalStateException("bug found: #initialize called again, module: " + getName());
+			throw new IllegalStateException(msg(U.C62, getName()));
 		initialize = true;
 	}
 
 	@Override
 	public void shutdown() {
 		if (shutdown)
-			throw new IllegalStateException("bug found: #shutdown called again, module: " + getName());
+			throw new IllegalStateException(msg(U.C63, getName()));
 		shutdown = true;
 	}
 

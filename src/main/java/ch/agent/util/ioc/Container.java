@@ -133,7 +133,8 @@ public class Container {
 		logger.info(lazymsg(U.C20, Misc.truncate(Arrays.toString((String[]) parameters), 60, " (etc.)")));
 		try {
 			configuration = getBuilder().build(Misc.join(" ", parameters));
-			registry = configuration.configure();
+			registry = configuration.create();
+			configuration.configure(registry);
 			configuration.initialize(registry);
 			configuration.executeCommands(registry, configuration.parseCommands(registry.getCommands().values()));
 		} catch (EscapeException e) {
