@@ -3,6 +3,7 @@ package ch.agent.util.ioc;
 import static ch.agent.util.STRINGS.lazymsg;
 import static ch.agent.util.STRINGS.msg;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -35,8 +36,10 @@ import ch.agent.util.logging.LoggerManager;
  * @param <M>
  *            the module type
  */
-public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> {
+public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> implements Serializable {
 	
+	private static final long serialVersionUID = -8582798552915184875L;
+
 	public static interface ExtractFilter {
 		boolean include(ModuleDefinition<?> def);
 	}

@@ -9,8 +9,9 @@ package ch.agent.util.ioc;
  * command, to be logged.
  * 
  */
-@SuppressWarnings("serial")
 public class EscapeException extends RuntimeException {
+
+	private static final long serialVersionUID = -3351063363176175992L;
 
 	public EscapeException(String moduleOrCommandName) {
 		super(moduleOrCommandName);

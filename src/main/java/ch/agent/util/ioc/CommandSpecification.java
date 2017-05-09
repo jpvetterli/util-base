@@ -1,9 +1,13 @@
 package ch.agent.util.ioc;
 
+import java.io.Serializable;
+
 /**
  * A command specification consists of module name and a command name.
  */
-public class CommandSpecification {
+public class CommandSpecification implements Serializable {
+
+	private static final long serialVersionUID = -1426998440999221081L;
 
 	public static final String NAME_SEPARATOR = "."; 
 	

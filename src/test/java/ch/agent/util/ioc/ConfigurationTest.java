@@ -17,6 +17,7 @@ public class ConfigurationTest {
 
 	public static class FooModDef extends ModuleDefinition<Module<?>> {
 
+		private static final long serialVersionUID = 4782773073007023426L;
 		private final boolean isFoo;
 		
 		public FooModDef(String name, boolean isFoo, String className, String[] required, String[] predecessors, String config) {
@@ -53,6 +54,7 @@ public class ConfigurationTest {
 	
 	public static class FooConf<T extends FooModDef> extends Configuration<T, Module<?>> {
 
+		private static final long serialVersionUID = -7446947653240132972L;
 		private final String foo;
 		
 		public FooConf(List<T> modules, String exec, String foo) {

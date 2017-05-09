@@ -4,8 +4,9 @@ package ch.agent.util.ioc;
  * Unchecked exception thrown when configuration fails for any reason.
  *
  */
-@SuppressWarnings("serial")
 public class ConfigurationException extends RuntimeException {
+
+	private static final long serialVersionUID = 8744200467905423052L;
 
 	/**
 	 * Constructor.

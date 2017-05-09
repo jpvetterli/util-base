@@ -10,6 +10,7 @@ public class ModuleDefinitionTest {
 	
 	public static class FooModuleDefinition extends ModuleDefinition<Module<?>> {
 
+		private static final long serialVersionUID = 6144411169631151591L;
 		private final boolean isFoo;
 		
 		public FooModuleDefinition(String name, boolean isFoo, String className, String[] required, String[] predecessors, String config) {
@@ -25,6 +26,7 @@ public class ModuleDefinitionTest {
 
 	public static class FooBarModuleDefinition extends FooModuleDefinition {
 
+		private static final long serialVersionUID = -4712627046325300973L;
 		private final boolean isBar;
 		
 		public FooBarModuleDefinition(String name, boolean isFoo, boolean isBar, String className, String[] required, String[] predecessors, String config) {

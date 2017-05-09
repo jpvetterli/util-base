@@ -8,6 +8,8 @@ import ch.agent.util.base.Misc;
  */
 public class ExecutableCommandSpecification extends CommandSpecification {
 
+	private static final long serialVersionUID = -5325049542871436808L;
+
 	private final String parameters;
 
 	/**

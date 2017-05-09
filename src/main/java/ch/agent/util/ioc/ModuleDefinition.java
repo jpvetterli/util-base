@@ -2,6 +2,7 @@ package ch.agent.util.ioc;
 
 import static ch.agent.util.STRINGS.msg;
 
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,8 +32,10 @@ import ch.agent.util.base.Misc;
  * @param <M>
  *            the module type
  */
-public class ModuleDefinition<M extends Module<?>> {
+public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	
+	private static final long serialVersionUID = -7103451839673077227L;
+
 	int review_javadoc; // configuration string
 	
 	private final String name;

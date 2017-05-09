@@ -2,6 +2,7 @@ package ch.agent.util.ioc;
 
 import static ch.agent.util.STRINGS.msg;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -23,8 +24,10 @@ import ch.agent.util.STRINGS.U;
  * @param <M>
  *            the module type
  */
-public class ConfigurationRegistry<M extends Module<?>> {
+public class ConfigurationRegistry<M extends Module<?>> implements Serializable {
 	
+	private static final long serialVersionUID = 8694801124105036870L;
+
 	private Map<String, M> modules;
 	private Map<String, CommandSpecification> commands;
 	
