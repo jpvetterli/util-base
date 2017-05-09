@@ -115,7 +115,7 @@ public class ArgsTest {
 			args.defList("foo");
 			args.put("foo", "value1");
 			args.put("foo", "value2");
-			assertEquals("value2", args.getVal("foo").minSize(2).stringArray()[1]);
+			assertEquals("value2", args.getVal("foo").size(2, Integer.MAX_VALUE).stringArray()[1]);
 		} catch (Exception e) {
 			fail("unexpected exception");
 		}
@@ -225,7 +225,7 @@ public class ArgsTest {
 			assertEquals(0.5, args.getVal("foo").size(5, 10).doubleArray()[1], 10e-10);
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertMessage(e, U.U00109);
+			assertMessage(e, U.U00110);
 		}
 	}
 	
@@ -235,10 +235,25 @@ public class ArgsTest {
 			args.defList("foo");
 			args.put("foo", "4.5");
 			args.put("foo", "0.5");
-			assertEquals(0.5, args.getVal("foo").minSize(3).doubleArray()[1], 10e-10);
+			assertEquals(0.5, args.getVal("foo").size(3, Integer.MAX_VALUE).doubleArray()[1], 10e-10);
 			fail("expected an exception");
 		} catch (Exception e) {
 			assertMessage(e, U.U00110);
+		}
+	}
+	
+	@Test
+	public void testDouble4a() {
+		try {
+			args.defList("foo");
+			args.put("foo", "4.5");
+			args.put("foo", "0.5");
+			args.put("foo", "0.6");
+			args.put("foo", "0.7");
+			assertEquals(0.5, args.getVal("foo").size(1, 3).doubleArray()[1], 10e-10);
+			fail("expected an exception");
+		} catch (Exception e) {
+			assertMessage(e, U.U00111);
 		}
 	}
 
@@ -866,7 +881,7 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.put("foo", "good2");
-			assertEquals(Good.good2, args.getVal("foo").enumValue(Good.good1));
+			assertEquals(Good.good2, args.getVal("foo").enumValue(Good.class));
 		} catch (Exception e) {
 			fail("unexpected exception");
 		}
@@ -876,7 +891,7 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.put("foo", "good3");
-			assertEquals(Good.good2, args.getVal("foo").enumValue(Good.good1));
+			assertEquals(Good.good2, args.getVal("foo").enumValue(Good.class));
 			fail("exception expected");
 		} catch (Exception e) {
 			assertTrue(e.getMessage().startsWith("U00115"));
@@ -888,7 +903,7 @@ public class ArgsTest {
 			args.defList("foo");
 			args.put("foo", "good1");
 			args.put("foo", "good2");
-			Enum<?>[] res = args.getVal("foo").enumArray(Good.good1);
+			Enum<?>[] res = args.getVal("foo").enumArray(Good.class);
 			assertEquals(Good.good1, res[0]);
 			assertEquals(Good.good2, res[1]);
 		} catch (Exception e) {
@@ -902,7 +917,7 @@ public class ArgsTest {
 			args.defList("foo");
 			args.put("foo", "good2");
 			args.put("foo", "good3");
-			Enum<?>[] res = args.getVal("foo").enumArray(Good.good1);
+			Enum<?>[] res = args.getVal("foo").enumArray(Good.class);
 			assertEquals(Good.good1, res[0]);
 			assertEquals(Good.good2, res[1]);
 		} catch (Exception e) {
@@ -914,7 +929,7 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.put("foo", "good2");
-			assertEquals(Good.good2, args.getVal("foo").enumValue(Bad.good1));
+			assertEquals(Good.good2, args.getVal("foo").enumValue(Bad.class));
 			fail("exception expected");
 		} catch (Exception e) {
 			assertTrue(e.getMessage().startsWith("U00115"));
@@ -925,7 +940,7 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.put("foo", "good1");
-			assertNotEquals(Good.good1, args.getVal("foo").enumValue(Bad.good1));
+			assertNotEquals(Good.good1, args.getVal("foo").enumValue(Bad.class));
 		} catch (Exception e) {
 			fail("unexpected exception");
 		}

@@ -67,15 +67,12 @@ import ch.agent.util.logging.LoggerBridge;
  * </code>
  * </pre>
  * <p>
- * When mappings are present, only parameters named in the mappings (
- * <q>foo</q> and
- * <q>quux</q> in the example) will be considered. If they are found in the file
- * the corresponding values will be assigned to parameters using the mapping
- * values (
- * <q>bar</q> and
- * <q>flix</q> in the example). This trick is useful when extracting specific
- * parameters from existing configuration files where names are defined by
- * someone else.
+ * When mappings are present, only parameters named in the mappings ("foo" and
+ * "quux" in the example) will be considered. If they are found in the file the
+ * corresponding values will be assigned to parameters using the mapping values
+ * ("bar" and "flix" in the example). This trick is useful when extracting
+ * specific parameters from existing configuration files where names are defined
+ * by someone else.
  * <p>
  * Except in <em>loose mode</em> parameter names must have been defined before
  * parsing. Loose mode is activated by {@link #setLoose} and deactivated by
@@ -207,30 +204,6 @@ public class Args implements Iterable<String> {
 		public Value size(int minSize, int maxSize) { 
 			throw new IllegalStateException(msg(U.U00107, getName()));
 		}
-		
-		/**
-		 * Check the number of values. Throw an exception if the size does not match
-		 * the constraint.
-		 * 
-		 * @param size maximum size
-		 * 
-		 * @return this value 
-		 */
-		public Value maxSize(int size) { 
-			throw new IllegalStateException(msg(U.U00107, getName()));
-		}
-		
-		/**
-		 * Check the number of values. Throw an exception if the size does not match
-		 * the constraint.
-		 * 
-		 * @param size minimum size
-		 * 
-		 * @return this value 
-		 */
-		public Value minSize(int size) { 
-			throw new IllegalStateException(msg(U.U00107, getName()));
-		}
 
 		/**
 		 * Return the value as a string. Throw an exception if the value is not
@@ -304,9 +277,10 @@ public class Args implements Iterable<String> {
 		 * Return the value as an Enum. Throw an exception if the value is not
 		 * scalar or if the value cannot be converted.
 		 * 
+		 * @param enumClass the enum type class
 		 * @return an Enum 
 		 */
-		public Enum<?> enumValue(Enum<?> example) {
+		public <T extends Enum<T>> T enumValue(Class<T> enumClass) {
 			throw new IllegalArgumentException(msg(U.U00101, getName()));
 		}
 		
@@ -314,9 +288,10 @@ public class Args implements Iterable<String> {
 		 * Return the value as an Enum array. Throw an exception if the value is 
 		 * scalar or if any element cannot be converted.
 		 * 
+		 * @param enumClass the enum type class
 		 * @return an Enum array
 		 */
-		public Enum<?>[] enumArray(Enum<?> example) {
+		public <T extends Enum<T>> T[] enumArray(Class<T> enumClass) {
 			throw new IllegalArgumentException(msg(U.U00102, getName()));
 		}
 		
@@ -417,13 +392,12 @@ public class Args implements Iterable<String> {
 			}
 		}
 		
-		@SuppressWarnings("unchecked")
-		protected Enum<?> asEnum(Enum<?> example, String value, int index) {
+		protected <T extends Enum<T>> T asEnum(Class<T> enumClass, String value, int index) {
 			try {
-				return Enum.valueOf(example.getClass(), value);
+				return Enum.valueOf(enumClass, value);
 			} catch (Exception e) {
 				String name = index >= 0 ? String.format("%s[%d]", getName(), index) : getName();
-				throw new IllegalArgumentException(msg(U.U00115, name, value, example.getClass().getSimpleName()));
+				throw new IllegalArgumentException(msg(U.U00115, name, value, enumClass.getSimpleName()));
 			}
 		}
 
@@ -537,8 +511,8 @@ public class Args implements Iterable<String> {
 		}
 
 		@Override
-		public Enum<?> enumValue(Enum<?> example) {
-			return asEnum(example, stringValue(), -1);
+		public <T extends Enum<T>> T enumValue(Class<T> enumClass) {
+			return asEnum(enumClass, stringValue(), -1);
 		}
 
 		@Override
@@ -578,33 +552,16 @@ public class Args implements Iterable<String> {
 					throw new IllegalArgumentException(msg(U.U00108, getName(), 
 							values.size(), minSize));
 			} else {
-				if (values.size() < minSize || values.size() > maxSize)
-					throw new IllegalArgumentException(msg(U.U00109, getName(), 
-							values.size(), minSize, maxSize));
+				if (values.size() < minSize)
+					throw new IllegalArgumentException(msg(U.U00110, getName(), 
+						values.size(), minSize));
+				if (values.size() > maxSize)
+				throw new IllegalArgumentException(msg(U.U00111, getName(), 
+						values.size(), maxSize));
 			}
 			return this;
 		}
 		
-		@Override
-		public Value minSize(int size) {
-			if (size < 0)
-				throw new IllegalArgumentException("size < 0");
-			if (values.size() < size)
-				throw new IllegalArgumentException(msg(U.U00110, getName(), 
-						values.size(), size));
-			return this;
-		}
-		
-		@Override
-		public Value maxSize(int size) {
-			if (size < 0)
-				throw new IllegalArgumentException("size < 0");
-			if (values.size() > size)
-				throw new IllegalArgumentException(msg(U.U00111, getName(), 
-						values.size(), size));
-			return this;
-		}
-
 		@Override
 		public String[] stringArray() {
 			return values.toArray(new String[values.size()]);
@@ -636,12 +593,13 @@ public class Args implements Iterable<String> {
 			}
 			return result;
 		}
-
+		
 		@Override
-		public Enum<?>[] enumArray(Enum<?> example) {
-			Enum<?>[] result = new Enum<?>[values.size()];
+		public <T extends Enum<T>> T[] enumArray(Class<T> enumClass) {
+			@SuppressWarnings("unchecked")
+			T[] result = (T[]) new Enum<?>[values.size()];
 			for (int i = 0; i < result.length; i++) {
-				result[i] = asEnum(example, values.get(i), i);
+				result[i] = asEnum(enumClass, values.get(i), i);
 			}
 			return result;
 		}
@@ -922,7 +880,7 @@ public class Args implements Iterable<String> {
 
 	/**
 	 * Define a scalar parameter. The name cannot be null but it can be empty,
-	 * in which case it is known as a <q>positional</q> parameter. When a scalar
+	 * in which case it is known as a <em>positional</em> parameter. When a scalar
 	 * parameter is repeated, the last value wins. An
 	 * <code>IllegalArgumentException</code> is thrown if there is already a
 	 * parameter with the same name.
@@ -940,7 +898,7 @@ public class Args implements Iterable<String> {
 	
 	/**
 	 * Define a list parameter. The name cannot be null but it can be empty, in
-	 * which case it is known as a <q>positional</q> parameter. When a list
+	 * which case it is known as a <em>positional</em> parameter. When a list
 	 * parameter is repeated all values are returned. An
 	 * <code>IllegalArgumentException</code> is thrown if there is already a
 	 * parameter with the same name.
