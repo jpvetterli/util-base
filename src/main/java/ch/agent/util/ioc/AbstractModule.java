@@ -108,13 +108,17 @@ public abstract class AbstractModule<T> implements Module<T> {
 	 * {@inheritDoc}
 	 * <p>
 	 * This implementation adds all commands of the module specified and returns
-	 * true, which means the module has been accepted as a requirement.
+	 * true, which means the module is accepted as a requirement.
 	 * <p>
 	 * As a consequence, when a subclass does not provide an implementation for
 	 * {@link #add(Module)} all requirements are accepted and all their commands
 	 * become available. If this is not the intention, the subclass must
 	 * override the method to return false.
-	 * 
+	 * <p>
+	 * All commands of the required module are added to this module with the
+	 * name of the required module prefixed to the command names. For example
+	 * after adding module <em>foo</em> with command <em>bar,</em> this module
+	 * will have a command named <em>foo.bar.</em>
 	 */
 	@Override
 	public boolean add(Module<?> module) {

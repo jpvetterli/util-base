@@ -88,10 +88,7 @@ public interface Module<T> {
 	
 	/**
 	 * Add a required module. This method is used to add any prerequisite
-	 * module. All commands of the added module will be added to this module
-	 * with the name of the added module prefixed to the command names. For
-	 * example if adding a module named <em>foo</em> which has a command named
-	 * <em>bar</em>, this module will have a command named <em>foo.bar</em>.
+	 * module.
 	 * 
 	 * @param module
 	 *            a module, initialized
@@ -101,9 +98,13 @@ public interface Module<T> {
 	
 	/**
 	 * Get the underlying object implementing the module. Some modules don't
-	 * have an underlying object distinct from themselves and return null.
+	 * have an underlying object distinct from themselves and return null. In
+	 * many implementations, calling this method before the module has been
+	 * initialized throws an <code>IllegalStateException</code>. To avoid this
+	 * problem, get the object from the required module in {@link #initialize}
+	 * and not in {@link #add(Module)}.
 	 * 
-	 * @return an object
+	 * @return the underlying object or null
 	 * @throws IllegalStateException
 	 *             if the object is not yet available
 	 */
