@@ -281,7 +281,6 @@ public class ArgsScanner {
 	public ArgsScanner() {
 		this('[', ']', '=', '\\');
 	}
-
 	
 	/**
 	 * Turn a string into a list of name-value pairs. An
@@ -295,7 +294,27 @@ public class ArgsScanner {
 	 * @throws IllegalArgumentException
 	 */
 	public List<String[]> asPairs(String string) {
-		return asValuesAndPairs(string, true);
+		return asValuesAndPairs(string, true, false);
+	}
+	
+	/**
+	 * Turn a string into a list of name-value pairs. An
+	 * <code>IllegalArgumentException</code> is thrown when parsing becomes
+	 * impossible because of a badly formed input.
+	 * 
+	 * @param string
+	 *            a string interpreted as a sequence of names, equals, and
+	 *            values
+	 * @return a list of 2-elements array representing name-value pairs
+	 * @throws IllegalArgumentException
+	 */
+	public List<String> asValues(String string) {
+		List<String[]> values = asValuesAndPairs(string, false, true);
+		List<String> result = new ArrayList<String>(values.size());
+		for (String [] v : values) {
+			result.add(v[0]);
+		}
+		return result;
 	}
 	
 	/**
@@ -312,24 +331,35 @@ public class ArgsScanner {
 	 * @throws IllegalArgumentException
 	 */
 	public List<String[]> asValuesAndPairs(String string) {
-		return asValuesAndPairs(string, false);
+		return asValuesAndPairs(string, false, false);
 	}
 	
 	/**
 	 * Turn a string into a list of isolated values and name-value pairs.
 	 * <code>IllegalArgumentException</code> is thrown when parsing becomes
 	 * impossible because of a badly formed input.
+	 * <p>
+	 * In <code>valuesOnly</code> mode, the name-value separator does not play
+	 * any special role and all elements of the result list will be an array of
+	 * length 1.
+	 * <p>
+	 * It is illegal to invoke the method with <code>pairsOnly</code> and
+	 * <code>valuesOnly</code> both true.
 	 * 
 	 * @param string
 	 *            a string interpreted as a sequence of isolated values and and
-	 *            name-value pairs, with name and value separated with an equal
-	 *            sign
-	 * @param strict if true, isolated values are forbidden
+	 *            name-value pairs, with name and value separated with the name-
+	 *            value separator
+	 * @param pairsOnly
+	 *            if true, isolated values are forbidden
+	 * @param valuesOnly
+	 *            if true, isolated values are forbidden
 	 * @return a list of 1-element arrays representing isolated values and
 	 *         2-elements arrays representing where name-value pairs
 	 * @throws IllegalArgumentException
 	 */
-	public List<String[]> asValuesAndPairs(String string, boolean strict) {
+	private List<String[]> asValuesAndPairs(String string, boolean pairsOnly, boolean valuesOnly) {
+		
 		List<String[]> results = new ArrayList<String[]>();
 		tokenizer.reset(string);
 		NameValueState state = NameValueState.INIT;
@@ -342,7 +372,7 @@ public class ArgsScanner {
 				if (token1 == null) {
 					state = NameValueState.END;
 				} else {
-					if (token1.equals(eq)) {
+					if (token1.equals(eq) && !valuesOnly) {
 						if (results.size() == 0)
 							throw new IllegalArgumentException(STRINGS.msg(U.U00158, eq, string));
 						else
@@ -354,15 +384,15 @@ public class ArgsScanner {
 			case NAME:
 				token2 = tokenizer.token();
 				if (token2 == null) {
-					if (strict)
+					if (pairsOnly)
 						throw new IllegalArgumentException(STRINGS.msg(U.U00157, eq, token1, string));
 					results.add(new String[]{token1});
 					state = NameValueState.END;
 				} else {
-					if (token2.equals(eq))
+					if (token2.equals(eq) && !valuesOnly)
 						state = NameValueState.VALUE;
 					else {
-						if (strict)
+						if (pairsOnly)
 							throw new IllegalArgumentException(STRINGS.msg(U.U00157, eq, token1, string));
 						results.add(new String[]{token1});
 						token1 = token2;

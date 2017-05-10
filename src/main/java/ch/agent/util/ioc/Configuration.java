@@ -150,7 +150,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 	 *            the configuration registry
 	 * @param executables
 	 *            a collection of executable command specifications
-	 * @throws Exception
+	 * @throws Exception when a command fails
 	 */
 	public void executeCommands(ConfigurationRegistry<M> registry, Collection<ExecutableCommandSpecification> executables) throws Exception {
 		for (ExecutableCommandSpecification spec : executables) {
@@ -239,6 +239,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 	 * The execution specification, which belongs to the top-level
 	 * configuration, is not included.
 	 * 
+	 * @param <T> the type of configuration returned
 	 * @param filter extraction filter or null
 	 * @param module
 	 *            names of zero or more top modules to include in the

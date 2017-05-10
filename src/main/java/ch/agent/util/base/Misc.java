@@ -43,6 +43,7 @@ public class Misc {
 	 * Join elements of an array of items into a string using a separator.
 	 * Elements are turned into a string using {@link #toString}.
 	 * 
+	 * @param <T> the type of items in the array
 	 * @param separator
 	 *            a non-null separator
 	 * @param items
@@ -66,6 +67,7 @@ public class Misc {
 	 * Join elements of a collection of items into a string using a separator.
 	 * Elements are turned into a string using {@link #toString}.
 	 * 
+	 * @param <T> the type of collection items
 	 * @param separator
 	 *            a non-null separator
 	 * @param items

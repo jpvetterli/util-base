@@ -269,6 +269,7 @@ public class ContainerTest {
 
 	@Test
 	public void test10() {
+		LogBuffer log = LogBuffer.startLogging();
 		Container c = new Container();
 		try {
 			c.run(new String[]{
@@ -276,16 +277,19 @@ public class ContainerTest {
 					String.format("module=[name = b class=%s config=[tag=[This tag was modified.]]]", BModule.class.getName()),
 			});
 			c.shutdown();
+			LogBuffer.stopLogging(log, DEBUG);
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
 			assertEquals("B#set This is module \"a\" stopping and tag=xyzzy", texts.get(1));
 			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));
 		} catch (Exception e) {
+			log.cleanup();
 			e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
 	@Test
 	public void test11() {
+		LogBuffer log = LogBuffer.startLogging();
 		Container c = new Container();
 		try {
 			c.run(new String[]{
@@ -294,12 +298,14 @@ public class ContainerTest {
 					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3]]"
 			});
 			c.shutdown();
+			LogBuffer.stopLogging(log, DEBUG);
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
 			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));
 			assertEquals("B#set exec1 and tag=xyzzy", texts.get(1));
 			assertEquals("B#set exec3 and tag=exec2", texts.get(2));
 			assertEquals("B#set This is module \"a\" stopping and tag=exec2", texts.get(3));
 		} catch (Exception e) {
+			log.cleanup();
 			e.printStackTrace();
 			fail("unexpected exception");
 		}
@@ -307,6 +313,7 @@ public class ContainerTest {
 
 	@Test
 	public void test12() {
+		LogBuffer log = LogBuffer.startLogging();
 		Container c = new Container();
 		try {
 			c.run(new String[]{
@@ -316,12 +323,14 @@ public class ContainerTest {
 					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3] c.echo=[hello world]]"
 			});
 			c.shutdown();
+			LogBuffer.stopLogging(log, DEBUG);
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
 			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));
 			assertEquals("B#set exec1 and tag=xyzzy", texts.get(1));
 			assertEquals("B#set exec3 and tag=exec2", texts.get(2));
 			assertEquals("B#set This is module \"a\" stopping and tag=exec2", texts.get(3));
 		} catch (Exception e) {
+			log.cleanup();
 			e.printStackTrace();
 			fail("unexpected exception");
 		}
@@ -329,6 +338,7 @@ public class ContainerTest {
 	
 	@Test
 	public void test12A() {
+		LogBuffer log = LogBuffer.startLogging();
 		Container c = new Container();
 		try {
 			c.run(new String[]{
@@ -338,12 +348,14 @@ public class ContainerTest {
 					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3] c.echo=[hello world] a.c.echo=[helloworld]]"
 			});
 			c.shutdown();
+			LogBuffer.stopLogging(log, DEBUG);
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
 			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));
 			assertEquals("B#set exec1 and tag=xyzzy", texts.get(1));
 			assertEquals("B#set exec3 and tag=exec2", texts.get(2));
 			assertEquals("B#set This is module \"a\" stopping and tag=exec2", texts.get(3));
 		} catch (Exception e) {
+			log.cleanup();
 			e.printStackTrace();
 			fail("unexpected exception");
 		}
@@ -351,8 +363,7 @@ public class ContainerTest {
 	
 	@Test
 	public void test12B() {
-		LogBuffer log = new LogBuffer();
-		log.capture();
+		LogBuffer log = LogBuffer.startLogging();
 		Container c = new Container();
 		try {
 			c.run(new String[]{
@@ -362,10 +373,7 @@ public class ContainerTest {
 					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3] c.demo-keyword]"
 			});
 			c.shutdown();
-			log.reset();
-			String logged = log.toString();
-			if (DEBUG)
-				System.err.println(logged);
+			String logged = LogBuffer.stopLogging(log, DEBUG);
 			assertTrue("keyword command missing", logged.indexOf("* (this is command c.demo-keyword in module c)") > 0);
 			assertTrue("keyword command parameters missing", logged.indexOf("* (parameters=)") > 0);
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
@@ -374,6 +382,7 @@ public class ContainerTest {
 			assertEquals("B#set exec3 and tag=exec2", texts.get(2));
 			assertEquals("B#set This is module \"a\" stopping and tag=exec2", texts.get(3));
 		} catch (Exception e) {
+			log.cleanup();
 			e.printStackTrace();
 			fail("unexpected exception");
 		}
@@ -381,34 +390,41 @@ public class ContainerTest {
 	
 	@Test
 	public void test13() {
+		LogBuffer log = LogBuffer.startLogging();
 		Container c = new Container();
 		try {
 			c.run(new String[]{
 					String.format("module=[name = x class=%s]", DModule.class.getName())
 			});
 			c.shutdown();
+			log.cleanup();
 			fail("exception expected");
 		} catch (Exception e) {
+			LogBuffer.stopLogging(log, DEBUG);
 			assertTrue("message C14 ?",  e.getCause().getCause().getMessage().indexOf("Duplicate command") > 0);
 		}
 	}
 	
 	@Test
 	public void test14() {
+		LogBuffer log = LogBuffer.startLogging();
 		Container c = new Container();
 		try {
 			c.run(new String[]{
 					String.format("module=[name = [] class=%s]", DModule.class.getName())
 			});
 			c.shutdown();
+			log.cleanup();
 			fail("exception expected");
 		} catch (Exception e) {
+			LogBuffer.stopLogging(log, DEBUG);
 			assertTrue("message C03 ?",  e.getMessage().startsWith("C03"));
 		}
 	}
 
 	@Test
 	public void test20() {
+		LogBuffer log = LogBuffer.startLogging();
 		Container c = new Container();
 		try {
 			c.run(new String[]{});
@@ -417,11 +433,13 @@ public class ContainerTest {
 			fail("unexpected exception");
 		} finally {
 			c.shutdown();
+			LogBuffer.stopLogging(log, DEBUG);
 		}
 	}
 	
 	@Test
 	public void test21() {
+		LogBuffer log = LogBuffer.startLogging();
 		Container c = new Container();
 		try {
 			c.run(new String[]{"module=[name = foo class=foo]"});
@@ -431,11 +449,13 @@ public class ContainerTest {
 			assertTrue("message C03 ?", e.getMessage().startsWith("C03"));
 		} finally {
 			c.shutdown();
+			LogBuffer.stopLogging(log, DEBUG);
 		}
 	}
 
 	@Test
 	public void test22() {
+		LogBuffer log = LogBuffer.startLogging();
 		Container c = new Container();
 		try {
 			c.run(new String[]{"module=[name = foo class=java.lang.String]"});
@@ -444,11 +464,13 @@ public class ContainerTest {
 			assertTrue(e.getMessage().startsWith("C03"));
 		} finally {
 			c.shutdown();
+			LogBuffer.stopLogging(log, DEBUG);
 		}
 	}
 
 	@Test
 	public void test23() {
+		LogBuffer log = LogBuffer.startLogging();
 		Container c = new Container();
 		try {
 			c.run(new String[]{
@@ -460,6 +482,7 @@ public class ContainerTest {
 			assertTrue(e.getMessage().startsWith("C09"));
 		} finally {
 			c.shutdown();
+			LogBuffer.stopLogging(log, DEBUG);
 		}
 	}
 	

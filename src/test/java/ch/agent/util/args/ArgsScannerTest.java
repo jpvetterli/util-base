@@ -45,6 +45,43 @@ public class ArgsScannerTest {
 	}
 	
 	@Test
+	public void testTwoStrings3() {
+		List<String[]> result = scanner.asValuesAndPairs("foo [bar baf]");
+		assertEquals("foo", result.get(0)[0]);
+		assertEquals("bar baf", result.get(1)[0]);
+	}
+	
+	@Test
+	public void testAsValues1() {
+		List<String> result = scanner.asValues("foo [bar baf]");
+		assertEquals("foo", result.get(0));
+		assertEquals("bar baf", result.get(1));
+	}
+	
+	@Test
+	public void testAsValues2() {
+		List<String> result = scanner.asValues("foo = [bar baf]");
+		assertEquals("foo", result.get(0));
+		assertEquals("=", result.get(1));
+		assertEquals("bar baf", result.get(2));
+	}
+	
+	@Test
+	public void testAsValues3() {
+		List<String> result = scanner.asValues("foo=[bar baf]");
+		assertEquals("foo", result.get(0));
+		assertEquals("=", result.get(1));
+		assertEquals("bar baf", result.get(2));
+	}
+	
+	@Test
+	public void testAsValues4() {
+		List<String> result = scanner.asValues("foo [=bar baf]");
+		assertEquals("foo", result.get(0));
+		assertEquals("=bar baf", result.get(1));
+	}
+
+	@Test
 	public void testEmptyString() {
 		assertEquals(0, scanner.asValuesAndPairs("").size());
 	}
@@ -231,25 +268,25 @@ public class ArgsScannerTest {
 	
 	@Test
 	public void testValuePairsMixed1() {
-		List<String[]> result = scanner.asValuesAndPairs("x foo=bar hop = la", false);
+		List<String[]> result = scanner.asValuesAndPairs("x foo=bar hop = la");
 		assertEquals("x", result.get(0)[0]);
 		assertEquals("la", result.get(2)[1]);
 	}
 	@Test
 	public void testNameValuePairsMixed2() {
-		List<String[]> result = scanner.asValuesAndPairs("foo=[ bar ] x hop =la", false);
+		List<String[]> result = scanner.asValuesAndPairs("foo=[ bar ] x hop =la");
 		assertEquals(" bar ", result.get(0)[1]);
 		assertEquals("la", result.get(2)[1]);
 	}
 	@Test
 	public void testNameValuePairsMixed3() {
-		List<String[]> result = scanner.asValuesAndPairs(" foo [ = ] bar[hop]=la x", false);
+		List<String[]> result = scanner.asValuesAndPairs(" foo [ = ] bar[hop]=la x");
 		assertEquals(" = ", result.get(1)[0]);
 		assertEquals("x", result.get(3)[0]);
 	}
 	@Test
 	public void testNameValuePairsMixed4() {
-		List<String[]> result = scanner.asValuesAndPairs(" foo = bar x hop=la y", false);
+		List<String[]> result = scanner.asValuesAndPairs(" foo = bar x hop=la y");
 		assertEquals("x", result.get(1)[0]);
 		assertEquals("y", result.get(3)[0]);
 	}
@@ -257,7 +294,7 @@ public class ArgsScannerTest {
 	@Test
 	public void testNameValuePairsMixed5() {
 		try {
-			List<String[]> result = scanner.asValuesAndPairs("foo = bar x", true);
+			List<String[]> result = scanner.asPairs("foo = bar x");
 			assertEquals("x", result.get(1)[0]);
 			fail("expected an exception");
 		} catch (Exception e) {
@@ -268,7 +305,7 @@ public class ArgsScannerTest {
 	@Test
 	public void testNameValuePairsMixed7() {
 		try {
-			List<String[]> result = scanner.asValuesAndPairs("=abc foo = bar x", true);
+			List<String[]> result = scanner.asPairs("=abc foo = bar x");
 			assertEquals("x", result.get(1)[0]);
 			fail("expected an exception");
 		} catch (Exception e) {
@@ -278,7 +315,7 @@ public class ArgsScannerTest {
 	
 	@Test
 	public void testNameValuePairsMixed8() {
-		List<String[]> result = scanner.asValuesAndPairs("one=1 foo two = 2 three= 3 bar baz four=4 done ", false);
+		List<String[]> result = scanner.asValuesAndPairs("one=1 foo two = 2 three= 3 bar baz four=4 done ");
 		assertEquals(8, result.size());
 		assertEquals("1", result.get(0)[1]);
 		assertEquals("1", result.get(0)[1]);

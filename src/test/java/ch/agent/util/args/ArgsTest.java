@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ch.agent.util.STRINGS.U;
+import ch.agent.util.ioc.LogBuffer;
 import ch.agent.util.logging.LoggerManager;
 
 public class ArgsTest {
@@ -89,8 +90,11 @@ public class ArgsTest {
 	@Test
 	public void testMissingPutLoose() {
 		try {
+			LogBuffer log = LogBuffer.startLogging();
 			args.setLoose(LoggerManager.getLogger(this.getClass()));
 			args.put("foo", "bar");
+			String logged = LogBuffer.stopLogging(log, DEBUG);
+			assertTrue("U00165 ??", logged.indexOf("D U00165 No parameter with \"foo\" defined.") >= 0);
 		} catch (Exception e) {
 			if (DEBUG) 
 				e.printStackTrace();

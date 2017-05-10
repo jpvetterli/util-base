@@ -46,7 +46,7 @@ public class TextFile {
 		 * @param line
 		 *            the text, with line separator already removed
 		 * @return true to request skipping remaining lines
-		 * @throws Exception
+		 * @throws Exception checked exception from the implementation
 		 */
 		boolean visit(int lineNr, String line) throws Exception;
 	}
@@ -274,8 +274,8 @@ public class TextFile {
 	 * @param append
 	 *            if true append to existing file
 	 * @param string
-	 *            a string
-	 * @throws IOException
+	 *            the string to write
+	 * @throws IOException when writing to the file fails
 	 */
 	public void write(String fileName, boolean append, String string) throws IOException {
 		write(fileName, append, string == null ? null : new String[]{string});

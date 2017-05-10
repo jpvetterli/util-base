@@ -83,10 +83,16 @@ import ch.agent.util.logging.LoggerBridge;
  */
 public class Args implements Iterable<String> {
 
-	public final static char EQ = '=';
-	public final static String VAR_PREFIX = "$";
+	/**
+	 * The string which is parsed as the boolean true value is "true".
+	 */
 	public final static String TRUE = "true";
+	/**
+	 * The string which is parsed as the boolean false value is "false".
+	 */
 	public final static String FALSE = "false";
+	private final static char EQ = '=';
+	private final static String VAR_PREFIX = "$";
 	
 	/**
 	 * A definition object is used to write code in method chaining style.
@@ -120,7 +126,7 @@ public class Args implements Iterable<String> {
 		 * Set an alias. An exception is thrown if the alias is already 
 		 * in use for this parameter or an another one.
 		 * 
-		 * @param alias
+		 * @param alias an alternate name for the parameter
 		 * @return this definition
 		 */
 		public Definition aka(String alias) {
@@ -136,9 +142,10 @@ public class Args implements Iterable<String> {
 		/**
 		 * Set a default value for the parameter. Only scalar parameters can
 		 * have default values. A parameter with a null default value is
-		 * mandatory.
+		 * mandatory. A parameter with a non-null default value can be omitted.
 		 * 
 		 * @param value
+		 *            the default value of the parameter
 		 * @return this definition
 		 */
 		public Definition init(String value) {
@@ -277,6 +284,7 @@ public class Args implements Iterable<String> {
 		 * Return the value as an Enum. Throw an exception if the value is not
 		 * scalar or if the value cannot be converted.
 		 * 
+		 * @param <T> the enum type
 		 * @param enumClass the enum type class
 		 * @return an Enum 
 		 */
@@ -288,6 +296,7 @@ public class Args implements Iterable<String> {
 		 * Return the value as an Enum array. Throw an exception if the value is 
 		 * scalar or if any element cannot be converted.
 		 * 
+		 * @param <T> the enum type
 		 * @param enumClass the enum type class
 		 * @return an Enum array
 		 */
@@ -842,7 +851,11 @@ public class Args implements Iterable<String> {
 	public void parse(String string) {
 		if (sequence != null)
 			sequence.clear();
-		parse(getScanner().asValuesAndPairs(string, !keywords));
+		parse(scan(string, !keywords));
+	}
+	
+	private List<String[]> scan(String string, boolean pairsOnly) {
+		return pairsOnly ? getScanner().asPairs(string) : getScanner().asValuesAndPairs(string);
 	}
 	
 	/**
@@ -858,7 +871,7 @@ public class Args implements Iterable<String> {
 				// resolve ${FOO} which can be anything, multiple name-value pairs, etc.
 				String resolved = resolve(pair[0]);
 				if (!resolved.equals(pair[0]))
-					parse(getScanner().asValuesAndPairs(resolved, !keywords));
+					parse(scan(resolved, !keywords));
 				else
 					put("", pair[0]);
 				break;
@@ -1144,7 +1157,7 @@ public class Args implements Iterable<String> {
 	private String parseIf(String text) {
 		String result = "";
 		try {
-			Map<String, String> map = asMap(getScanner().asValuesAndPairs(text, false));
+			Map<String, String> map = asMap(scan(text, false));
 			String nonEmptyValue = map.get(ifNonEmptyName);
 			String thenValue = map.get(ifThenName);
 			String elseValue = map.get(ifElseName);
@@ -1168,12 +1181,12 @@ public class Args implements Iterable<String> {
 	private List<String[]> parseFile(boolean simple, String fileName) throws IOException {
 		ArgsFileVisitor visitor = new ArgsFileVisitor(simple, SEPARATOR);
 		textFile.read(fileName, visitor);
-		return getScanner().asValuesAndPairs(visitor.getContent(), !keywords);
+		return scan(visitor.getContent(), !keywords);
 	}
 	
 	private List<String[]> parseFile(boolean simple, String fileName, String mappings) throws IOException {
 		List<String[]> pairs = parseFile(simple, fileName);
-		Map<String, String> map = asMap(getScanner().asValuesAndPairs(mappings, false));
+		Map<String, String> map = asMap(scan(mappings, false));
 		Iterator<String[]> it = pairs.iterator();
 		while(it.hasNext()) {
 			String[] pair = it.next();

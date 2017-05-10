@@ -20,8 +20,8 @@ import ch.agent.util.base.LazyString;
  * this is the case, the next higher level available is used and the log message
  * is prefixed with the desired level in upper case followed by a blank. For
  * example, supposing the <em>trace</em> level is not supported, a
- * <em>trace</em> message is logged as a <em>debug</em> message with a prefix of
- * <q>TRACE</q>.
+ * <em>trace</em> message is logged as a <em>debug</em> message with "TRACE&nbsp;" in
+ * front.
  * <p>
  * The <em>lazy string</em> version of the logging methods are provided for
  * dealing with expensive messages. The performance cost of a lazy string is

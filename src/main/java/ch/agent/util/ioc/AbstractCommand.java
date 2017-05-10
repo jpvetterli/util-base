@@ -24,9 +24,7 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	 * Constructor. The original name cannot be empty and may not contain a
 	 * period. However it is possible to rename the command with a name
 	 * containing one or more periods. This feature is used by the
-	 * implementation of
-	 * 
-	 * @link {@link AbstractModule#add(Module)}.
+	 * implementation of @link {@link AbstractModule#add(Module)}.
 	 * 
 	 * @param name
 	 *            command name

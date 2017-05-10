@@ -93,7 +93,7 @@ public class LazyString {
 	 * Construct a lazy message. The actual message text is only created if and
 	 * when needed. Depending on the specification, the message key will be
 	 * included in the message text. By default, key and message body are joined
-	 * with a hyphen. Here is an example with key <q>M042</q>:
+	 * with a hyphen. Here is an example with key "M042":
 	 * 
 	 * <pre>
 	 * <code>
@@ -104,7 +104,7 @@ public class LazyString {
 	 * The behavior is specified using the <code>keyBodyFormat</code> parameter,
 	 * with a value in {@link java.util.Formatter} syntax. When the parameter is
 	 * null, the key is not inserted. When the parameter is empty,
-	 * <q>%s&nbsp;-&nbsp;%s</q> is used as default.
+	 * "%s&nbsp;-&nbsp;%s" is used as default.
 	 * <p>
 	 * When the <code>bundle</code> parameter is null, the <code>key</code>
 	 * parameter is interpreted as the message text.
