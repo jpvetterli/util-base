@@ -16,6 +16,49 @@ import ch.agent.util.file.TextFile;
 import ch.agent.util.logging.LoggerBridge;
 
 /**
+ * Args is a parser for command line arguments. It is named after the parameter
+ * of the main method of Java programs, usually written like this:
+ * 
+ * <pre>
+ * <code>
+ * public static void main(String[] <b>args</b>) {
+ *    // etc.
+ * }
+ * </code></pre>
+ * 
+ * Args consists of a simple language and a small set of built-in
+ * operators. Application are of course free to use Args beyond parsing command
+ * line arguments. Using Args consists of three steps: (1) defining parameters,
+ * (2) parsing the input, and (3) extracting values of parameters.
+ * 
+ * <h3>Defining parameters</h3>
+ * 
+ * <h3>Parsing the input</h3>
+ * 
+ * The input is a single string. For convenience Args provides a method to parse
+ * an array of strings, like the command line arguments of the main method, but
+ * all elements are joined into a single string, with blanks inserted between.
+ * <p>
+ * The input is a succession of name-value pairs and standalone keywords. 
+ * Name-value pairs have an equal sign character between them, 
+ * possibly surrounded by one or more white space characters 
+ * (characters for which {@link Character#isWhitespace} is true). 
+ * 
+ * <p>
+ * EXPLAIN THAT escape have only effect in brackets and in front of $$
+ * </p>
+ * 
+ * <h3>Extracting values of parameters</h3>
+ * 
+ * <h3>Built-in operators</h3>
+ * 
+ * Variables. "file", "if", "file with mapping".
+ * 
+ * 
+ * <pre>
+ * ==================== ***** WORK IN PROGRESS ABOVE -- OLD DOC BELOW ******** ===================
+ * </pre>
+ * 
  * Support for parameter lists and parameter files. A parameter list is a
  * sequence of name-value pairs separated by white space, with names and values
  * separated by an equal sign (which can be surrounded by white space). It is
@@ -32,20 +75,7 @@ import ch.agent.util.logging.LoggerBridge;
  * </pre>
  * 
  * In the example, parameter "foo" has two values: "bar" and "2nd val" while
- * parameter "qu ux" has one value, "[what = ever]". It is possible to change
- * the meta characters dynamically at run time, like this:
- * 
- * <pre>
- * <code>
- * Tokenizer.MetaCharacters = '':\ foo: bar 'qu ux':'[what = ever]' foo: '2nd val'
- * </code>
- * </pre>
- * 
- * The special parameter <code>Tokenizer.MetaCharacters</code> takes a value
- * with exactly four characters in predefined order: bracket open, bracket
- * close, name-value separator, escape character. In the example, names and
- * values are the same as previously but there is no need for escaping the "]"
- * of "[what = ever]".
+ * parameter "qu ux" has one value, "[what = ever]".
  * <p>
  * When a name is repeated the previous value is lost unless the parameter was
  * defined as a list parameter, like "foo" in the example.
@@ -82,17 +112,6 @@ import ch.agent.util.logging.LoggerBridge;
  * 
  */
 public class Args implements Iterable<String> {
-
-	/**
-	 * The string which is parsed as the boolean true value is "true".
-	 */
-	public final static String TRUE = "true";
-	/**
-	 * The string which is parsed as the boolean false value is "false".
-	 */
-	public final static String FALSE = "false";
-	private final static char EQ = '=';
-	private final static String VAR_PREFIX = "$";
 	
 	/**
 	 * A definition object is used to write code in method chaining style.
@@ -156,11 +175,22 @@ public class Args implements Iterable<String> {
 			return this;
 		}
 		
+		public Definition repeatable() {
+			Value v = args().internalGet(name());
+			if (v == null)
+				throw new IllegalArgumentException("bug: " + name());
+			v.setRepeatable(true);
+			return this;
+		}
+		
 	}
 	
-	public abstract class Value {
+	public class Value {
 		private String canonical;
-		
+		private String value;
+		private String defaultValue;
+		private boolean repeatable;
+
 		/**
 		 * Constructor.
 		 * 
@@ -170,206 +200,294 @@ public class Args implements Iterable<String> {
 			this.canonical = canonical;
 		}
 		
-		public abstract boolean isScalar();
-		
 		protected String getName() {
 			return canonical;
 		}
 
-		public abstract void set(String value);
+		public void set(String value) {
+			this.value = value;
+		}
+		
+		public void append(String value) {
+			this.value = this.value == null ?
+					new StringBuilder(value.length() + 2).append(LBRACKET).append(value).append(RBRACKET).toString() :
+					new StringBuilder(this.value.length() + value.length() + 3).append(this.value).append(SEPARATOR).append(LBRACKET).append(value).append(RBRACKET).toString();
+		}
 		
 		public String getDefault() {
-			return null;
+			return defaultValue;
 		}
 
 		public void setDefault(String value) {
-			throw new IllegalStateException(msg(U.U00106, getName()));
-		}
-
-		/**
-		 * Check the number of values. Throw an exception if the number of values does not match
-		 * the constraint.
-		 * 
-		 * @param size
-		 *            size constraint
-		 * 
-		 * @return this value
-		 */
-		public Value size(int size) {
-			return size(size, size);
+			this.defaultValue = value;
 		}
 		
-		/**
-		 * Check the number of values. Throw an exception if the size does not match
-		 * the constraint.
-		 * 
-		 * @param minSize minimum size
-		 * @param maxSize maximum size
-		 * 
-		 * @return this value 
-		 */
-		public Value size(int minSize, int maxSize) { 
-			throw new IllegalStateException(msg(U.U00107, getName()));
+		public boolean isRepeatable() {
+			return repeatable;
+		}
+
+		public void setRepeatable(boolean b) {
+			this.repeatable = b;
 		}
 
 		/**
-		 * Return the value as a string. Throw an exception if the value is not
-		 * scalar.
+		 * Return the value as a string. Throw an exception if the value is null
+		 * and no default value was defined.
 		 * 
 		 * @return a string
 		 */
 		public String stringValue() {
-			throw new IllegalArgumentException(msg(U.U00101, getName()));
-		}		
-
-		/**
-		 * Return the value split into a string array. Throw an exception if the
-		 * value is not scalar.
-		 * 
-		 * @param separator
-		 *            a string specifying the separator pattern, not null
-		 * @param count
-		 *            the number of elements, negative for any
-		 * @return an string array
-		 */
-		public String[] stringSplit(String separator, int count) {
-			throw new IllegalArgumentException(msg(U.U00101, getName()));
-		}
-
-		/**
-		 * Return the value as a string array. Throw an exception if the value is 
-		 * scalar. 
-		 * 
-		 * @return a string array
-		 */
-		public String[] stringArray() {
-			throw new IllegalArgumentException(msg(U.U00102, getName()));
+			if (value == null) {
+				if (defaultValue == null)
+					throw new IllegalArgumentException(msg(U.U00105, getName()));
+				return defaultValue;
+			}
+			return value;
 		}
 		
 		/**
-		 * Return the value as a int. Throw an exception if the value is not
-		 * scalar or if the value cannot be converted.
+		 * Split value into a number of strings. Splitting is done on white
+		 * space and meta characters. An <code>IllegalArgumentException</code>
+		 * is thrown if the number of strings is too small or too large, as
+		 * specified by two parameters. Negative parameters are ignored.
+		 * 
+		 * @param min
+		 *            minimal number of strings (no limit if negative)
+		 * @param max
+		 *            maximal number of strings (no limit if negative)
+		 * @return an array of strings
+		 */
+		public String[] stringValues(int min, int max) {
+			List<String> values = getScanner().asValues(stringValue());
+			checkSize(values.size(), min, max);
+			return values.toArray(new String[values.size()]);
+		}
+
+		/**
+		 * Split value into a number of strings. Splitting is done on white
+		 * space and meta characters.
+		 * 
+		 * @return an array of strings
+		 */
+		public String[] stringValues() {
+			return stringValues(-1, -1);
+		}
+
+		private void checkSize(int size, int min, int max) {
+			if (min > -1) {
+				if (min == max) {
+					if (size != min)
+						throw new IllegalArgumentException(msg(U.U00109, getName(), size, min));
+				} else {
+					if (max > -1 && min > max)
+						throw new IllegalArgumentException(msg(U.U00108, getName(), min, max));
+					if (size < min)
+						throw new IllegalArgumentException(msg(U.U00110, getName(), size, min));
+				}
+			} 
+			if (max > -1) {
+				if (size > max)
+					throw new IllegalArgumentException(msg(U.U00111, getName(),	size, max));
+			}
+		}
+			
+		/**
+		 * Return the value as a int. Throw an exception if the value cannot be
+		 * converted.
 		 * 
 		 * @return an int
 		 */
 		public int intValue() {
-			throw new IllegalArgumentException(msg(U.U00101, getName()));
-		}		
-
-		/**
-		 * Return the value split into an int array. Throw an exception if the
-		 * value is not scalar or if the value cannot be converted.
-		 * 
-		 * @param separator
-		 *            a string specifying the separator pattern, not null
-		 * @param count
-		 *            the number of elements, negative for any
-		 * @return an int array
-		 */
-		public int[] intSplit(String separator, int count) {
-			throw new IllegalArgumentException(msg(U.U00101, getName()));
+			return asInt(stringValue(), -1);
 		}
 
 		/**
-		 * Return the value as an int array. Throw an exception if the value is 
-		 * scalar or if any element cannot be converted.
+		 * Split the value into a number of strings and convert them to
+		 * integers. Throw an exception if a string cannot be converted or if
+		 * the number of strings does not agree with the constraints. Return the
+		 * integers in an array.
+		 * 
+		 * @param min
+		 *            the minimum number of integers (no limit if negative)
+		 * @param max
+		 *            the maximum number of integers (no limit if negative)
+		 * @return an int array
+		 */
+		public int[] intValues(int min, int max) {
+			String[] strings = stringValues(min, max);
+			int[] ints = new int[strings.length];
+			try {
+				for (int i = 0; i < ints.length; i++) {
+					ints[i] = asInt(strings[i], i);
+				}
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException(msg(U.U00117, getName(), stringValue()), e);
+			}
+			return ints;
+		}
+
+		/**
+		 * Split the value into a number of strings and convert them to
+		 * integers. Throw an exception if a string cannot be converted. Return
+		 * the integers in an array.
 		 * 
 		 * @return an int array
 		 */
-		public int[] intArray() {
-			throw new IllegalArgumentException(msg(U.U00102, getName()));
-		}	
-		
-		/**
-		 * Return the value as an Enum. Throw an exception if the value is not
-		 * scalar or if the value cannot be converted.
-		 * 
-		 * @param <T> the enum type
-		 * @param enumClass the enum type class
-		 * @return an Enum 
-		 */
-		public <T extends Enum<T>> T enumValue(Class<T> enumClass) {
-			throw new IllegalArgumentException(msg(U.U00101, getName()));
+		public int[] intValues() {
+			return intValues(-1, -1);
 		}
 		
 		/**
-		 * Return the value as an Enum array. Throw an exception if the value is 
-		 * scalar or if any element cannot be converted.
-		 * 
-		 * @param <T> the enum type
-		 * @param enumClass the enum type class
-		 * @return an Enum array
-		 */
-		public <T extends Enum<T>> T[] enumArray(Class<T> enumClass) {
-			throw new IllegalArgumentException(msg(U.U00102, getName()));
-		}
-		
-		/**
-		 * Return the value as a boolean. Throw an exception if the value is not
-		 * scalar or if the value cannot be converted.
+		 * Return the value as a boolean. Throw an exception if the value cannot
+		 * be converted.
 		 * 
 		 * @return a boolean
 		 */
 		public boolean booleanValue() {
-			throw new IllegalArgumentException(msg(U.U00101, getName()));
-		}		
-
-		/**
-		 * Return the value split into a boolean array. Throw an exception if the
-		 * value is not scalar or if the value cannot be converted.
-		 * 
-		 * @param separator
-		 *            a string specifying the separator pattern, not null
-		 * @param count
-		 *            the number of elements, negative for any
-		 * @return a boolean array
-		 */
-		public boolean[] booleanSplit(String separator, int count) {
-			throw new IllegalArgumentException(msg(U.U00101, getName()));
+			return asBoolean(stringValue(), -1);
 		}
 
 		/**
-		 * Return the value as a boolean array. Throw an exception if the value is 
-		 * scalar or if any element cannot be converted.
+		 * Split the value into a number of strings and convert them to
+		 * booleans. Throw an exception if a string cannot be converted or if
+		 * the number of strings does not agree with the constraints. Return the
+		 * booleans in an array.
+		 * 
+		 * @param min
+		 *            the minimum number of booleans (no limit if negative)
+		 * @param max
+		 *            the maximum number of booleans (no limit if negative)
+		 * @return a boolean array
+		 */
+		public boolean[] booleanValues(int min, int max) {
+			String[] strings = stringValues(min, max);
+			boolean[] booleans = new boolean[strings.length];
+			try {
+				for (int i = 0; i < booleans.length; i++) {
+					booleans[i] = asBoolean(strings[i], i);
+				}
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException(msg(U.U00119, getName(), stringValue()), e);
+			}
+			return booleans;
+		}
+		
+		/**
+		 * Split the value into a number of strings and convert them to
+		 * booleans. Throw an exception if a string cannot be converted. Return
+		 * the booleans in an array.
 		 * 
 		 * @return a boolean array
 		 */
-		public boolean[] booleanArray() {
-			throw new IllegalArgumentException(msg(U.U00102, getName()));
-		}		
+		public boolean[] booleanValues() {
+			return booleanValues(-1,  -1);
+		}
 
 		/**
-		 * Return the value as a double. Throw an exception if the value is not
-		 * scalar or if the value cannot be converted.
+		 * Return the value as a double. Throw an exception if the value cannot
+		 * be converted.
 		 * 
 		 * @return a double
 		 */
 		public double doubleValue() {
-			throw new IllegalArgumentException(msg(U.U00101, getName()));
-		}		
-
-		/**
-		 * Return the value as a double array. Throw an exception if the value is 
-		 * scalar or if any element cannot be converted.
-		 * 
-		 * @return a double array
-		 */
-		public double[] doubleArray() {
-			throw new IllegalArgumentException(msg(U.U00102, getName()));
+			return asDouble(stringValue(), -1);
 		}
 		
 		/**
-		 * Return the value split into a double array. Throw an exception if the
-		 * value is not scalar or if the value cannot be converted.
+		 * Split the value into a number of strings and convert them to
+		 * doubles. Throw an exception if a string cannot be converted or if
+		 * the number of strings does not agree with the constraints. Return the
+		 * doubles in an array.
 		 * 
-		 * @param separator
-		 *            a string specifying the separator pattern, not null
-		 * @param count
-		 *            the number of elements, negative for any
+		 * @param min
+		 *            the minimum number of doubles (no limit if negative)
+		 * @param max
+		 *            the maximum number of doubles (no limit if negative)
 		 * @return a double array
 		 */
-		public double[] doubleSplit(String separator, int count) {
-			throw new IllegalArgumentException(msg(U.U00101, getName()));
+		public double[] doubleValues(int min, int max) {
+			String[] strings = stringValues(min, max);
+			double[] doubles = new double[strings.length];
+			try {
+				for (int i = 0; i < doubles.length; i++) {
+					doubles[i] = asDouble(strings[i], i);
+				}
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException(msg(U.U00118, getName(), stringValue()), e);
+			}
+			return doubles;
+		}
+		
+		/**
+		 * Split the value into a number of strings and convert them to doubles.
+		 * Throw an exception if a string cannot be converted. Return the
+		 * doubles in an array.
+		 * 
+		 * @return a double array
+		 */
+		public double[] doubleValues() {
+			return doubleValues(-1, -1);
+		}
+		
+		/**
+		 * Return the value as an Enum constant. Throw an exception if the value
+		 * cannot be converted.
+		 * 
+		 * @param <T>
+		 *            the type of the enum value
+		 * @param enumClass
+		 *            the enum type class
+		 * @return an Enum
+		 */
+		public <T extends Enum<T>> T enumValue(Class<T> enumClass) {
+			return asEnum(enumClass, stringValue(), -1);
+		}
+
+		/**
+		 * Split the value into a number of strings and convert them to enum
+		 * constants. Throw an exception if a string cannot be converted or if
+		 * the number of strings does not agree with the constraints. Return the
+		 * enum constants in an array.
+		 * 
+		 * @param <T>
+		 *            the type of the enum values
+		 * @param enumClass
+		 *            the class object of the enum type
+		 * @param min
+		 *            the minimum number of enum constants (no limit if
+		 *            negative)
+		 * @param max
+		 *            the maximum number of enum constants (no limit if
+		 *            negative)
+		 * @return an enum double array
+		 */
+		public <T extends Enum<T>> T[] enumValues(Class<T> enumClass, int min, int max) {
+			String[] strings = stringValues(min, max);
+			@SuppressWarnings("unchecked")
+			T[] enums = (T[]) new Enum<?>[strings.length];
+			try {
+				for (int i = 0; i < enums.length; i++) {
+					enums[i] = asEnum(enumClass, strings[i], i);
+				}
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException(msg(U.U00120, getName(), stringValue(), enumClass.getSimpleName()), e);
+			}
+			return enums;
+		}
+		
+		/**
+		 * Split the value into a number of strings and convert them to enum
+		 * constants. Throw an exception if a string cannot be converted. Return
+		 * the enum constants in an array.
+		 * 
+		 * @param <T>
+		 *            the type of the enum values
+		 * @param enumClass
+		 *            the class object of the enum type
+		 * @return an enum double array
+		 */
+		public <T extends Enum<T>> T[] enumValues(Class<T> enumClass) {
+			return enumValues(enumClass, -1, -1);
 		}
 
 		protected boolean asBoolean(String value, int index) {
@@ -409,210 +527,12 @@ public class Args implements Iterable<String> {
 				throw new IllegalArgumentException(msg(U.U00115, name, value, enumClass.getSimpleName()));
 			}
 		}
-
-	}
-
-	private class ScalarValue extends Value {
-		private String value;
-		private String defaultValue;
-
-		public ScalarValue(String canonical) {
-			super(canonical);
-		}
 		
-		@Override
-		public boolean isScalar() {
-			return true;
-		}
-
-		@Override
-		public String getDefault() {
-			return defaultValue;
-		}
-
-		@Override
-		public void setDefault(String value) {
-			this.defaultValue = value;
-		}
-
-		@Override
-		public void set(String value) {
-			this.value = value;
-		}
-
-		@Override
-		public String stringValue() {
-			if (value == null) {
-				if (defaultValue == null)
-					throw new IllegalArgumentException(msg(U.U00105, getName()));
-				return defaultValue;
-			}
-			return value;
-		}
-		
-		@Override
-		public String[] stringSplit(String separator, int count) {
-			String s = stringValue();
-			try {
-				return Misc.split(s, separator, count);
-			} catch (IllegalArgumentException e) {
-				throw new IllegalArgumentException(msg(U.U00116, getName(), s, count, separator));
-			}
-		}
-
-		@Override
-		public int intValue() {
-			return asInt(stringValue(), -1);
-		}
-
-		@Override
-		public int[] intSplit(String separator, int count) {
-			String[] parts = stringSplit(separator, count);
-			int[] result = new int[parts.length];
-			try {
-				for (int i = 0; i < result.length; i++) {
-					result[i] = Integer.parseInt(parts[i]);
-				}
-			} catch (NumberFormatException e) {
-				throw new IllegalArgumentException(msg(U.U00117, getName(), stringValue(), count, separator));
-			}
-			return result;
-		}
-
-		@Override
-		public boolean booleanValue() {
-			return asBoolean(stringValue(), -1);
-		}
-		
-		@Override
-		public boolean[] booleanSplit(String separator, int count) {
-			String[] parts = stringSplit(separator, count);
-			boolean[] result = new boolean[parts.length];
-			try {
-				for (int i = 0; i < result.length; i++) {
-					result[i] = asBoolean(parts[i], -1);
-				}
-			} catch (IllegalArgumentException e) {
-				throw new IllegalArgumentException(msg(U.U00119, getName(), stringValue(), count, separator));
-			}
-			return result;
-		}
-
-
-
-		@Override
-		public double doubleValue() {
-			return asDouble(stringValue(), -1);
-		}
-		
-		@Override
-		public double[] doubleSplit(String separator, int count) {
-			String[] parts = stringSplit(separator, count);
-			double[] result = new double[parts.length];
-			try {
-				for (int i = 0; i < result.length; i++) {
-					result[i] = Double.parseDouble(parts[i]);
-				}
-			} catch (NumberFormatException e) {
-				throw new IllegalArgumentException(msg(U.U00118, getName(), stringValue(), count, separator));
-			}
-			return result;
-		}
-
-		@Override
-		public <T extends Enum<T>> T enumValue(Class<T> enumClass) {
-			return asEnum(enumClass, stringValue(), -1);
-		}
-
 		@Override
 		public String toString() {
 			return stringValue();
 		}
-		
-	}
 
-	private class ListValue extends Value {
-		private List<String> values;
-
-		public ListValue(String canonical) {
-			super(canonical);
-			this.values = new ArrayList<String>();
-		}
-
-		@Override
-		public boolean isScalar() {
-			return false;
-		}
-
-		@Override
-		public void set(String value) {
-			if (value == null)
-				this.values.clear();
-			else
-				this.values.add(value);
-		}
-
-		@Override
-		public Value size(int minSize, int maxSize) {
-			if (minSize < 0 || maxSize < 0)
-				throw new IllegalArgumentException("minSize < 0 or maxSize < 0");
-			if (minSize == maxSize) {
-				if (minSize > -1 && values.size() != minSize)
-					throw new IllegalArgumentException(msg(U.U00108, getName(), 
-							values.size(), minSize));
-			} else {
-				if (values.size() < minSize)
-					throw new IllegalArgumentException(msg(U.U00110, getName(), 
-						values.size(), minSize));
-				if (values.size() > maxSize)
-				throw new IllegalArgumentException(msg(U.U00111, getName(), 
-						values.size(), maxSize));
-			}
-			return this;
-		}
-		
-		@Override
-		public String[] stringArray() {
-			return values.toArray(new String[values.size()]);
-		}
-
-		@Override
-		public int[] intArray() {
-			int[] result = new int[values.size()];
-			for (int i = 0; i < result.length; i++) {
-				result[i] = asInt(values.get(i), i);
-			}
-			return result;
-		}
-
-		@Override
-		public boolean[] booleanArray() {
-			boolean[] result = new boolean[values.size()];
-			for (int i = 0; i < result.length; i++) {
-				result[i] = asBoolean(values.get(i), i);
-			}
-			return result;
-		}
-
-		@Override
-		public double[] doubleArray() {
-			double[] result = new double[values.size()];
-			for (int i = 0; i < result.length; i++) {
-				result[i] = asDouble(values.get(i), i);
-			}
-			return result;
-		}
-		
-		@Override
-		public <T extends Enum<T>> T[] enumArray(Class<T> enumClass) {
-			@SuppressWarnings("unchecked")
-			T[] result = (T[]) new Enum<?>[values.size()];
-			for (int i = 0; i < result.length; i++) {
-				result[i] = asEnum(enumClass, values.get(i), i);
-			}
-			return result;
-		}
-		
 	}
 
 	private class ArgsFileVisitor implements TextFile.Visitor {
@@ -646,6 +566,20 @@ public class Args implements Iterable<String> {
 		}
 		
 	}
+	
+	/**
+	 * The string which is parsed as the boolean true value is "true".
+	 */
+	public final static String TRUE = "true";
+	/**
+	 * The string which is parsed as the boolean false value is "false".
+	 */
+	public final static String FALSE = "false";
+	private final static char EQ = '=';
+	private final static char LBRACKET = '[';
+	private final static char RBRACKET = ']';
+
+	private final static String VAR_PREFIX = "$";
 	
 	/**
 	 * The default name of the if parameter is simply "if".
@@ -752,7 +686,7 @@ public class Args implements Iterable<String> {
 	}
 	
 	private ArgsScanner getScanner() {
-		return new ArgsScanner('[', ']', EQ, '\\');
+		return new ArgsScanner(LBRACKET, RBRACKET, EQ, '\\');
 	}
 
 	/**
@@ -905,27 +839,10 @@ public class Args implements Iterable<String> {
 	 * @throws IllegalArgumentException
 	 */
 	public Definition def(String name) {
-		putValue(name, new ScalarValue(name));
+		putValue(name, new Value(name));
 		return new Definition(this, name);
 	}
 	
-	/**
-	 * Define a list parameter. The name cannot be null but it can be empty, in
-	 * which case it is known as a <em>positional</em> parameter. When a list
-	 * parameter is repeated all values are returned. An
-	 * <code>IllegalArgumentException</code> is thrown if there is already a
-	 * parameter with the same name.
-	 * 
-	 * @param name
-	 *            the name of the parameter
-	 * @return a definition object which can be used to define aliases
-	 * @throws IllegalArgumentException
-	 */
-	public Definition defList(String name) {
-		putValue(name, new ListValue(name));
-		return new Definition(this, name);
-	}
-
 	/**
 	 * Put a value for the named parameter. Except in <em>loose mode</em> an
 	 * <code>IllegalArgumentException</code> is thrown if there is no parameter
@@ -972,7 +889,10 @@ public class Args implements Iterable<String> {
 				}
 			} else {
 				String resolved = resolve(value);
-				v.set(resolved);
+				if (v.isRepeatable())
+					v.append(resolved);
+				else
+					v.set(resolved);
 				if (sequence != null)
 					sequence.add(new String[] {name, resolved});
 			}
@@ -983,7 +903,7 @@ public class Args implements Iterable<String> {
 		boolean keyword = false;
 		if (name.length() == 0) {
 			Value v = args.get(value); // value, not name
-			if (v != null && v.isScalar() && v.getDefault().equals(FALSE)) {
+			if (v != null && v.getDefault().equals(FALSE)) {
 				v.set(TRUE);
 				keyword = true;
 				if (sequence != null)
@@ -1047,6 +967,24 @@ public class Args implements Iterable<String> {
 	 */
 	public String get(String name) {
 		return getVal(name).stringValue();
+	}
+	
+	/**
+	 * Return value of parameter as an array of strings. This is method is
+	 * shorthand for
+	 * 
+	 * <pre>
+	 * <code>
+	 * getVal(name).stringValues()
+	 * </code>
+	 * </pre>
+	 * 
+	 * @param name
+	 *            name of parameter
+	 * @return an array of strings
+	 */
+	public String[] split(String name) {
+		return getVal(name).stringValues();
 	}
 
 	/**

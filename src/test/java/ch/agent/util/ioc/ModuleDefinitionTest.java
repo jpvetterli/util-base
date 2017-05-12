@@ -50,8 +50,8 @@ public class ModuleDefinitionTest {
 					p.get(MODULE_NAME), 
 					p.getVal("foo").booleanValue(),
 					p.get(MODULE_CLASS), 
-					p.getVal(MODULE_REQUIREMENT).stringArray(), 
-					p.getVal(MODULE_PREDECESSOR).stringArray(),
+					p.split(MODULE_REQUIREMENT), 
+					p.split(MODULE_PREDECESSOR),
 					p.get(MODULE_CONFIG));
 		}
 

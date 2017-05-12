@@ -76,8 +76,8 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 	protected void defineSyntax(Args p) {
 		p.def(MODULE_NAME);
 		p.def(MODULE_CLASS);
-		p.defList(MODULE_REQUIREMENT).aka(MODULE_REQUIREMENT_AKA);
-		p.defList(MODULE_PREDECESSOR).aka(MODULE_PREDECESSOR_AKA);
+		p.def(MODULE_REQUIREMENT).aka(MODULE_REQUIREMENT_AKA).repeatable().init("");
+		p.def(MODULE_PREDECESSOR).aka(MODULE_PREDECESSOR_AKA).repeatable().init("");
 		p.def(MODULE_CONFIG).aka(MODULE_CONFIG_AKA).init("");
 	}
 
@@ -95,8 +95,8 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 		return (MD) new ModuleDefinition<M>(
 				p.get(MODULE_NAME), 
 				p.get(MODULE_CLASS), 
-				p.getVal(MODULE_REQUIREMENT).stringArray(), 
-				p.getVal(MODULE_PREDECESSOR).stringArray(),
+				p.split(MODULE_REQUIREMENT), 
+				p.split(MODULE_PREDECESSOR),
 				p.get(MODULE_CONFIG));
 	}
 

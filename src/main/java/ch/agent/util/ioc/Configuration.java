@@ -124,7 +124,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 			if (spec.isParameterless())
 				syntax.def(spec.getName()).init(Args.FALSE);
 			else
-				syntax.defList(spec.getName());
+				syntax.def(spec.getName()).repeatable().init("");
 			map.put(spec.getName(), spec);
 		}
 		syntax.setSequenceTrackingMode(true);

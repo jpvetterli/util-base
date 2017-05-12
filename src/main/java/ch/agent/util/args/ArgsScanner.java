@@ -121,6 +121,10 @@ public class ArgsScanner {
 			}
 		}
 
+		public String remainder() {
+			return input.substring(position + (test(position, closing) ? 1 : 0));
+		}
+		
 		/**
 		 * Reset the input.
 		 * 
@@ -240,6 +244,21 @@ public class ArgsScanner {
 			}
 		}
 		
+		/**
+		 * Test a character at a given position of the input.
+		 * 
+		 * @param pos a position
+		 * @param ch a character
+		 * @return true if the character at position pos equals ch, else false 
+		 */
+		private boolean test(int pos, char ch) {
+			try {
+				return input.charAt(pos) == ch;
+			} catch (IndexOutOfBoundsException e) {
+				return false;
+			}
+		}
+	
 		/**
 		 * Change position so that {@link #advance()} returns the current char
 		 * again.
@@ -417,6 +436,31 @@ public class ArgsScanner {
 			}
 		}
 		return results;
+	}
+	
+	/**
+	 * Return the string token at the start of the input and the remaining
+	 * input. If the input starts with a string token it is returned in the
+	 * first element, else a null is returned in the first element. In the first
+	 * case, the remaining input is returned in the second element. In the
+	 * second case the second element is null.
+	 * 
+	 * @param input
+	 *            a string
+	 * @return an array of two strings
+	 */
+	public String[] immediateString(String input) {
+		
+		String[] result = new String[2];
+		tokenizer.reset(input);
+		String token = tokenizer.token();
+		if (token != null) {
+			if (!token.equals(eq)) {
+				result[0] = token;
+				result[1] = tokenizer.remainder();
+			}
+		}
+		return result;
 	}
 
 	private void setMetaCharacters(String spec) {

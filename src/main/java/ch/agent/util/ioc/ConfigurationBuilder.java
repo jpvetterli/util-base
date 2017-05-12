@@ -100,7 +100,7 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 *            the object taking parameters
 	 */
 	protected void defineSyntax(Args p) {
-		p.defList(MODULE);
+		p.def(MODULE).repeatable().init("");
 		p.def(EXEC).aka(EXEC_AKA).init(""); // can be omitted
 	}
 
@@ -115,7 +115,7 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 */
 	@SuppressWarnings("unchecked")
 	protected C build(Args p) {
-		String[] moduleStatements = p.getVal(MODULE).stringArray();
+		String[] moduleStatements = p.split(MODULE);
 		String exec = p.get(EXEC);
 		List<D> sortedModules = parseModuleSpecifications(moduleStatements);
 		return (C) new Configuration<D,M>(sortedModules, exec);

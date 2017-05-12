@@ -14,7 +14,7 @@ import ch.agent.util.STRINGS.U;
 public class ArgsScannerTest {
 
 	private ArgsScanner scanner;
-	
+
 	@Before
 	public void setUp() throws Exception {
 		scanner = new ArgsScanner();
@@ -24,31 +24,41 @@ public class ArgsScannerTest {
 	public void testOneString() {
 		assertEquals("foo", scanner.asValuesAndPairs("foo").get(0)[0]);
 	}
-	
+
 	@Test
 	public void testOneString2() {
 		assertEquals("foo", scanner.asValuesAndPairs("foo ").get(0)[0]);
 	}
-	
+
 	@Test
 	public void testTwoStrings() {
 		List<String[]> result = scanner.asValuesAndPairs("foo bar");
 		assertEquals("foo", result.get(0)[0]);
 		assertEquals("bar", result.get(1)[0]);
 	}
-	
+
 	@Test
 	public void testTwoStrings2() {
 		List<String[]> result = scanner.asValuesAndPairs("	foo 	 bar");
 		assertEquals("foo", result.get(0)[0]);
 		assertEquals("bar", result.get(1)[0]);
 	}
-	
+
 	@Test
 	public void testTwoStrings3() {
 		List<String[]> result = scanner.asValuesAndPairs("foo [bar baf]");
 		assertEquals("foo", result.get(0)[0]);
 		assertEquals("bar baf", result.get(1)[0]);
+	}
+
+	@Test
+	public void testAsValues0() {
+		try {
+			scanner.asValues(null);
+			fail("exception expected");
+		} catch (IllegalArgumentException e) {
+			
+		}
 	}
 	
 	@Test
@@ -57,7 +67,7 @@ public class ArgsScannerTest {
 		assertEquals("foo", result.get(0));
 		assertEquals("bar baf", result.get(1));
 	}
-	
+
 	@Test
 	public void testAsValues2() {
 		List<String> result = scanner.asValues("foo = [bar baf]");
@@ -65,7 +75,7 @@ public class ArgsScannerTest {
 		assertEquals("=", result.get(1));
 		assertEquals("bar baf", result.get(2));
 	}
-	
+
 	@Test
 	public void testAsValues3() {
 		List<String> result = scanner.asValues("foo=[bar baf]");
@@ -73,7 +83,7 @@ public class ArgsScannerTest {
 		assertEquals("=", result.get(1));
 		assertEquals("bar baf", result.get(2));
 	}
-	
+
 	@Test
 	public void testAsValues4() {
 		List<String> result = scanner.asValues("foo [=bar baf]");
@@ -82,10 +92,41 @@ public class ArgsScannerTest {
 	}
 
 	@Test
+	public void testAsValues5() {
+		List<String> result = scanner.asValues("foo [bar baf][a b c]");
+		assertEquals("foo", result.get(0));
+		assertEquals("bar baf", result.get(1));
+		assertEquals("a b c", result.get(2));
+	}
+
+	@Test
+	public void testAsValues6() {
+		List<String> result = scanner.asValues("[foo] [bar baf][a b c]");
+		assertEquals("foo", result.get(0));
+		assertEquals("bar baf", result.get(1));
+		assertEquals("a b c", result.get(2));
+	}
+	
+	@Test
+	public void testAsValues7() {
+		List<String> result = scanner.asValues("[foo][bar][baf]");
+		assertEquals("foo", result.get(0));
+		assertEquals("bar", result.get(1));
+		assertEquals("baf", result.get(2));
+	}
+	
+	@Test
+	public void testAsValues8() {
+		List<String> result = scanner.asValues("[foo]bar[baf]");
+		assertEquals("foo", result.get(0));
+		assertEquals("bar[baf]", result.get(1));
+	}
+
+	@Test
 	public void testEmptyString() {
 		assertEquals(0, scanner.asValuesAndPairs("").size());
 	}
-	
+
 	@Test
 	public void testEmptyString2() {
 		assertEquals(0, scanner.asValuesAndPairs("   	").size());
@@ -145,6 +186,7 @@ public class ArgsScannerTest {
 			fail("unexpected exception");
 		}
 	}
+
 	@Test
 	public void testNameValuePair2a() {
 		try {
@@ -166,6 +208,7 @@ public class ArgsScannerTest {
 			fail("unexpected exception");
 		}
 	}
+
 	@Test
 	public void testNameValuePair3a() {
 		try {
@@ -188,6 +231,7 @@ public class ArgsScannerTest {
 			fail("unexpected exception");
 		}
 	}
+
 	@Test
 	public void testNameValuePair4a() {
 		try {
@@ -202,8 +246,7 @@ public class ArgsScannerTest {
 	@Test
 	public void testNameValuePair5() {
 		try {
-			List<String[]> pairs = scanner
-					.asPairs("[f =[o] o] = b\\ar [f =[o] o] = b\\ar");
+			List<String[]> pairs = scanner.asPairs("[f =[o] o] = b\\ar [f =[o] o] = b\\ar");
 			assertEquals("f =[o] o", pairs.get(0)[0]);
 			assertEquals("b\\ar", pairs.get(0)[1]);
 			assertEquals("f =[o] o", pairs.get(1)[0]);
@@ -245,7 +288,7 @@ public class ArgsScannerTest {
 			assertTrue(e.getMessage().startsWith(U.U00157));
 		}
 	}
-	
+
 	@Test
 	public void testNameValuePair9() {
 		try {
@@ -255,7 +298,7 @@ public class ArgsScannerTest {
 			assertTrue(e.getMessage().startsWith(U.U00159));
 		}
 	}
-	
+
 	@Test
 	public void testNameValuePair10() {
 		try {
@@ -265,32 +308,35 @@ public class ArgsScannerTest {
 			assertTrue(e.getMessage().startsWith(U.U00157));
 		}
 	}
-	
+
 	@Test
 	public void testValuePairsMixed1() {
 		List<String[]> result = scanner.asValuesAndPairs("x foo=bar hop = la");
 		assertEquals("x", result.get(0)[0]);
 		assertEquals("la", result.get(2)[1]);
 	}
+
 	@Test
 	public void testNameValuePairsMixed2() {
 		List<String[]> result = scanner.asValuesAndPairs("foo=[ bar ] x hop =la");
 		assertEquals(" bar ", result.get(0)[1]);
 		assertEquals("la", result.get(2)[1]);
 	}
+
 	@Test
 	public void testNameValuePairsMixed3() {
 		List<String[]> result = scanner.asValuesAndPairs(" foo [ = ] bar[hop]=la x");
 		assertEquals(" = ", result.get(1)[0]);
 		assertEquals("x", result.get(3)[0]);
 	}
+
 	@Test
 	public void testNameValuePairsMixed4() {
 		List<String[]> result = scanner.asValuesAndPairs(" foo = bar x hop=la y");
 		assertEquals("x", result.get(1)[0]);
 		assertEquals("y", result.get(3)[0]);
 	}
-	
+
 	@Test
 	public void testNameValuePairsMixed5() {
 		try {
@@ -301,7 +347,7 @@ public class ArgsScannerTest {
 			assertTrue(e.getMessage().startsWith(U.U00157));
 		}
 	}
-	
+
 	@Test
 	public void testNameValuePairsMixed7() {
 		try {
@@ -312,7 +358,7 @@ public class ArgsScannerTest {
 			assertTrue(e.getMessage().startsWith(U.U00158));
 		}
 	}
-	
+
 	@Test
 	public void testNameValuePairsMixed8() {
 		List<String[]> result = scanner.asValuesAndPairs("one=1 foo two = 2 three= 3 bar baz four=4 done ");
@@ -323,7 +369,7 @@ public class ArgsScannerTest {
 		assertEquals("4", result.get(6)[1]);
 		assertEquals("done", result.get(7)[0]);
 	}
-	
+
 	@Test
 	public void testMetaChars1() {
 		try {
@@ -334,6 +380,7 @@ public class ArgsScannerTest {
 			fail("unexpected exception");
 		}
 	}
+
 	@Test
 	public void testMetaChars1a() {
 		try {
@@ -344,6 +391,7 @@ public class ArgsScannerTest {
 			fail("unexpected exception");
 		}
 	}
+
 	@Test
 	public void testMetaChars2() {
 		try {
@@ -354,6 +402,7 @@ public class ArgsScannerTest {
 			fail("unexpected exception");
 		}
 	}
+
 	@Test
 	public void testMetaChars2a() {
 		try {
@@ -388,7 +437,7 @@ public class ArgsScannerTest {
 			assertTrue(e.getMessage().startsWith(U.U00163));
 		}
 	}
-	
+
 	@Test
 	public void testMetaChars5() {
 		try {
@@ -410,7 +459,7 @@ public class ArgsScannerTest {
 			fail("unexpected exception");
 		}
 	}
-	
+
 	@Test
 	public void testMetaChars8() {
 		try {
@@ -422,7 +471,7 @@ public class ArgsScannerTest {
 			fail("unexpected exception");
 		}
 	}
-	
+
 	@Test
 	public void testMetaChars9() {
 		try {
@@ -433,7 +482,7 @@ public class ArgsScannerTest {
 			fail("unexpected exception");
 		}
 	}
-	
+
 	@Test
 	public void testMetaChars10() {
 		try {
@@ -455,5 +504,169 @@ public class ArgsScannerTest {
 			fail("unexpected exception");
 		}
 	}
+
+	@Test
+	public void testMetaChars12() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("a[ ]b");
+			assertEquals("a[", result.get(0)[0]);
+			assertEquals("]b", result.get(1)[0]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testMetaChars13() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("[a ]b");
+			assertEquals("a ", result.get(0)[0]);
+			assertEquals("b", result.get(1)[0]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testImmediate1() {
+		try {
+			scanner.immediateString(null);
+			fail("exception expected");
+		} catch (IllegalArgumentException e) {
+		}
+	}
+
+	@Test
+	public void testImmediate2() {
+		try {
+			String[] result = scanner.immediateString("");
+			assertEquals(2, result.length);
+			assertEquals(null, result[0]);
+			assertEquals(null, result[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testImmediate3() {
+		try {
+			String[] result = scanner.immediateString("abc d etc.");
+			assertEquals(2, result.length);
+			assertEquals("abc", result[0]);
+			assertEquals(" d etc.", result[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testImmediate3a() {
+		try {
+			String[] result = scanner.immediateString("abc");
+			assertEquals(2, result.length);
+			assertEquals("abc", result[0]);
+			assertEquals("", result[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testImmediate3b() {
+		try {
+			String[] result = scanner.immediateString("abc ");
+			assertEquals(2, result.length);
+			assertEquals("abc", result[0]);
+			assertEquals(" ", result[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testImmediate4() {
+		try {
+			String[] result = scanner.immediateString("= abc d");
+			assertEquals(2, result.length);
+			assertEquals(null, result[0]);
+			assertEquals(null, result[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testImmediate5() {
+		try {
+			String[] result = scanner.immediateString("[ abc ] d etc.");
+			assertEquals(2, result.length);
+			assertEquals(" abc ", result[0]);
+			assertEquals(" d etc.", result[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testImmediate5a() {
+		try {
+			String[] result = scanner.immediateString("[a]d");
+			assertEquals(2, result.length);
+			assertEquals("a", result[0]);
+			assertEquals("d", result[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testImmediate6() {
+		try {
+			String[] result = scanner.immediateString("[abc]d etc.");
+			assertEquals(2, result.length);
+			assertEquals("abc", result[0]);
+			assertEquals("d etc.", result[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testImmediate7() {
+		try {
+			String[] result = scanner.immediateString("\\[abc]d etc.");
+			assertEquals(2, result.length);
+			assertEquals("\\[abc]d", result[0]);
+			assertEquals(" etc.", result[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testImmediate7a() {
+		try {
+			String[] result = scanner.immediateString("[\\[abc\\]d] etc.");
+			assertEquals(2, result.length);
+			assertEquals("[abc]d", result[0]);
+			assertEquals(" etc.", result[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testImmediate8() {
+		try {
+			String[] result = scanner.immediateString("[abc\\]] d etc.");
+			assertEquals(2, result.length);
+			assertEquals("abc]", result[0]);
+			assertEquals(" d etc.", result[1]);
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
 
 }

@@ -14,24 +14,21 @@ public class STRINGS extends LazyString {
 	 * {@link ResourceBundle} with base name <code>ch.agent.util.UtilMsg</code>.
 	 */
 	public class U {
-		public static final String U00101 = "U00101";
-		public static final String U00102 = "U00102";
 		public static final String U00103 = "U00103";
 		public static final String U00104 = "U00104";
 		public static final String U00105 = "U00105";
-		public static final String U00106 = "U00106";
-		public static final String U00107 = "U00107";
 		public static final String U00108 = "U00108";
+		public static final String U00109 = "U00109";
 		public static final String U00110 = "U00110";
 		public static final String U00111 = "U00111";
 		public static final String U00112 = "U00112";
 		public static final String U00113 = "U00113";
 		public static final String U00114 = "U00114";
 		public static final String U00115 = "U00115";
-		public static final String U00116 = "U00116";
 		public static final String U00117 = "U00117";
 		public static final String U00118 = "U00118";
 		public static final String U00119 = "U00119";
+		public static final String U00120 = "U00120";
 		public static final String U00121 = "U00121";
 		public static final String U00122 = "U00122";
 		public static final String U00130 = "U00130";

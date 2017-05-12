@@ -96,8 +96,7 @@ public class ArgsTest {
 			String logged = LogBuffer.stopLogging(log, DEBUG);
 			assertTrue("U00165 ??", logged.indexOf("D U00165 No parameter with \"foo\" defined.") >= 0);
 		} catch (Exception e) {
-			if (DEBUG) 
-				e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception ");
 		}
 	}
@@ -116,34 +115,12 @@ public class ArgsTest {
 	@Test
 	public void testListParameter() {
 		try {
-			args.defList("foo");
-			args.put("foo", "value1");
-			args.put("foo", "value2");
-			assertEquals("value2", args.getVal("foo").size(2, Integer.MAX_VALUE).stringArray()[1]);
+			args.def("foo");
+			args.put("foo", "value1 value2");
+			assertEquals("value1 value2", args.get("foo"));
+			assertEquals("value2", args.split("foo")[1]);
 		} catch (Exception e) {
 			fail("unexpected exception");
-		}
-	}
-	
-	@Test
-	public void testListParameterException() {
-		try {
-			args.defList("foo");
-			args.getVal("foo").stringValue();
-			fail("expected an exception");
-		} catch (Exception e) {
-			assertMessage(e, U.U00101);
-		}
-	}
-	
-	@Test
-	public void testListParameterException2() {
-		try {
-			args.def("foo");
-			args.getVal("foo").stringArray();
-			fail("expected an exception");
-		} catch (Exception e) {
-			assertMessage(e, U.U00102);
 		}
 	}
 	
@@ -223,10 +200,9 @@ public class ArgsTest {
 	@Test
 	public void testDouble3() {
 		try {
-			args.defList("foo").aka("F");
-			args.put("F", "4.5");
-			args.put("F", "0.5");
-			assertEquals(0.5, args.getVal("foo").size(5, 10).doubleArray()[1], 10e-10);
+			args.def("foo").aka("F");
+			args.put("F", "4.5 0.5");
+			assertEquals(0.5, args.getVal("foo").doubleValues(5, 10)[1], 10e-10);
 			fail("expected an exception");
 		} catch (Exception e) {
 			assertMessage(e, U.U00110);
@@ -236,10 +212,9 @@ public class ArgsTest {
 	@Test
 	public void testDouble4() {
 		try {
-			args.defList("foo");
-			args.put("foo", "4.5");
-			args.put("foo", "0.5");
-			assertEquals(0.5, args.getVal("foo").size(3, Integer.MAX_VALUE).doubleArray()[1], 10e-10);
+			args.def("foo");
+			args.put("foo", "4.5 0.5");
+			assertEquals(0.5, args.getVal("foo").doubleValues(3, Integer.MAX_VALUE)[1], 10e-10);
 			fail("expected an exception");
 		} catch (Exception e) {
 			assertMessage(e, U.U00110);
@@ -249,12 +224,9 @@ public class ArgsTest {
 	@Test
 	public void testDouble4a() {
 		try {
-			args.defList("foo");
-			args.put("foo", "4.5");
-			args.put("foo", "0.5");
-			args.put("foo", "0.6");
-			args.put("foo", "0.7");
-			assertEquals(0.5, args.getVal("foo").size(1, 3).doubleArray()[1], 10e-10);
+			args.def("foo");
+			args.put("foo", "4.5 0.5 0.6 0.7");
+			assertEquals(0.5, args.getVal("foo").doubleValues(1, 3)[1], 10e-10);
 			fail("expected an exception");
 		} catch (Exception e) {
 			assertMessage(e, U.U00111);
@@ -264,10 +236,9 @@ public class ArgsTest {
 	@Test
 	public void testDouble5() {
 		try {
-			args.defList("foo");
-			args.put("foo", "4.5");
-			args.put("foo", "0.5");
-			assertEquals(0.5, args.getVal("foo").doubleArray()[1], 10e-10);
+			args.def("foo");
+			args.put("foo", "4.5 0.5");
+			assertEquals(0.5, args.getVal("foo").doubleValues()[1], 10e-10);
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
@@ -296,20 +267,18 @@ public class ArgsTest {
 	@Test
 	public void testParser2() {
 		try {
-			args.defList("foo");
+			args.def("foo");
 			args.def("b a]z");
 			args.setSequenceTrackingMode(true);
-			args.parse("foo = [b a r] [b a\\]z]=barf] foo=[2nd value]");
-			assertEquals("b a r", args.getVal("foo").stringArray()[0]);
-			assertEquals("2nd value", args.getVal("foo").stringArray()[1]);
+			args.parse("foo = [[b a r] [2nd value]] [b a\\]z]=barf]");
+			assertEquals("b a r", args.split("foo")[0]);
+			assertEquals("2nd value", args.getVal("foo").stringValues()[1]);
 			assertEquals("barf]", args.getVal("b a]z").stringValue());
 			List<String[]> sequence = args.getSequence();
 			assertEquals("foo", sequence.get(0)[0]);
-			assertEquals("b a r", sequence.get(0)[1]);
+			assertEquals("[b a r] [2nd value]", sequence.get(0)[1]);
 			assertEquals("b a]z", sequence.get(1)[0]);
 			assertEquals("barf]", sequence.get(1)[1]);
-			assertEquals("foo", sequence.get(2)[0]);
-			assertEquals("2nd value", sequence.get(2)[1]);
 		} catch (Exception e) {
 			fail("unexpected exception");
 		}
@@ -331,10 +300,10 @@ public class ArgsTest {
 	@Test
 	public void testParser4() {
 		try {
-			args.defList("foo");
+			args.def("foo");
 			args.def("qu ux");
-			args.parse("foo = bar [qu ux]=[\\[what = ever\\]] foo = [2nd val]");
-			String[] values = args.getVal("foo").stringArray();
+			args.parse("foo = [bar [2nd val]] [qu ux]=[\\[what = ever\\]]");
+			String[] values = args.split("foo");
 			assertEquals("[what = ever]", args.getVal("qu ux").stringValue());
 			assertEquals(2, values.length);
 			assertEquals("bar", values[0]);
@@ -347,10 +316,10 @@ public class ArgsTest {
 	@Test
 	public void testNameless1() {
 		try {
-			args.defList("");
+			args.def("");
 			args.def("qu ux");
-			args.parse("bar [qu ux]=[[what = ever]] [2nd val]");
-			String[] values = args.getVal("").stringArray();
+			args.parse("[bar [2nd val]] [qu ux]=[[what = ever]]");
+			String[] values = args.split("");
 			assertEquals("[what = ever]", args.getVal("qu ux").stringValue());
 			assertEquals(2, values.length);
 			assertEquals("bar", values[0]);
@@ -363,16 +332,17 @@ public class ArgsTest {
 	@Test
 	public void testNameless2() {
 		try {
-			args.defList("");
-			args.parse("bar baf");
-			String[] values = args.getVal("").stringArray();
+			args.def("");
+			args.parse("[bar baf]");
+			String[] values = args.getVal("").stringValues();
 			assertEquals(2, values.length);
-			args.parse("bar baf");
-			values = args.getVal("").stringArray();
-			assertEquals(4, values.length);
+			args.parse("[bar baf]");
+			values = args.getVal("").stringValues();
+			// reset has no effect because repeated parameter replaces previous value 
+			assertEquals(2, values.length);
 			args.reset();
-			args.parse("bar baf");
-			values = args.getVal("").stringArray();
+			args.parse("[bar baf]");
+			values = args.getVal("").stringValues();
 			assertEquals(2, values.length);
 		} catch (Exception e) {
 			fail("unexpected exception");
@@ -384,14 +354,34 @@ public class ArgsTest {
 		try {
 			args.def("exit").init("false");
 			args.def("name").init("default");
-			args.defList("");
+			args.def("").repeatable();
 			args.parse("exit name=value bar baf");
-			String[] values = args.getVal("").stringArray();
+			String[] values = args.split("");
 			assertEquals(2, values.length);
 			assertEquals("value", args.get("name"));
 			assertEquals(true, args.getVal("exit").booleanValue());
+			assertEquals("baf", values[1]);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testNameless3a() {
+		try {
+			args.def("exit").init("faltse"); // intentional typo
+			args.def("name").init("default");
+			args.def("").repeatable();
+			args.parse("exit name=value bar baf");
+			String[] values = args.split("");
+			assertEquals(3, values.length);
+			assertEquals("value", args.get("name"));
+			assertEquals("exit", values[0]);
+			assertEquals("bar", values[1]);
+			assertEquals("baf", values[2]);
+			assertEquals("faltse", args.get("exit"));
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -401,15 +391,15 @@ public class ArgsTest {
 		try {
 			args.def("exit").init("false");
 			args.def("name").init("default");
-			args.defList("");
+			args.def("");
 			args.parse("$EXIT=exit $FOO=BAR exit name=value ${EXIT} ${FOO}");
-			String[] values = args.getVal("").stringArray();
+			String[] values = args.split("");
 			assertEquals(1, values.length);
 			assertEquals("BAR", values[0]);
 			assertEquals("value", args.get("name"));
 			assertEquals(true, args.getVal("exit").booleanValue());
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -421,7 +411,7 @@ public class ArgsTest {
 			args.parse("foo = []");
 			assertEquals(0, args.getVal("foo").stringValue().length());
 		} catch (Exception e) {
-			fail("unexpected exception");
+			if (DEBUG) fail("unexpected exception");
 		}
 	}
 
@@ -702,12 +692,12 @@ public class ArgsTest {
 	@Test
 	public void testAlias5() {
 		try {
-			args.defList("").aka("pos");
+			args.def("").repeatable().aka("pos");
 			args.parse("foo bar baf");
-			assertEquals(3, args.getVal("pos").stringArray().length);
+			assertEquals(3, args.split("pos").length);
 			args.reset();
 			args.parse("pos=foo pos = bar baf");
-			assertEquals(3, args.getVal("").stringArray().length);
+			assertEquals(3, args.split("").length);
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
@@ -717,11 +707,11 @@ public class ArgsTest {
 	@Test
 	public void testPositional1() {
 		try {
-			args.defList("");
+			args.def("").repeatable();
 			args.def("name1").init("value");
 			args.def("name2");
 			args.parse("name2=x foo bar baf");
-			assertEquals(3, args.getVal("").stringArray().length);
+			assertEquals(3, args.split("").length);
 			assertEquals("value", args.get("name1"));
 			assertEquals("x", args.get("name2"));
 		} catch (Exception e) {
@@ -786,9 +776,9 @@ public class ArgsTest {
 	@Test
 	public void testVars4() {
 		try {
-			args.defList("foo");
+			args.def("foo").repeatable();
 			args.parse("$a=1 $b=2 foo=${a} foo=${b}");
-			int[] values = args.getVal("foo").intArray();
+			int[] values = args.getVal("foo").intValues();
 			assertEquals(1, values[0]);
 			assertEquals(2, values[1]);
 		} catch (Exception e) {
@@ -904,10 +894,9 @@ public class ArgsTest {
 	@Test
 	public void testEnum3() {
 		try {
-			args.defList("foo");
-			args.put("foo", "good1");
-			args.put("foo", "good2");
-			Enum<?>[] res = args.getVal("foo").enumArray(Good.class);
+			args.def("foo");
+			args.put("foo", "good1 good2");
+			Enum<?>[] res = args.getVal("foo").enumValues(Good.class);
 			assertEquals(Good.good1, res[0]);
 			assertEquals(Good.good2, res[1]);
 		} catch (Exception e) {
@@ -918,14 +907,15 @@ public class ArgsTest {
 	@Test
 	public void testEnum4() {
 		try {
-			args.defList("foo");
-			args.put("foo", "good2");
-			args.put("foo", "good3");
-			Enum<?>[] res = args.getVal("foo").enumArray(Good.class);
+			args.def("foo");
+			args.put("foo", "good2 good3");
+			Enum<?>[] res = args.getVal("foo").enumValues(Good.class);
 			assertEquals(Good.good1, res[0]);
 			assertEquals(Good.good2, res[1]);
+			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith("U00115"));
+			if (DEBUG) e.printStackTrace();
+			assertTrue(e.getMessage().startsWith("U00120"));
 		}
 	}
 	@Test
@@ -936,6 +926,7 @@ public class ArgsTest {
 			assertEquals(Good.good2, args.getVal("foo").enumValue(Bad.class));
 			fail("exception expected");
 		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
 			assertTrue(e.getMessage().startsWith("U00115"));
 		}
 	}
@@ -971,7 +962,7 @@ public class ArgsTest {
 			args.parse("$ = hop foo = [${} la boum]");
 			assertEquals("hop la boum", args.get("foo"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -1027,13 +1018,13 @@ public class ArgsTest {
 			assertEquals("x", args2.get("arg1"));
 			assertEquals("y", args2.get("arg2"));
 
-			// after reset, all $variables have disappeated
+			// after reset, all $variables have disappeared
 			args2.reset();
 			args2.parse(args.get("fooa"));
 			assertEquals("a", args2.get("arg1"));
 			assertEquals("b", args2.get("arg2"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -1042,8 +1033,8 @@ public class ArgsTest {
 	public void testSplitString1() {
 		try {
 			args.def("foo");
-			args.put("foo", "a, b, c");
-			String[] parts = args.getVal("foo").stringSplit("\\s*,\\s*", 3);
+			args.put("foo", "a b c");
+			String[] parts = args.split("foo");
 			assertEquals(3, parts.length);
 			assertEquals("a", parts[0]);
 			assertEquals("b", parts[1]);
@@ -1059,10 +1050,11 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.put("foo", "a, b");
-			args.getVal("foo").stringSplit("\\s*,\\s*", 3);
+			args.getVal("foo").stringValues(3, 3);
 			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith("U00116"));
+			if (DEBUG) e.printStackTrace();
+			assertTrue(e.getMessage().startsWith("U00109"));
 		}
 	}
 	
@@ -1071,7 +1063,7 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.put("foo", "");
-			assertEquals(0, args.getVal("foo").stringSplit("\\s*,\\s*", -1).length);
+			assertEquals(0, args.split("foo").length);
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
@@ -1082,38 +1074,24 @@ public class ArgsTest {
 	public void testSplitString4() {
 		try {
 			args.def("scalar").init("");
-			args.defList("list");
-			String[] scalar = args.getVal("scalar").stringSplit("WHATEVER", -1);
-			String[] list = args.getVal("list").stringArray();
+			// list is now also a scalar and requires a default value
+			args.def("list");
+			String[] scalar = args.split("scalar");
 			assertEquals(0, scalar.length);
-			assertEquals(0, list.length);
+			args.split("list");
+			fail("exception expected");
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
+			assertTrue(e.getMessage().startsWith("U00105"));
 		}
 	}
 	
 	@Test
-	public void testSplitString5() {
-		try {
-			args.def("scalar").init("");
-			args.defList("list");
-			int[] scalar = args.getVal("scalar").intSplit("WHATEVER", -1);
-			int[] list = args.getVal("list").intArray();
-			assertEquals(0, scalar.length);
-			assertEquals(0, list.length);
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-
-	@Test
 	public void testSplitInt1() {
 		try {
 			args.def("foo");
-			args.put("foo", "1, -2, 3");
-			int[] elem = args.getVal("foo").intSplit("\\s*,\\s*", 3);
+			args.put("foo", "1 -2 3");
+			int[] elem = args.getVal("foo").intValues(3, 3);
 			assertEquals(3, elem.length);
 			assertEquals(1, elem[0]);
 			assertEquals(-2, elem[1]);
@@ -1127,11 +1105,12 @@ public class ArgsTest {
 	public void testSplitInt2() {
 		try {
 			args.def("foo");
-			args.put("foo", "a, b");
-			args.getVal("foo").intSplit("\\s*,\\s*", 3);
+			args.put("foo", "a b");
+			args.getVal("foo").intValues(3, 4);
 			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith("U00116"));
+			if (DEBUG) e.printStackTrace();
+			assertTrue(e.getMessage().startsWith("U00110"));
 		}
 	}
 	
@@ -1139,10 +1118,11 @@ public class ArgsTest {
 	public void testSplitInt3() {
 		try {
 			args.def("foo");
-			args.put("foo", "1, 2, x");
-			args.getVal("foo").intSplit("\\s*,\\s*", 3);
+			args.put("foo", "1 2 x");
+			args.getVal("foo").intValues();
 			fail("exception expected");
 		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
 			assertTrue(e.getMessage().startsWith("U00117"));
 		}
 	}
@@ -1152,7 +1132,7 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.put("foo", "");
-			int[] elem = args.getVal("foo").intSplit("\\s*,\\s*", -1);
+			int[] elem = args.getVal("foo").intValues();
 			assertEquals(0, elem.length);
 		} catch (Exception e) {
 			fail("unexpected exception");
@@ -1163,8 +1143,8 @@ public class ArgsTest {
 	public void testSplitDouble1() {
 		try {
 			args.def("foo");
-			args.put("foo", "1, -2, 3");
-			double[] elem = args.getVal("foo").doubleSplit("\\s*,\\s*", 3);
+			args.put("foo", "1 -2 3");
+			double[] elem = args.getVal("foo").doubleValues();
 			assertEquals(3, elem.length);
 			assertEquals(1, elem[0], 1e-10);
 			assertEquals(-2, elem[1], 1e-10);
@@ -1178,8 +1158,8 @@ public class ArgsTest {
 	public void testSplitDouble2() {
 		try {
 			args.def("foo");
-			args.put("foo", "1.1, -2.2, 3.3");
-			double[] elem = args.getVal("foo").doubleSplit("\\s*,\\s*", 3);
+			args.put("foo", "1.1 -2.2 3.3");
+			double[] elem = args.getVal("foo").doubleValues();
 			assertEquals(3, elem.length);
 			assertEquals(1.1, elem[0], 1e-10);
 			assertEquals(-2.2, elem[1], 1e-10);
@@ -1193,10 +1173,11 @@ public class ArgsTest {
 	public void testSplitDouble3() {
 		try {
 			args.def("foo");
-			args.put("foo", "1, 2, x");
-			args.getVal("foo").doubleSplit("\\s*,\\s*", 3);
+			args.put("foo", "1 2 x");
+			args.getVal("foo").doubleValues();
 			fail("exception expected");
 		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
 			assertTrue(e.getMessage().startsWith("U00118"));
 		}
 	}
@@ -1206,7 +1187,7 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.put("foo", "");
-			double[] elem = args.getVal("foo").doubleSplit("\\s*,\\s*", -1);
+			double[] elem = args.getVal("foo").doubleValues();
 			assertEquals(0, elem.length);
 		} catch (Exception e) {
 			fail("unexpected exception");
@@ -1216,8 +1197,8 @@ public class ArgsTest {
 	public void testSplitBoolean1() {
 		try {
 			args.def("foo");
-			args.put("foo", "true , false,false");
-			boolean[] elem = args.getVal("foo").booleanSplit("\\s*,\\s*", 3);
+			args.put("foo", "true false false");
+			boolean[] elem = args.getVal("foo").booleanValues();
 			assertEquals(3, elem.length);
 			assertEquals(true, elem[0]);
 			assertEquals(false, elem[1]);
@@ -1230,8 +1211,8 @@ public class ArgsTest {
 	public void testSplitBoolean2() {
 		try {
 			args.def("foo");
-			args.put("foo", "TRUE , False,false");
-			boolean[] elem = args.getVal("foo").booleanSplit("\\s*,\\s*", 3);
+			args.put("foo", "TRUE  False false");
+			boolean[] elem = args.getVal("foo").booleanValues();
 			assertEquals(3, elem.length);
 			assertEquals(true, elem[0]);
 			assertEquals(false, elem[1]);
@@ -1245,10 +1226,11 @@ public class ArgsTest {
 	public void testSplitBoolean3() {
 		try {
 			args.def("foo");
-			args.put("foo", "true, false, x");
-			args.getVal("foo").booleanSplit("\\s*,\\s*", 3);
+			args.put("foo", "true false x");
+			args.getVal("foo").booleanValues();
 			fail("exception expected");
 		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
 			assertTrue(e.getMessage().startsWith("U00119"));
 		}
 	}
@@ -1258,12 +1240,38 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.put("foo", "");
-			boolean[] elem = args.getVal("foo").booleanSplit("\\s*,\\s*", -1);
+			boolean[] elem = args.getVal("foo").booleanValues();
 			assertEquals(0, elem.length);
 		} catch (Exception e) {
 			fail("unexpected exception");
 		}
 	}
-
 	
+	@Test
+	public void testSplitBoolean5() {
+		try {
+			args.def("foo");
+			args.put("foo", "true");
+			args.getVal("foo").booleanValues(0, 0);
+			fail("exception expected");
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			assertTrue(e.getMessage().startsWith("U00109"));
+		}
+	}
+	
+	@Test
+	public void testSplitBoolean6() {
+		try {
+			args.def("foo");
+			args.put("foo", "");
+			// impossible constraint
+			args.getVal("foo").booleanValues(1, 0);
+			fail("exception expected");
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			assertTrue(e.getMessage().startsWith("U00108"));
+		}
+	}
+
 }
