@@ -252,9 +252,9 @@ public class ArgsTest {
 			args.def("foo");
 			args.def("b a]z");
 			args.setSequenceTrackingMode(true);
-			args.parse("foo = [b a r] [b a\\]z]=barf]");
+			args.parse("foo = [b a r] [b a\\]z]=barf");
 			assertEquals("b a r", args.get("foo"));
-			assertEquals("barf]", args.get("b a]z"));
+			assertEquals("barf", args.get("b a]z"));
 			List<String[]> sequence = args.getSequence();
 			assertEquals("foo", sequence.get(0)[0]);
 			assertEquals("b a]z", sequence.get(1)[0]);
@@ -270,16 +270,17 @@ public class ArgsTest {
 			args.def("foo");
 			args.def("b a]z");
 			args.setSequenceTrackingMode(true);
-			args.parse("foo = [[b a r] [2nd value]] [b a\\]z]=barf]");
+			args.parse("foo = [[b a r] [2nd value]] [b a\\]z]=barf");
 			assertEquals("b a r", args.split("foo")[0]);
 			assertEquals("2nd value", args.getVal("foo").stringValues()[1]);
-			assertEquals("barf]", args.getVal("b a]z").stringValue());
+			assertEquals("barf", args.getVal("b a]z").stringValue());
 			List<String[]> sequence = args.getSequence();
 			assertEquals("foo", sequence.get(0)[0]);
 			assertEquals("[b a r] [2nd value]", sequence.get(0)[1]);
 			assertEquals("b a]z", sequence.get(1)[0]);
-			assertEquals("barf]", sequence.get(1)[1]);
+			assertEquals("barf", sequence.get(1)[1]);
 		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -523,7 +524,7 @@ public class ArgsTest {
 			args.def("bar");
 			args.def("name1");
 			args.def("name2");
-			args.parse(String.format("if=[non-empty=[x] then=[file = %s] else=[bar=b name1=n1 name2=n2]", file2));
+			args.parse(String.format("if=[non-empty=[x] then=[file = %s] else=[bar=b name1=n1 name2=n2]]", file2));
 			assertEquals("bar's value", args.get("bar"));
 			assertEquals("val1", args.get("name1"));
 			assertEquals("val2", args.get("name2"));
@@ -539,7 +540,7 @@ public class ArgsTest {
 			args.def("bar");
 			args.def("name1");
 			args.def("name2");
-			args.parse(String.format("if=[non-empty=[] then=[file = %s] else=[bar=b name1=n1 name2=n2]", file2));
+			args.parse(String.format("if=[non-empty=[] then=[file = %s] else=[bar=b name1=n1 name2=n2]]", file2));
 			assertEquals("b", args.get("bar"));
 			assertEquals("n1", args.get("name1"));
 			assertEquals("n2", args.get("name2"));

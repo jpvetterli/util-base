@@ -1,9 +1,10 @@
 package ch.agent.util.args;
 
+import static ch.agent.util.STRINGS.msg;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import ch.agent.util.STRINGS;
 import ch.agent.util.STRINGS.U;
 
 /**
@@ -42,6 +43,30 @@ public class ArgsScanner {
 
 	/**
 	 * The tokenizer takes care of extracting tokens from the input.
+	 * <p>
+	 * Specification:
+	 * <ul>
+	 * <li>There are 3 meta characters (meta): [ ] =.
+	 * <li>Whitespace characters (ws) such that
+	 * {@link Character#isWhitespace} returns true.
+	 * <li>There is an escape character (esc): \
+	 * <li>\ turns meta, whitespace and escape characters into normal characters
+	 * anywhere in the input. In such cases, the escape itself is omitted from
+	 * the output. In all other cases it is included in the output. 
+	 * <li>\ at the end of the input produces an IllegalArgumentException
+	 * (unless escaped).
+	 * <li>[ starts a bracket and must be balanced with ] which terminates the
+	 * bracket.
+	 * <li>A bracket can contain a nested bracket.
+	 * <li>An unbalanced ] produces an IllegalArgumentException (unless
+	 * escaped).
+	 * <li>The token corresponding to a terminated bracket is the string between
+	 * [ and ], which are removed. Whitespace and = have no effect inside a
+	 * bracket.
+	 * <li>A simple string is a sequence of characters starting with no ws and
+	 * no metas (unless escaped).
+	 * <li>=is returned as a simple string containing only =.
+	 * </ul>
 	 */
 	private static class Tokenizer {
 
@@ -55,9 +80,10 @@ public class ArgsScanner {
 		private char esc;
 
 		private String input;
-		private int position;
+		private int position; // first is 0
 		private String token;
 		private StringBuffer buffer;
+		private State escapedState;
 		private State state;
 		private int depth; // nested BRACKET
 
@@ -95,7 +121,7 @@ public class ArgsScanner {
 		
 		private void checkMetaCharacters(char open, char close, char equals, char esc) {
 			if (open == equals || open == esc || open == close || close == equals || close == esc || equals == esc)
-				throw new IllegalArgumentException(STRINGS.msg(U.U00163, open, close, equals, esc));
+				throw new IllegalArgumentException(msg(U.U00163, open, close, equals, esc));
 		}
 		
 		/**
@@ -126,6 +152,14 @@ public class ArgsScanner {
 		}
 		
 		/**
+		 * Get the current scanner position. First position is 1.
+		 * 
+		 * @return a positive number
+		 */
+		public int getPosition() {
+			return position + 1;
+		}
+		/**
 		 * Reset the input.
 		 * 
 		 * @param input
@@ -153,16 +187,31 @@ public class ArgsScanner {
 			switch (state) {
 			case END:
 				break;
+			case ESCAPE:
+				if (ch == 0) {
+					throw new IllegalArgumentException(msg(U.U00153, esc, getPosition(), input));
+				} else {
+					if (!isMeta(ch) && ch != esc && !Character.isWhitespace(ch))
+						buffer.append(esc);
+					buffer.append(ch);
+					state = escapedState;
+				}
+				break;
 			case INIT:
 				if (ch == 0) {
 					addToken(false);
 					state = State.END;
+				} else if (ch == esc) {
+					escapedState = state;
+					state = State.ESCAPE;
 				} else if (ch == equals) {
 					buffer.append(equals);
 					addToken(false);
 				} else if (ch == opening) {
 					state = State.BRACKET;
 					depth = 1;
+				} else if (ch == closing) {
+					throw new IllegalArgumentException(msg(U.U00154, closing, getPosition(), input));
 				} else if (Character.isWhitespace(ch)) {
 				} else {
 					buffer.append(ch);
@@ -173,39 +222,34 @@ public class ArgsScanner {
 				if (ch == 0) {
 					addToken(false);
 					state = State.END;
-				} else if (ch == equals) {
+				} else if (ch == esc) {
+					escapedState = state;
+					state = State.ESCAPE;
+				} else if (isMeta(ch)) {
+					if (ch == closing) {
+						// must do this test here to support ArgsScanner#immediate
+						throw new IllegalArgumentException(msg(U.U00154, closing, getPosition(), input));
+					}
 					addToken(false);
 					backtrack();
-				} else if (Character.isWhitespace(ch)) {
+				} else if (Character.isWhitespace(ch))
 					addToken(false);
-				} else {
-					// embedded brackets play no special role here
+				else
 					buffer.append(ch);
-				}
-				break;
-			case ESCAPE:
-				if (ch == 0) {
-					addToken(false);
-					state = State.END;
-				} else if (ch == closing || ch == opening) {
-					// replace the escape with the bracket
-					buffer.setCharAt(buffer.length() - 1, ch);
-					state = State.BRACKET;
-				} else {
-					// replace two escapes with a single one
-					if (ch != esc)
-						buffer.append(ch);
-					state = State.BRACKET;
-				}
 				break;
 			case BRACKET:
 				if (ch == 0) {
 					addToken(false);
 					state = State.END;
+				} else if (ch == esc) {
+					escapedState = state;
+					state = State.ESCAPE;
 				} else if (ch == opening) {
 					depth++;
 					buffer.append(ch);
 				} else if (ch == closing) {
+					if (depth == 0)
+						throw new IllegalArgumentException(msg(U.U00154, closing, input, getPosition()));
 					--depth;
 					if (depth == 0)
 						addToken(true);
@@ -218,12 +262,18 @@ public class ArgsScanner {
 				}
 				break;
 			default:
-				throw new RuntimeException("bug");
+				throw new RuntimeException("bug: " + state.name());
 			}
 			return token != null ? 1 : (ch == 0 ? -1 : 0);
 		}
 
+		private boolean isMeta(char ch) {
+			return ch == equals || ch == opening || ch == closing;
+		}
+		
 		private void addToken(boolean emptyOk) {
+			if (depth != 0)
+				throw new IllegalArgumentException(msg(U.U00155, closing, getPosition(), input));
 			if (emptyOk || buffer.length() > 0) {
 				token = buffer.toString();
 				buffer.setLength(0);
@@ -245,18 +295,24 @@ public class ArgsScanner {
 		}
 		
 		/**
-		 * Test a character at a given position of the input.
+		 * Test if character at a given position is one of the given characters.
 		 * 
 		 * @param pos a position
-		 * @param ch a character
-		 * @return true if the character at position pos equals ch, else false 
+		 * @param chars characters to test
+		 * @return true if the character at position pos is one of the give characters, else false 
 		 */
-		private boolean test(int pos, char ch) {
+		private boolean test(int pos, char... chars) {
+			boolean result = false;
 			try {
-				return input.charAt(pos) == ch;
+				for (char ch : chars) {
+					if (input.charAt(pos) == ch) {
+						result = true;
+						break;
+					}
+				}
 			} catch (IndexOutOfBoundsException e) {
-				return false;
 			}
+			return result;
 		}
 	
 		/**
@@ -312,23 +368,8 @@ public class ArgsScanner {
 	 * @return a list of 2-elements array representing name-value pairs
 	 * @throws IllegalArgumentException
 	 */
-	public List<String[]> asPairs(String string) {
-		return asValuesAndPairs(string, true, false);
-	}
-	
-	/**
-	 * Turn a string into a list of name-value pairs. An
-	 * <code>IllegalArgumentException</code> is thrown when parsing becomes
-	 * impossible because of a badly formed input.
-	 * 
-	 * @param string
-	 *            a string interpreted as a sequence of names, equals, and
-	 *            values
-	 * @return a list of 2-elements array representing name-value pairs
-	 * @throws IllegalArgumentException
-	 */
 	public List<String> asValues(String string) {
-		List<String[]> values = asValuesAndPairs(string, false, true);
+		List<String[]> values = asValuesAndPairs(string, true);
 		List<String> result = new ArrayList<String>(values.size());
 		for (String [] v : values) {
 			result.add(v[0]);
@@ -350,7 +391,7 @@ public class ArgsScanner {
 	 * @throws IllegalArgumentException
 	 */
 	public List<String[]> asValuesAndPairs(String string) {
-		return asValuesAndPairs(string, false, false);
+		return asValuesAndPairs(string, false);
 	}
 	
 	/**
@@ -369,15 +410,13 @@ public class ArgsScanner {
 	 *            a string interpreted as a sequence of isolated values and and
 	 *            name-value pairs, with name and value separated with the name-
 	 *            value separator
-	 * @param pairsOnly
-	 *            if true, isolated values are forbidden
 	 * @param valuesOnly
 	 *            if true, isolated values are forbidden
 	 * @return a list of 1-element arrays representing isolated values and
 	 *         2-elements arrays representing where name-value pairs
 	 * @throws IllegalArgumentException
 	 */
-	private List<String[]> asValuesAndPairs(String string, boolean pairsOnly, boolean valuesOnly) {
+	private List<String[]> asValuesAndPairs(String string, boolean valuesOnly) {
 		
 		List<String[]> results = new ArrayList<String[]>();
 		tokenizer.reset(string);
@@ -391,28 +430,21 @@ public class ArgsScanner {
 				if (token1 == null) {
 					state = NameValueState.END;
 				} else {
-					if (token1.equals(eq) && !valuesOnly) {
-						if (results.size() == 0)
-							throw new IllegalArgumentException(STRINGS.msg(U.U00158, eq, string));
-						else
-							throw new IllegalArgumentException(STRINGS.msg(U.U00156, eq, lastToken(results), string));
-					} else
+					if (token1.equals(eq) && !valuesOnly)
+						throw new IllegalArgumentException(msg(U.U00156, eq, tokenizer.getPosition(), string));
+					else
 						state = NameValueState.NAME;
 				}
 				break;
 			case NAME:
 				token2 = tokenizer.token();
 				if (token2 == null) {
-					if (pairsOnly)
-						throw new IllegalArgumentException(STRINGS.msg(U.U00157, eq, token1, string));
 					results.add(new String[]{token1});
 					state = NameValueState.END;
 				} else {
 					if (token2.equals(eq) && !valuesOnly)
 						state = NameValueState.VALUE;
 					else {
-						if (pairsOnly)
-							throw new IllegalArgumentException(STRINGS.msg(U.U00157, eq, token1, string));
 						results.add(new String[]{token1});
 						token1 = token2;
 						state = NameValueState.NAME; // (no state transition)
@@ -422,7 +454,7 @@ public class ArgsScanner {
 			case VALUE:
 				token2 = tokenizer.token();
 				if (token2 == null) {
-					throw new IllegalArgumentException(STRINGS.msg(U.U00159, eq, token1, string));
+					throw new IllegalArgumentException(msg(U.U00159, eq, token1, string));
 				} else {
 					if (token1.equals(METACHAR))
 						setMetaCharacters(token2);
@@ -450,7 +482,6 @@ public class ArgsScanner {
 	 * @return an array of two strings
 	 */
 	public String[] immediateString(String input) {
-		
 		String[] result = new String[2];
 		tokenizer.reset(input);
 		String token = tokenizer.token();
@@ -465,27 +496,10 @@ public class ArgsScanner {
 
 	private void setMetaCharacters(String spec) {
 		if (spec.length() != 4)
-			throw new IllegalArgumentException(STRINGS.msg(U.U00164, spec));
+			throw new IllegalArgumentException(msg(U.U00164, spec));
 		tokenizer.setMetaCharacters(spec.charAt(0), spec.charAt(1), 
 				spec.charAt(2), spec.charAt(3));
 		eq = String.valueOf(spec.charAt(2));
 	}
 	
-	private String lastToken(List<String[]> pairs) {
-		String lastToken = null;
-		if (pairs.size() > 0) {
-			String[] pair = pairs.get(pairs.size() - 1);
-			switch (pair.length) {
-			case 1:
-				lastToken = pair[0];
-				break;
-			case 2:
-				lastToken = pair[1];
-				break;
-			default:
-				throw new RuntimeException("bug: " + pair.length);
-			}
-		}
-		return lastToken;
-	}	
 }

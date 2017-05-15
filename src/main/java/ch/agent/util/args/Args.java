@@ -607,7 +607,6 @@ public class Args implements Iterable<String> {
 	
 	private static final String SEPARATOR = " ";
 	private static final String COMMENT = "#";
-	private final boolean keywords;
 	private final String fileParameterName;
 	private final String ifName;
 	private final String ifNonEmptyName;
@@ -627,8 +626,6 @@ public class Args implements Iterable<String> {
 	 * and will be replaced with default values. <code>Args</code> is either in
 	 * <em>strict mode</em> or in <em>loose mode</em>.
 	 * 
-	 * @param keywords
-	 *            if true support also keywords, else name-values only
 	 * @param fileName
 	 *            the name of the "file" parameter, or null
 	 * @param ifGrammar
@@ -638,8 +635,7 @@ public class Args implements Iterable<String> {
 	 * @param sep
 	 *            a regular expression used as the mapping separator, or null
 	 */
-	public Args(boolean keywords, String fileName, String[] ifGrammar, String suffix, String sep) {
-		this.keywords = keywords;
+	public Args(String fileName, String[] ifGrammar, String suffix, String sep) {
 		this.fileParameterName = (fileName == null ? FILE : fileName);
 		if (ifGrammar != null) {
 			if (ifGrammar.length != 4)
@@ -669,20 +665,7 @@ public class Args implements Iterable<String> {
 	 * {@link Args#FILE_SIMPLE_SUFFIX} and {@link #MAPPING_SEPARATOR}.
 	 */
 	public Args() {
-		this(true, null, null, null, null);
-	}
-	
-	/**
-	 * Construct an Args object using defaults.The default values for the name
-	 * of the file parameter, the suffix, and the mapping separator are taken
-	 * from {@link #FILE}, {@link Args#FILE_SIMPLE_SUFFIX} and
-	 * {@link #MAPPING_SEPARATOR}.
-	 * 
-	 * @param keywords
-	 *            if true support also keywords, else name-values only
-	 */
-	public Args(boolean keywords) {
-		this(keywords, null, null, null, null);
+		this(null, null, null, null);
 	}
 	
 	private ArgsScanner getScanner() {
@@ -785,11 +768,11 @@ public class Args implements Iterable<String> {
 	public void parse(String string) {
 		if (sequence != null)
 			sequence.clear();
-		parse(scan(string, !keywords));
+		parse(scan(string));
 	}
 	
-	private List<String[]> scan(String string, boolean pairsOnly) {
-		return pairsOnly ? getScanner().asPairs(string) : getScanner().asValuesAndPairs(string);
+	private List<String[]> scan(String string) {
+		return getScanner().asValuesAndPairs(string);
 	}
 	
 	/**
@@ -805,7 +788,7 @@ public class Args implements Iterable<String> {
 				// resolve ${FOO} which can be anything, multiple name-value pairs, etc.
 				String resolved = resolve(pair[0]);
 				if (!resolved.equals(pair[0]))
-					parse(scan(resolved, !keywords));
+					parse(scan(resolved));
 				else
 					put("", pair[0]);
 				break;
@@ -1112,7 +1095,7 @@ public class Args implements Iterable<String> {
 	private String parseIf(String text) {
 		String result = "";
 		try {
-			Map<String, String> map = asMap(scan(text, false));
+			Map<String, String> map = asMap(scan(text));
 			String nonEmptyValue = map.get(ifNonEmptyName);
 			String thenValue = map.get(ifThenName);
 			String elseValue = map.get(ifElseName);
@@ -1136,12 +1119,12 @@ public class Args implements Iterable<String> {
 	private List<String[]> parseFile(boolean simple, String fileName) throws IOException {
 		ArgsFileVisitor visitor = new ArgsFileVisitor(simple, SEPARATOR);
 		textFile.read(fileName, visitor);
-		return scan(visitor.getContent(), !keywords);
+		return scan(visitor.getContent());
 	}
 	
 	private List<String[]> parseFile(boolean simple, String fileName, String mappings) throws IOException {
 		List<String[]> pairs = parseFile(simple, fileName);
-		Map<String, String> map = asMap(scan(mappings, false));
+		Map<String, String> map = asMap(scan(mappings));
 		Iterator<String[]> it = pairs.iterator();
 		while(it.hasNext()) {
 			String[] pair = it.next();
