@@ -1,5 +1,5 @@
 #
 $VAL1=val1
-name1 = ${VAL1}
-name2 = ${VAR-SET-IN-LEVEL1}
+name1 = $$VAL1
+name2 = $$VAR-SET-IN-LEVEL1
 
