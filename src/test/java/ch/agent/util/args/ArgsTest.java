@@ -900,27 +900,6 @@ public class ArgsTest {
 	@Test
 	public void testVars12() {
 		
-		int this_one_is_harder;
-		int would_require_to_change_the_logic_of_the_scanner;
-		int eg_like_always_escape_brackets_if_you_want_one;
-		
-		try {
-			args.def("foo");
-			args.parse("$VAR=val foo=[a=b x=[z=$$VAR] c=$$VAR etc=2]");
-			assertEquals("a=b x=[z=val] c=val etc=2", args.get("foo"));
-		} catch (Exception e) {
-			if (true||DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	
-	@Test
-	public void testVars12orig() {
-		
-		int this_one_is_harder;
-		int would_require_to_change_the_logic_of_the_scanner;
-		int eg_like_always_escape_brackets_if_you_want_one;
-		
 		try {
 			args.def("module");
 			args.parse("$VAR=varvalue module=[name=a class=x pred=$$VAR " + 
@@ -928,7 +907,7 @@ public class ArgsTest {
 			assertEquals("name=a class=x pred=varvalue " + 
 						"conf=[svc = varvalue ] count=2", args.get("module"));
 		} catch (Exception e) {
-			if (true||DEBUG) e.printStackTrace();
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}

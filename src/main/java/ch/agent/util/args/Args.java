@@ -912,34 +912,51 @@ public class Args implements Iterable<String> {
 		}
 		return keyword;
 	}
-
+	
+	private boolean removeEscape(StringBuilder s) {
+		int len = s.length();
+		boolean isEscape = len > 0 && s.charAt(len - 1) == '\\';
+		if (isEscape)
+			s.deleteCharAt(len - 1);
+		return isEscape;
+	}
+	
 	private String resolve(String value) {
-		String[] parts = value.split("\\$\\{");
-		StringBuilder s = new StringBuilder(parts[0]);
-		for (int i = 1; i < parts.length; i++) {
-			int len = s.length();
-			if (len > 0 && s.charAt(len - 1) == '\\') {
-				// \$ is an escape
-				s.deleteCharAt(len - 1);
-				s.append("${" + parts[i]);
-			} else {
-				String[] nameRemainder = parts[i].split("}", 2);
-				if (nameRemainder.length == 1)
-					s.append("${" + nameRemainder[0]);
-				else {
-					
-					String resolved = vars.get(nameRemainder[0]);
-					if (resolved == null)
-						throw new IllegalArgumentException(msg(U.U00122, value, nameRemainder[0]));
-					else
-						s.append(resolved);
-					s.append(nameRemainder[1]);
+		StringBuilder s = new StringBuilder();
+		while (value.length() > 0) {
+			int prefix = value.indexOf("$$");
+			if (prefix < 0) {
+				s.append(value);
+				value = "";
+			} else if (prefix >= 0) {
+				s.append(value.substring(0,  prefix));
+				value = value.substring(prefix + 2);
+				if (removeEscape(s)) {
+					s.append("$$");
+				} else if (value.length() == 0) {
+					s.append("$$");
+				} else if (Character.isWhitespace(value.charAt(0))) {
+					s.append("$$");
+				} else {
+					String[] nextStringAndRemainder = getScanner().immediateString(value);
+					if (nextStringAndRemainder[0] == null) {
+						// probably a name-value separator
+						s.append("$$");
+					} else {
+						// possibly a variable
+						String resolved = vars.get(nextStringAndRemainder[0]);
+						if (resolved == null)
+							throw new IllegalArgumentException(msg(U.U00122, value, nextStringAndRemainder[0]));
+						else
+							s.append(resolved);
+						value = nextStringAndRemainder[1];
+					}
 				}
 			}
 		}
 		return s.toString();
 	}
-	
+
 	/**
 	 * Return the value object for the parameter specified. An exception is
 	 * thrown if the the name is unknown. For a nameless parameter, pass an
