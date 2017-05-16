@@ -113,6 +113,73 @@ import ch.agent.util.logging.LoggerBridge;
  */
 public class Args implements Iterable<String> {
 	
+	
+	/**
+	 * It is possible to configure the meta characters with a system property
+	 * named <b>ArgsMetaCharacters</b>. The property is ignored unless it
+	 * contains exactly 4 characters. 
+	 */
+	public static final String ARGS_META = "ArgsMetaCharacters";
+	
+	static {
+		String metaChars = System.getProperty(ARGS_META);
+		if (metaChars != null) {
+			char[] chars = validate(metaChars);
+			leftQuote = chars[0];
+			rightQuote = chars[1];
+			nameValueSeparator = chars[2];
+			escape = chars[3];
+		} else {
+			leftQuote = '[';
+			rightQuote = ']';
+			nameValueSeparator = '=';
+			escape = '\\';
+		}
+	}
+	
+	/**
+	 * Validate a string of meta characters. There must be four characters and
+	 * they must be different. The sequence is
+	 * <ol>
+	 * <li>left quote,
+	 * <li>right quote,
+	 * <li>name-value separator,
+	 * <li>escape.
+	 * </ol>
+	 * The characters are returned in an array in that sequence.
+	 * 
+	 * @param metaChars
+	 *            a string of length 4
+	 * @return an array of length 4
+	 */
+	public static char[] validate(String metaChars) {
+		if (metaChars.length() != 4)
+			throw new IllegalArgumentException(msg(U.U00164, metaChars));
+		char lq = metaChars.charAt(0);
+		char rq = metaChars.charAt(1);
+		char nvs = metaChars.charAt(2);
+		char esc = metaChars.charAt(3);
+		if (lq == rq || lq == nvs || lq == esc || rq == nvs || rq == esc || nvs == esc)
+			throw new IllegalArgumentException(msg(U.U00163, lq, rq, nvs, esc));
+		return new char[]{lq, rq, nvs, esc};
+	}
+	
+	/**
+	 * There are four meta characters (default in parentheses):
+	 * <ol>
+	 * <li>left quote ([)
+	 * <li>right quote (])
+	 * <li>name-value separator (=)
+	 * <li>escape (\)
+	 * </ol>
+	 * For nested quotes to function the left and right quotes must be
+	 * different.
+	 */
+	private final static char leftQuote;
+	private final static char rightQuote;
+	private final static char nameValueSeparator;
+	private final static char escape;
+	
 	/**
 	 * A definition object is used to write code in method chaining style.
 	 * For example, to define a parameter with two aliases and a default
@@ -210,8 +277,8 @@ public class Args implements Iterable<String> {
 		
 		public void append(String value) {
 			this.value = this.value == null ?
-					new StringBuilder(value.length() + 2).append(LBRACKET).append(value).append(RBRACKET).toString() :
-					new StringBuilder(this.value.length() + value.length() + 3).append(this.value).append(SEPARATOR).append(LBRACKET).append(value).append(RBRACKET).toString();
+					new StringBuilder(value.length() + 2).append(leftQuote).append(value).append(rightQuote).toString() :
+					new StringBuilder(this.value.length() + value.length() + 3).append(this.value).append(SEPARATOR).append(leftQuote).append(value).append(rightQuote).toString();
 		}
 		
 		public String getDefault() {
@@ -540,19 +607,21 @@ public class Args implements Iterable<String> {
 		private StringBuffer buffer;
 		private boolean simple;
 		private String separator;
+		private char equals;
 		
-		public ArgsFileVisitor(boolean simple, String separator) {
+		public ArgsFileVisitor(boolean simple, String separator, char equals) {
 			super();
 			buffer = new StringBuffer();
 			this.simple = simple;
 			this.separator = separator;
+			this.equals = equals;
 		}
 
 		@Override
 		public boolean visit(int lineNr, String line) throws Exception {
 			if (!line.trim().startsWith(COMMENT)) {
 				if (simple) {
-					if (line.indexOf(EQ) >= 0)
+					if (line.indexOf(equals) >= 0)
 						buffer.append(line);
 				} else 
 					buffer.append(line);
@@ -575,10 +644,7 @@ public class Args implements Iterable<String> {
 	 * The string which is parsed as the boolean false value is "false".
 	 */
 	public final static String FALSE = "false";
-	private final static char EQ = '=';
-	private final static char LBRACKET = '[';
-	private final static char RBRACKET = ']';
-
+	
 	private final static String VAR_PREFIX = "$";
 	
 	/**
@@ -669,7 +735,7 @@ public class Args implements Iterable<String> {
 	}
 	
 	private ArgsScanner getScanner() {
-		return new ArgsScanner(LBRACKET, RBRACKET, EQ, '\\');
+		return new ArgsScanner(leftQuote, rightQuote, nameValueSeparator, escape);
 	}
 
 	/**
@@ -898,7 +964,7 @@ public class Args implements Iterable<String> {
 	
 	private boolean removeEscape(StringBuilder s) {
 		int len = s.length();
-		boolean isEscape = len > 0 && s.charAt(len - 1) == '\\';
+		boolean isEscape = len > 0 && s.charAt(len - 1) == escape;
 		if (isEscape)
 			s.deleteCharAt(len - 1);
 		return isEscape;
@@ -1117,7 +1183,16 @@ public class Args implements Iterable<String> {
 	}
 	
 	private List<String[]> parseFile(boolean simple, String fileName) throws IOException {
-		ArgsFileVisitor visitor = new ArgsFileVisitor(simple, SEPARATOR);
+		
+		int wip;
+//		must get = from the scanner
+//		I am creating new scanners all the time
+//		it's not necessary since the tokenizer is reset
+//		it's not like if it has to be reentrant
+//		or?
+		
+		int the_way; //  to go is to pass characters to scanner but fast (no check)
+		ArgsFileVisitor visitor = new ArgsFileVisitor(simple, SEPARATOR, nameValueSeparator);
 		textFile.read(fileName, visitor);
 		return scan(visitor.getContent());
 	}

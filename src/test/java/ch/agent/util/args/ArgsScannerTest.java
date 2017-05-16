@@ -420,7 +420,8 @@ public class ArgsScannerTest {
 	@Test
 	public void testMetaChars02() {
 		try {
-			List<String[]> result = scanner.asValuesAndPairs("Tokenizer.MetaCharacters=():\\\\ OOPS (f =(o) o) : (b\\ar (w h a t) b\\ar)");
+			ArgsScanner customScanner = new ArgsScanner('(', ')', ':', '\\');
+			List<String[]> result = customScanner.asValuesAndPairs("OOPS (f =(o) o) : (b\\ar (w h a t) b\\ar)");
 			assertEquals("f =(o) o", result.get(1)[0]);
 			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
 		} catch (Exception e) {
@@ -431,7 +432,8 @@ public class ArgsScannerTest {
 	@Test
 	public void testMetaChars02a() {
 		try {
-			List<String[]> result = scanner.asValuesAndPairs("Tokenizer.MetaCharacters=():\\\\ OOPS (f =\\(o\\) o) : (b\\ar (w h a t) b\\ar)");
+			ArgsScanner customScanner = new ArgsScanner('(', ')', ':', '\\');
+			List<String[]> result = customScanner.asValuesAndPairs("OOPS (f =\\(o\\) o) : (b\\ar (w h a t) b\\ar)");
 			assertEquals("f =(o) o", result.get(1)[0]);
 			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
 		} catch (Exception e) {
@@ -440,21 +442,10 @@ public class ArgsScannerTest {
 	}
 
 	@Test
-	public void testMetaChars03() {
-		try {
-			List<String[]> result = scanner.asValuesAndPairs("Tokenizer.MetaCharacters=toolong OOPS (f =(o\\) o) : (b\\ar (w h a t\\) b\\ar)");
-			assertEquals("f =(o) o", result.get(1)[0]);
-			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
-			fail("expected an exception");
-		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00164));
-		}
-	}
-
-	@Test
 	public void testMetaChars04() {
 		try {
-			List<String[]> result = scanner.asValuesAndPairs("Tokenizer.MetaCharacters=xxxx OOPS (f =(o\\) o) : (b\\ar (w h a t\\) b\\ar)");
+			ArgsScanner customScanner = new ArgsScanner('x', 'x', 'x', 'x');
+			List<String[]> result = customScanner.asValuesAndPairs("Tokenizer.MetaCharacters=xxxx OOPS (f =(o\\) o) : (b\\ar (w h a t\\) b\\ar)");
 			assertEquals("f =(o) o", result.get(1)[0]);
 			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
 			fail("expected an exception");
@@ -466,13 +457,14 @@ public class ArgsScannerTest {
 	@Test
 	public void testMetaChars05() {
 		try {
-			scanner.asValuesAndPairs("Tokenizer.MetaCharacters='':\\\\ OOPS 'f =\\'o\\' o' : 'b\\ar \\'w h a t\\' b\\ar'");
+			ArgsScanner customScanner = new ArgsScanner('\'', '\'', ':', '\\');
+			customScanner.asValuesAndPairs("a: 'x y z'");
 			fail("expected an exception");
 		} catch (Exception e) {
 			assertTrue(e.getMessage().startsWith(U.U00163));
 		}
 	}
-
+	
 	@Test
 	public void testMetaChars07() {
 		try {
@@ -503,17 +495,6 @@ public class ArgsScannerTest {
 			assertEquals("[]=\\", result.get(0)[0]); // instead: "[]=\\a\\] a=b"
 		} catch (Exception e) {
 			e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-
-	@Test
-	public void testMetaChars10() {
-		try {
-			List<String[]> result = scanner.asValuesAndPairs("Tokenizer.MetaCharacters=[[]=\\\\] OOPS [f =[o] o] = [b\\ar [w h a t] b\\ar]");
-			assertEquals("f =[o] o", result.get(1)[0]);
-			assertEquals("b\\ar [w h a t] b\\ar", result.get(1)[1]);
-		} catch (Exception e) {
 			fail("unexpected exception");
 		}
 	}

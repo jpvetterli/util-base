@@ -73,11 +73,11 @@ public class ArgsScanner {
 		private enum State {
 			INIT, STRING, BRACKET, ESCAPE, END
 		}
-
-		private char opening;
-		private char closing;
-		private char equals;
-		private char esc;
+		
+		private final char opening;
+		private final char closing;
+		private final char equals;
+		private final char esc;
 
 		private String input;
 		private int position; // first is 0
@@ -100,28 +100,10 @@ public class ArgsScanner {
 		 *            the escape character
 		 */
 		public Tokenizer(char open, char close, char equals, char esc) {
-			setMetaCharacters(open, close, equals, esc);
-		}
-	
-		/**
-		 * Set meta characters. Characters must be distinct except open and
-		 * close.
-		 * 
-		 * @param ocee
-		 *            a string of length 4 with the open, close, equals and
-		 *            escape meta characters
-		 */
-		public void setMetaCharacters(char open, char close, char equals, char esc) {
-			checkMetaCharacters(open, close, equals, esc);
 			this.opening = open;
 			this.closing = close;
 			this.equals = equals;
 			this.esc = esc;
-		}
-		
-		private void checkMetaCharacters(char open, char close, char equals, char esc) {
-			if (open == equals || open == esc || open == close || close == equals || close == esc || equals == esc)
-				throw new IllegalArgumentException(msg(U.U00163, open, close, equals, esc));
 		}
 		
 		/**
@@ -324,12 +306,6 @@ public class ArgsScanner {
 		}
 	}
 	
-	/**
-	 * Name of the special parameter used to modify meta characters. Takes a value
-	 * of length four with the open, close, equals, and escape meta characters.
-	 */
-	public static final String METACHAR = "Tokenizer.MetaCharacters";
-	
 	private enum NameValueState {
 		INIT, END, NAME, VALUE
 	}
@@ -340,23 +316,26 @@ public class ArgsScanner {
 	/**
 	 * Constructor for a scanner with custom meta characters.
 	 * 
-	 * @param opening the opening bracket
-	 * @param closing the closing bracket
-	 * @param equals the name-value separator
-	 * @param esc the escape character
+	 * @param lq left quote
+	 * @param rq right quote
+	 * @param nvs name-value separator
+	 * @param esc escape
 	 */
-	public ArgsScanner(char opening, char closing, char equals, char esc) {
-		tokenizer = new Tokenizer(opening, closing, equals, esc);
-		eq = String.valueOf(equals);
+	public ArgsScanner(char lq, char rq, char nvs, char esc) {
+		if (lq == rq || lq == nvs || lq == esc || rq == nvs || rq == esc || nvs == esc)
+			throw new IllegalArgumentException(msg(U.U00163, lq, rq, nvs, esc));
+		tokenizer = new Tokenizer(lq, rq, nvs, esc);
+		eq = String.valueOf(nvs);
 	}
-
+	
 	/**
-	 * Constructor for a scanner using default meta characters.
+	 * Constructor for a scanner using default meta characters. The defaults are
+	 * [, ], = and \.
 	 */
 	public ArgsScanner() {
 		this('[', ']', '=', '\\');
 	}
-	
+
 	/**
 	 * Turn a string into a list of name-value pairs. An
 	 * <code>IllegalArgumentException</code> is thrown when parsing becomes
@@ -456,10 +435,7 @@ public class ArgsScanner {
 				if (token2 == null) {
 					throw new IllegalArgumentException(msg(U.U00159, eq, token1, string));
 				} else {
-					if (token1.equals(METACHAR))
-						setMetaCharacters(token2);
-					else 
-						results.add(new String[]{token1, token2});
+					results.add(new String[]{token1, token2});
 					state = NameValueState.INIT;
 				}
 				break;
@@ -494,12 +470,4 @@ public class ArgsScanner {
 		return result;
 	}
 
-	private void setMetaCharacters(String spec) {
-		if (spec.length() != 4)
-			throw new IllegalArgumentException(msg(U.U00164, spec));
-		tokenizer.setMetaCharacters(spec.charAt(0), spec.charAt(1), 
-				spec.charAt(2), spec.charAt(3));
-		eq = String.valueOf(spec.charAt(2));
-	}
-	
 }

@@ -315,6 +315,40 @@ public class ArgsTest {
 	}
 	
 	@Test
+	public void testNestedParser1() {
+		try {
+			args.def("foo");
+			args.parse("foo = [bar=[baf=[xyzzy]]]");
+			Args args2 = new Args();
+			args2.def("bar");
+			args2.parse(args.get("foo"));
+			Args args3 = new Args();
+			args3.def("baf");
+			args3.parse(args2.get("bar"));
+			assertEquals("xyzzy", args3.get("baf"));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testNestedParser2() {
+		try {
+			args.def("foo");
+			args.parse("$var1=val1 foo = [bar=[baf=[ xyzzy + $$var1 ]]]");
+			Args args2 = new Args();
+			args2.def("bar");
+			args2.parse(args.get("foo"));
+			Args args3 = new Args();
+			args3.def("baf");
+			args3.parse(args2.get("bar"));
+			assertEquals(" xyzzy + val1 ", args3.get("baf"));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
 	public void testNameless1() {
 		try {
 			args.def("");
