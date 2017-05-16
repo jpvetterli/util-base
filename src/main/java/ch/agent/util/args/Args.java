@@ -120,65 +120,134 @@ public class Args implements Iterable<String> {
 	 * contains exactly 4 characters. 
 	 */
 	public static final String ARGS_META = "ArgsMetaCharacters";
+	public static final String ARGS_IF_SYNTAX = "ArgsIfSyntax";
+	public static final String ARGS_INCLUDE_NAME = "ArgsIncludeName";
 	
 	static {
-		String metaChars = System.getProperty(ARGS_META);
-		if (metaChars != null) {
-			char[] chars = validate(metaChars);
-			leftQuote = chars[0];
-			rightQuote = chars[1];
-			nameValueSeparator = chars[2];
-			escape = chars[3];
-		} else {
-			leftQuote = '[';
-			rightQuote = ']';
-			nameValueSeparator = '=';
-			escape = '\\';
-		}
+		char[] chars = validateMetaCharacters(System.getProperty(ARGS_META));
+		leftQuote = chars[0];
+		rightQuote = chars[1];
+		nameValueSeparator = chars[2];
+		escape = chars[3];
+		
+		String[] elements = validateIfSyntax(System.getProperty(ARGS_IF_SYNTAX));
+		ifName = elements[0];
+		ifNonEmptyName = elements[1];
+		ifThenName = elements[2];
+		ifElseName = elements[3];
+		
+		includeName = validateIncludeName(System.getProperty(ARGS_INCLUDE_NAME));
 	}
 	
 	/**
 	 * Validate a string of meta characters. There must be four characters and
-	 * they must be different. The sequence is
+	 * they must be different. The sequence (defaults in parentheses) is
 	 * <ol>
-	 * <li>left quote,
-	 * <li>right quote,
-	 * <li>name-value separator,
-	 * <li>escape.
+	 * <li>left quote ([),
+	 * <li>right quote (]),
+	 * <li>name-value separator (=),
+	 * <li>escape (\).
 	 * </ol>
-	 * The characters are returned in an array in that sequence.
+	 * The characters are returned in an array in that sequence. If the input is
+	 * null default meta characters are returned.
 	 * 
 	 * @param metaChars
 	 *            a string of length 4
 	 * @return an array of length 4
 	 */
-	public static char[] validate(String metaChars) {
-		if (metaChars.length() != 4)
-			throw new IllegalArgumentException(msg(U.U00164, metaChars));
-		char lq = metaChars.charAt(0);
-		char rq = metaChars.charAt(1);
-		char nvs = metaChars.charAt(2);
-		char esc = metaChars.charAt(3);
-		if (lq == rq || lq == nvs || lq == esc || rq == nvs || rq == esc || nvs == esc)
-			throw new IllegalArgumentException(msg(U.U00163, lq, rq, nvs, esc));
-		return new char[]{lq, rq, nvs, esc};
+	public static char[] validateMetaCharacters(String metaChars) {
+		if (metaChars == null)
+			return new char[] { '[', ']', '=', '\\' };
+		else {
+			if (metaChars.length() != 4)
+				throw new IllegalArgumentException(msg(U.U00164, metaChars));
+			char lq = metaChars.charAt(0);
+			char rq = metaChars.charAt(1);
+			char nvs = metaChars.charAt(2);
+			char esc = metaChars.charAt(3);
+			validateMetaCharacters(lq, rq, nvs, esc);
+			return new char[] { lq, rq, nvs, esc };
+		}
 	}
 	
 	/**
-	 * There are four meta characters (default in parentheses):
-	 * <ol>
-	 * <li>left quote ([)
-	 * <li>right quote (])
-	 * <li>name-value separator (=)
-	 * <li>escape (\)
-	 * </ol>
-	 * For nested quotes to function the left and right quotes must be
-	 * different.
+	 * Validate four meta characters. 
+	 * The four characters must be different.
+	 *
+	 * @param leftQuote the left quote 
+	 * @param rightQuote the right quote 
+	 * @param nameValueSeparator the name-value separator
+	 * @param escape the escape
 	 */
+	public static void validateMetaCharacters(char leftQuote, char rightQuote, char nameValueSeparator, char escape) {
+		if (leftQuote == rightQuote || leftQuote == nameValueSeparator || leftQuote == escape 
+			|| rightQuote == nameValueSeparator || rightQuote == escape 
+			|| nameValueSeparator == escape)
+			throw new IllegalArgumentException(msg(U.U00163, leftQuote, rightQuote, nameValueSeparator, escape));
+	}
+
+	/**
+	 * Validate a string with the syntax for conditionals. There must be four
+	 * comma-separated elements and they must be different. The sequence (with
+	 * defaults in parentheses) is
+	 * <ol>
+	 * <li>if (if),
+	 * <li>non-empty (non-empty),
+	 * <li>then (then),
+	 * <li>else (else).
+	 * </ol>
+	 * The elements are returned in an array in that sequence. If the input is
+	 * empty an array with defaults is returned.
+	 * 
+	 * @param syntax
+	 *            a string with 4 comma-separated elements
+	 * @return an array of length 4
+	 */
+	public static String[] validateIfSyntax(String syntax) {
+		if (syntax == null) {
+			return new String[]{"if", "non-empty", "then", "else"};
+		} else {
+			String[] el = syntax.split("\\s*,\\s*"); 
+			if (el.length != 4)
+				throw new IllegalArgumentException(msg(U.U00161, syntax));
+			if (el[0].equals(el[1]) || el[0].equals(el[2]) || el[0].equals(el[3])
+					|| el[1].equals(el[2]) || el[1].equals(el[3])
+					|| el[2].equals(el[3]))
+				throw new IllegalArgumentException(msg(U.U00162, syntax));
+			return el;
+		}
+	}
+	
+	/**
+	 * Validate string used to request file inclusion. The name must not be empty.
+	 * The input specified is returned. If it is null the default is returned,
+	 * which is "include".
+	 * 
+	 * @param name
+	 *            a string
+	 * @return a string
+	 */
+	public static String validateIncludeName(String name) {
+		if (name == null) {
+			return "include";
+		} else {
+			if (name.length() == 0)
+				throw new IllegalArgumentException(msg(U.U00160));
+			return name;
+		}
+	}
+
 	private final static char leftQuote;
 	private final static char rightQuote;
 	private final static char nameValueSeparator;
 	private final static char escape;
+	
+	private final static String ifName;
+	private final static String ifNonEmptyName;
+	private final static String ifThenName;
+	private final static String ifElseName;
+	
+	private final static String includeName;
 	
 	/**
 	 * A definition object is used to write code in method chaining style.
@@ -648,14 +717,6 @@ public class Args implements Iterable<String> {
 	private final static String VAR_PREFIX = "$";
 	
 	/**
-	 * The default name of the if parameter is simply "if".
-	 */
-	public static final String IF = "if";
-	public static final String IF_NON_EMPTY = "non-empty";
-	public static final String IF_THEN = "then";
-	public static final String IF_ELSE = "else";
-	
-	/**
 	 * The default name of the file parameter is simply "file".
 	 */
 	public static final String FILE = "file";
@@ -674,10 +735,6 @@ public class Args implements Iterable<String> {
 	private static final String SEPARATOR = " ";
 	private static final String COMMENT = "#";
 	private final String fileParameterName;
-	private final String ifName;
-	private final String ifNonEmptyName;
-	private final String ifThenName;
-	private final String ifElseName;
 	private String simpleFileParameterName;
 	private String mappingSeparator;
 	private Map<String, Value> args;
@@ -695,32 +752,19 @@ public class Args implements Iterable<String> {
 	 * 
 	 * @param fileName
 	 *            the name of the "file" parameter, or null
-	 * @param ifGrammar
-	 *            an array with 4 strings for the "if-nonempty-then-else" grammar
 	 * @param suffix
 	 *            the suffix used to request simple parsing
 	 * @param sep
 	 *            a regular expression used as the mapping separator, or null
 	 */
-	public Args(String fileName, String[] ifGrammar, String suffix, String sep) {
+	public Args(String fileName, String suffix, String sep) {
 		this.fileParameterName = (fileName == null ? FILE : fileName);
-		if (ifGrammar != null) {
-			if (ifGrammar.length != 4)
-				throw new IllegalArgumentException("ifGrammar.length != 4");
-			this.ifName = ifGrammar[0];
-			this.ifNonEmptyName = ifGrammar[1];
-			this.ifThenName = ifGrammar[2];
-			this.ifElseName = ifGrammar[3];
-		} else {
-			this.ifName = IF;
-			this.ifNonEmptyName = IF_NON_EMPTY;
-			this.ifThenName = IF_THEN;
-			this.ifElseName = IF_ELSE;
-		}
 		this.simpleFileParameterName = (suffix == null ? 
 				fileParameterName + FILE_SIMPLE_SUFFIX : fileParameterName + suffix);
 		this.mappingSeparator = (sep == null ? MAPPING_SEPARATOR : sep);
 		args = new HashMap<String, Args.Value>();
+		def(ifName);
+		def(includeName);
 		vars = new HashMap<String, String>();
 		textFile = new TextFile();
 		scanner = new ArgsScanner(leftQuote, rightQuote, nameValueSeparator, escape);
@@ -734,7 +778,7 @@ public class Args implements Iterable<String> {
 	 * {@link Args#FILE_SIMPLE_SUFFIX} and {@link #MAPPING_SEPARATOR}.
 	 */
 	public Args() {
-		this(null, null, null, null);
+		this(null, null, null);
 	}
 	
 	private ArgsScanner getScanner() {

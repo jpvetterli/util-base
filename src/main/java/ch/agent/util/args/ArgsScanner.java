@@ -322,8 +322,7 @@ public class ArgsScanner {
 	 * @param esc escape
 	 */
 	public ArgsScanner(char lq, char rq, char nvs, char esc) {
-		if (lq == rq || lq == nvs || lq == esc || rq == nvs || rq == esc || nvs == esc)
-			throw new IllegalArgumentException(msg(U.U00163, lq, rq, nvs, esc));
+		Args.validateMetaCharacters(lq, rq, nvs, esc);
 		tokenizer = new Tokenizer(lq, rq, nvs, esc);
 		eq = String.valueOf(nvs);
 	}
