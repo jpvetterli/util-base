@@ -686,6 +686,7 @@ public class Args implements Iterable<String> {
 	private List<String[]> sequence;
 	private boolean loose;
 	private LoggerBridge logger;
+	private ArgsScanner scanner;
 
 	/**
 	 * Construct a custom <code>Args</code> object. Nulls are valid arguments
@@ -722,6 +723,8 @@ public class Args implements Iterable<String> {
 		args = new HashMap<String, Args.Value>();
 		vars = new HashMap<String, String>();
 		textFile = new TextFile();
+		scanner = new ArgsScanner(leftQuote, rightQuote, nameValueSeparator, escape);
+
 	}
 	
 	/**
@@ -735,7 +738,7 @@ public class Args implements Iterable<String> {
 	}
 	
 	private ArgsScanner getScanner() {
-		return new ArgsScanner(leftQuote, rightQuote, nameValueSeparator, escape);
+		return scanner;
 	}
 
 	/**
@@ -1183,15 +1186,6 @@ public class Args implements Iterable<String> {
 	}
 	
 	private List<String[]> parseFile(boolean simple, String fileName) throws IOException {
-		
-		int wip;
-//		must get = from the scanner
-//		I am creating new scanners all the time
-//		it's not necessary since the tokenizer is reset
-//		it's not like if it has to be reentrant
-//		or?
-		
-		int the_way; //  to go is to pass characters to scanner but fast (no check)
 		ArgsFileVisitor visitor = new ArgsFileVisitor(simple, SEPARATOR, nameValueSeparator);
 		textFile.read(fileName, visitor);
 		return scan(visitor.getContent());
