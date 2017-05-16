@@ -1,4 +1,4 @@
 $VAR-SET-IN-LEVEL0 = val0
 #$VAR-SET-IN-LEVEL1 = val2
 name0 = $$VAR-SET-IN-LEVEL0
-file = $$FILE
+include = $$FILE

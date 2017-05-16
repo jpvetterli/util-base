@@ -3,7 +3,6 @@ package ch.agent.util.args;
 import static ch.agent.util.STRINGS.lazymsg;
 import static ch.agent.util.STRINGS.msg;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -120,8 +119,6 @@ public class Args implements Iterable<String> {
 	 * contains exactly 4 characters. 
 	 */
 	public static final String ARGS_META = "ArgsMetaCharacters";
-	public static final String ARGS_IF_SYNTAX = "ArgsIfSyntax";
-	public static final String ARGS_INCLUDE_NAME = "ArgsIncludeName";
 	
 	static {
 		char[] chars = validateMetaCharacters(System.getProperty(ARGS_META));
@@ -129,14 +126,6 @@ public class Args implements Iterable<String> {
 		rightQuote = chars[1];
 		nameValueSeparator = chars[2];
 		escape = chars[3];
-		
-		String[] elements = validateIfSyntax(System.getProperty(ARGS_IF_SYNTAX));
-		ifName = elements[0];
-		ifNonEmptyName = elements[1];
-		ifThenName = elements[2];
-		ifElseName = elements[3];
-		
-		includeName = validateIncludeName(System.getProperty(ARGS_INCLUDE_NAME));
 	}
 	
 	/**
@@ -186,68 +175,20 @@ public class Args implements Iterable<String> {
 			throw new IllegalArgumentException(msg(U.U00163, leftQuote, rightQuote, nameValueSeparator, escape));
 	}
 
-	/**
-	 * Validate a string with the syntax for conditionals. There must be four
-	 * comma-separated elements and they must be different. The sequence (with
-	 * defaults in parentheses) is
-	 * <ol>
-	 * <li>if (if),
-	 * <li>non-empty (non-empty),
-	 * <li>then (then),
-	 * <li>else (else).
-	 * </ol>
-	 * The elements are returned in an array in that sequence. If the input is
-	 * empty an array with defaults is returned.
-	 * 
-	 * @param syntax
-	 *            a string with 4 comma-separated elements
-	 * @return an array of length 4
-	 */
-	public static String[] validateIfSyntax(String syntax) {
-		if (syntax == null) {
-			return new String[]{"if", "non-empty", "then", "else"};
-		} else {
-			String[] el = syntax.split("\\s*,\\s*"); 
-			if (el.length != 4)
-				throw new IllegalArgumentException(msg(U.U00161, syntax));
-			if (el[0].equals(el[1]) || el[0].equals(el[2]) || el[0].equals(el[3])
-					|| el[1].equals(el[2]) || el[1].equals(el[3])
-					|| el[2].equals(el[3]))
-				throw new IllegalArgumentException(msg(U.U00162, syntax));
-			return el;
-		}
-	}
-	
-	/**
-	 * Validate string used to request file inclusion. The name must not be empty.
-	 * The input specified is returned. If it is null the default is returned,
-	 * which is "include".
-	 * 
-	 * @param name
-	 *            a string
-	 * @return a string
-	 */
-	public static String validateIncludeName(String name) {
-		if (name == null) {
-			return "include";
-		} else {
-			if (name.length() == 0)
-				throw new IllegalArgumentException(msg(U.U00160));
-			return name;
-		}
-	}
-
 	private final static char leftQuote;
 	private final static char rightQuote;
 	private final static char nameValueSeparator;
 	private final static char escape;
 	
-	private final static String ifName;
-	private final static String ifNonEmptyName;
-	private final static String ifThenName;
-	private final static String ifElseName;
+	private final static String COND = "condition";
+	private final static String COND_IF_NON_EMPTY = "if";
+	private final static String COND_THEN = "then";
+	private final static String COND_ELSE = "else";
 	
-	private final static String includeName;
+	private final static String INCLUDE = "include";
+	private final static String INC_NAMES = "names";
+	private final static String INC_CLASS = "extractor";
+	private final static String INC_CONFIG = "extractor-parameters";
 	
 	/**
 	 * A definition object is used to write code in method chaining style.
@@ -347,7 +288,7 @@ public class Args implements Iterable<String> {
 		public void append(String value) {
 			this.value = this.value == null ?
 					new StringBuilder(value.length() + 2).append(leftQuote).append(value).append(rightQuote).toString() :
-					new StringBuilder(this.value.length() + value.length() + 3).append(this.value).append(SEPARATOR).append(leftQuote).append(value).append(rightQuote).toString();
+					new StringBuilder(this.value.length() + value.length() + 3).append(this.value).append(BLANK).append(leftQuote).append(value).append(rightQuote).toString();
 		}
 		
 		public String getDefault() {
@@ -671,40 +612,6 @@ public class Args implements Iterable<String> {
 
 	}
 
-	private class ArgsFileVisitor implements TextFile.Visitor {
-
-		private StringBuffer buffer;
-		private boolean simple;
-		private String separator;
-		private char equals;
-		
-		public ArgsFileVisitor(boolean simple, String separator, char equals) {
-			super();
-			buffer = new StringBuffer();
-			this.simple = simple;
-			this.separator = separator;
-			this.equals = equals;
-		}
-
-		@Override
-		public boolean visit(int lineNr, String line) throws Exception {
-			if (!line.trim().startsWith(COMMENT)) {
-				if (simple) {
-					if (line.indexOf(equals) >= 0)
-						buffer.append(line);
-				} else 
-					buffer.append(line);
-				buffer.append(separator);
-			}
-			return false;
-		}
-		
-		public String getContent() {
-			return buffer.toString();
-		}
-		
-	}
-	
 	/**
 	 * The string which is parsed as the boolean true value is "true".
 	 */
@@ -714,29 +621,10 @@ public class Args implements Iterable<String> {
 	 */
 	public final static String FALSE = "false";
 	
+	private int clean;
 	private final static String VAR_PREFIX = "$";
+	private final static String BLANK = " ";
 	
-	/**
-	 * The default name of the file parameter is simply "file".
-	 */
-	public static final String FILE = "file";
-	
-	/**
-	 * The default suffix after FILE to force "simple" parsing. Simple parsing
-	 * excludes all lines which don't look like simple name-value pairs.
-	 */
-	public static final String FILE_SIMPLE_SUFFIX = "*";
-	/**
-	 * The default mapping separator is a semicolon surrounded
-	 * by zero or more white space characters.
-	 */
-	public static final String MAPPING_SEPARATOR = "\\s*;\\s*";
-	
-	private static final String SEPARATOR = " ";
-	private static final String COMMENT = "#";
-	private final String fileParameterName;
-	private String simpleFileParameterName;
-	private String mappingSeparator;
 	private Map<String, Value> args;
 	private Map<String, String> vars;
 	private TextFile textFile; // use only one for duplicate detection to work
@@ -744,47 +632,74 @@ public class Args implements Iterable<String> {
 	private boolean loose;
 	private LoggerBridge logger;
 	private ArgsScanner scanner;
+	private ArgsIncluder includer;
+	private Args includeArgs;
+	private Args ifArgs;
 
 	/**
-	 * Construct a custom <code>Args</code> object. Nulls are valid arguments
-	 * and will be replaced with default values. <code>Args</code> is either in
-	 * <em>strict mode</em> or in <em>loose mode</em>.
-	 * 
-	 * @param fileName
-	 *            the name of the "file" parameter, or null
-	 * @param suffix
-	 *            the suffix used to request simple parsing
-	 * @param sep
-	 *            a regular expression used as the mapping separator, or null
+	 * Constructor.
 	 */
-	public Args(String fileName, String suffix, String sep) {
-		this.fileParameterName = (fileName == null ? FILE : fileName);
-		this.simpleFileParameterName = (suffix == null ? 
-				fileParameterName + FILE_SIMPLE_SUFFIX : fileParameterName + suffix);
-		this.mappingSeparator = (sep == null ? MAPPING_SEPARATOR : sep);
+	public Args() {
 		args = new HashMap<String, Args.Value>();
-		def(ifName);
-		def(includeName);
+		def(COND);
+		def(INCLUDE);
 		vars = new HashMap<String, String>();
 		textFile = new TextFile();
 		scanner = new ArgsScanner(leftQuote, rightQuote, nameValueSeparator, escape);
-
-	}
-	
-	/**
-	 * Construct an Args object using defaults. Keywords are not supported. The
-	 * default values for the name of the file parameter, the suffix, and the
-	 * mapping separator are taken from {@link #FILE},
-	 * {@link Args#FILE_SIMPLE_SUFFIX} and {@link #MAPPING_SEPARATOR}.
-	 */
-	public Args() {
-		this(null, null, null);
 	}
 	
 	private ArgsScanner getScanner() {
 		return scanner;
 	}
-
+	
+	private Args parseIncludeArgs(String input) {
+		if (includeArgs == null) {
+			includeArgs = new Args();
+			includeArgs.def(""); // mandatory file name
+			includeArgs.def(INC_NAMES).init("");
+			includeArgs.def(INC_CLASS).init("");
+			includeArgs.def(INC_CONFIG).init("");
+		}
+		int remove_all_variables_then_add_global_variables; // WIP
+		includeArgs.reset();
+		includeArgs.setVariables(getVariables());
+		includeArgs.parse(input);
+		return includeArgs;
+	}
+	
+	private Args parseIfArgs(String input) {
+		if (ifArgs == null) {
+			ifArgs = new Args();
+			ifArgs.def(COND_IF_NON_EMPTY);
+			ifArgs.def(COND_THEN);
+			ifArgs.def(COND_ELSE).init("");
+		}
+		int remove_all_variables_then_add_global_variables; // WIP
+		ifArgs.reset();
+		ifArgs.setVariables(getVariables());
+		ifArgs.parse(input);
+		return ifArgs;
+	}
+	
+	private ArgsIncluder getIncluder(String className) {
+		ArgsIncluder inc = null;
+		if (className != null) {
+			try {
+				inc = (ArgsIncluder) Class.forName(className).newInstance();
+				inc.setTextFileReader(textFile);
+			} catch (Exception e) {
+				throw new IllegalArgumentException(msg(U.U00161, className), e);
+			}
+		} else {
+			if (includer == null) {
+				includer = new ArgsIncluder();
+				includer.setTextFileReader(textFile);
+			}
+			inc = includer;
+		}
+		return inc;
+	}
+	
 	/**
 	 * Enable loose mode and optionally set a logger. If available the logger is
 	 * used to log unresolved names at log level "debug".
@@ -863,7 +778,7 @@ public class Args implements Iterable<String> {
 	 * @throws IllegalArgumentException
 	 */
 	public void parse(String[] args) {
-		parse(Misc.join(SEPARATOR, args));
+		parse(Misc.join(BLANK, args));
 	}
 
 	/**
@@ -906,12 +821,10 @@ public class Args implements Iterable<String> {
 					put("", pair[0]);
 				break;
 			case 2:
-				if (pair[0].equals(fileParameterName))
-					parse(parseFileAndMapping(false, pair[0], resolve(pair[1])));
-				else if (pair[0].equals(simpleFileParameterName))
-					parse(parseFileAndMapping(true, pair[0], resolve(pair[1])));
-				else if (pair[0].equals(ifName))
+				if (pair[0].equals(COND))
 					parse(parseIf(pair[1]));
+				else if (pair[0].equals(INCLUDE))
+					parse(parseInclude(pair[1]));
 				else
 					put(pair[0], pair[1]);
 				break;
@@ -1115,6 +1028,16 @@ public class Args implements Iterable<String> {
 	}
 	
 	/**
+	 * Add all variables in a map. 
+	 * Any existing variable is replaced.
+	 * 
+	 * @param variables a map of variables
+	 */
+	public void setVariables(Map<String, String> variables) {
+		vars.putAll(variables);
+	}
+	
+	/**
 	 * Add a variable. If a variable with the same name exists nothing is done
 	 * (the principle is that <em>the first one wins</em>). If the value
 	 * contains embedded variables these are substituted before adding the
@@ -1155,38 +1078,6 @@ public class Args implements Iterable<String> {
 	}
 	
 	/**
-	 * Return a list of name-value pairs from a text file. Lines starting with a
-	 * hash are skipped.
-	 * <p>
-	 * The file specification consists of a file name optionally followed by a
-	 * mapping separator ({@link #MAPPING_SEPARATOR}) and zero or more mappings,
-	 * which are simply name-value pairs. When such mappings are present, only
-	 * the names found in the mapping will be extracted from the file and the
-	 * corresponding values will be used to rename the pairs.
-	 * An <code>IllegalArgumentException</code> will be thrown if anything 
-	 * goes wrong while parsing the file specification. Some of these exceptions
-	 * are wrapped <code>IOException</code>s.
-	 * 
-	 * @param simple request simple parsing 
-	 * @param fileParameterName the name of the parameter (typically, "file" or "file*")
-	 * @param fileSpec
-	 *            a file name possibly followed by mappings
-	 * @return a list of arrays of length 2 (name and value)
-	 * @throws IllegalArgumentException
-	 */
-	private List<String[]> parseFileAndMapping(boolean simple, String fileParameterName, String fileSpec) {
-		String[] fm = fileSpec.split(mappingSeparator, 2);
-		try {
-			if (fm.length > 1)
-				return parseFile(simple, fm[0], fm[1]);
-			else
-				return parseFile(simple, fm[0]);
-		} catch (Exception e) {
-			throw new IllegalArgumentException(msg(U.U00130, fileParameterName, fileSpec), e);
-		}
-	}
-	
-	/**
 	 * Parse a specification like:
 	 * 
 	 * <pre>
@@ -1207,53 +1098,41 @@ public class Args implements Iterable<String> {
 	 */
 	private String parseIf(String text) {
 		String result = "";
-		try {
-			Map<String, String> map = asMap(scan(text));
-			String nonEmptyValue = map.get(ifNonEmptyName);
-			String thenValue = map.get(ifThenName);
-			String elseValue = map.get(ifElseName);
-			if (nonEmptyValue == null) 
-				throw new IllegalArgumentException(msg(U.U00133, ifNonEmptyName));
-			if (thenValue == null) 
-				throw new IllegalArgumentException(msg(U.U00133, ifThenName));
-			if (map.size() != (elseValue == null ? 2 : 3)) 
-				throw new IllegalArgumentException(msg(U.U00134, ifNonEmptyName, ifThenName, ifElseName));
-			String resolved = resolve(nonEmptyValue);
-			if (resolved.length() > 0)
-				result = thenValue;
-			else if (elseValue != null)
-				result = elseValue;
-		} catch (Exception e) {
-			throw new IllegalArgumentException(msg(U.U00132, ifName, text), e);
-		}
+		Args a = parseIfArgs(text);
+		String ifValue = a.get(COND_IF_NON_EMPTY);
+		String thenValue = a.get(COND_THEN);
+		String elseValue = a.get(COND_ELSE);
+		String resolved = resolve(ifValue);
+		if (resolved.length() > 0)
+			result = thenValue;
+		else if (!Misc.isEmpty(elseValue))
+			result = elseValue;
 		return result;
 	}
 	
-	private List<String[]> parseFile(boolean simple, String fileName) throws IOException {
-		ArgsFileVisitor visitor = new ArgsFileVisitor(simple, SEPARATOR, nameValueSeparator);
-		textFile.read(fileName, visitor);
-		return scan(visitor.getContent());
-	}
-	
-	private List<String[]> parseFile(boolean simple, String fileName, String mappings) throws IOException {
-		List<String[]> pairs = parseFile(simple, fileName);
-		Map<String, String> map = asMap(scan(mappings));
-		Iterator<String[]> it = pairs.iterator();
-		while(it.hasNext()) {
-			String[] pair = it.next();
-			String mapping = map.get(pair[0]);
-			if (mapping == null)
-				it.remove();
-			else
-				pair[0] = mapping;
+	private List<String[]> parseInclude(String text) {
+		ArgsIncluder argsIncluder = null;
+		try {
+			Args a = parseIncludeArgs(text);
+			String fileName = a.get("");
+			String names = a.get(INC_NAMES);
+			String classe = a.get(INC_CLASS);
+			String config = a.get(INC_CONFIG);
+			argsIncluder = Misc.isEmpty(classe) ? getIncluder(null) : getIncluder(classe);
+			Map<String, String> map = null;
+			if (!Misc.isEmpty(names)) {
+				map = asMap(scan(names));
+			}
+			return argsIncluder.include(scanner, fileName, map, config);
+		} finally {
+			argsIncluder = null;
 		}
-		return pairs;
 	}
-	
+
 	private Map<String, String> asMap(List<String[]> pairs) {
 		Map<String, String> map = new HashMap<String, String>();
 		for (String[] pair : pairs) {
-			map.put(pair[0],  pair[1]);
+			map.put(pair[0],  pair.length == 2 ? pair[1] : "");
 		}
 		return map;
 	}
@@ -1267,6 +1146,7 @@ public class Args implements Iterable<String> {
 		for (Value v : args.values()) {
 			v.set(null);
 		}
+		int must_only_clear_local_variables; // = here we are
 		vars.clear();
 	}
 	

@@ -458,7 +458,7 @@ public class ArgsTest {
 			args.def("multi");
 			args.def("name1");
 			args.def("name2");
-			args.parse("file = " + file1 + " name2 = val2B");
+			args.parse("include = " + file1 + " name2 = val2B");
 			assertEquals("foo's value", args.get("foo"));
 			assertEquals("bar's value", args.get("bar"));
 			assertEquals("a b c", args.get("multi"));
@@ -473,21 +473,22 @@ public class ArgsTest {
 	@Test
 	public void testIf1() {
 		try {
-			args.parse("if=[foo bar]");
+			args.parse("condition=[foo bar]");
 			fail("exception expected");
 		} catch (Exception e) {
-			assertTrue(e.getMessage(), e.getMessage().startsWith("U00132"));
+			if (DEBUG) e.printStackTrace();
+			assertTrue(e.getMessage(), e.getMessage().startsWith(U.U00103));
 		}
 	}
 	
 	@Test
 	public void testIf2() {
 		try {
-			args.parse("if=[non-empty=[] them=foo]");
+			args.parse("condition=[if=[] them=foo]");
 			fail("exception expected");
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
-			assertTrue(e.getMessage(), e.getCause().getMessage().startsWith("U00133"));
+			assertTrue(e.getMessage(), e.getMessage().startsWith(U.U00103));
 		}
 	}
 	
@@ -495,7 +496,7 @@ public class ArgsTest {
 	public void testIf3a() {
 		try {
 			args.def("foo").init("0");
-			args.parse("$X=2 if=[non-empty=[${X}] then=[foo=1]]");
+			args.parse("$X=2 condition=[if=[$$X] then=[foo=1]]");
 			assertEquals("1", args.get("foo"));
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
@@ -507,7 +508,7 @@ public class ArgsTest {
 	public void testIf3b() {
 		try {
 			args.def("foo").init("0");
-			args.parse("$X=[] if=[non-empty=[$$X] then=[foo=1]]");
+			args.parse("$X=[] condition=[if=[$$X] then=[foo=1]]");
 			assertEquals("0", args.get("foo"));
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
@@ -519,7 +520,7 @@ public class ArgsTest {
 	public void testIf4() {
 		try {
 			args.def("foo");
-			args.parse("if=[non-empty=[x] then=[foo=bar]]");
+			args.parse("condition=[if=[x] then=[foo=bar]]");
 			assertEquals("bar", args.get("foo"));
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
@@ -531,7 +532,7 @@ public class ArgsTest {
 	public void testIf5() {
 		try {
 			args.def("foo");
-			args.parse("if=[non-empty=[] then=[foo=bar] else=[foo=baz]]");
+			args.parse("condition=[if=[] then=[foo=bar] else=[foo=baz]]");
 			assertEquals("baz", args.get("foo"));
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
@@ -544,11 +545,11 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.def("nonono");
-			args.parse("if=[non-empty=[] then=[foo=bar] else=[foo=baz] nonono=42]");
+			args.parse("condition=[if=[] then=[foo=bar] else=[foo=baz] nonono=42]");
 			fail("exception expected");
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
-			assertTrue(e.getMessage(), e.getCause().getMessage().startsWith("U00134"));
+			assertTrue(e.getMessage(), e.getMessage().startsWith(U.U00103));
 		}
 	}
 
@@ -558,7 +559,7 @@ public class ArgsTest {
 			args.def("bar");
 			args.def("name1");
 			args.def("name2");
-			args.parse(String.format("if=[non-empty=[x] then=[file = %s] else=[bar=b name1=n1 name2=n2]]", file2));
+			args.parse(String.format("condition=[if=[x] then=[include = %s] else=[bar=b name1=n1 name2=n2]]", file2));
 			assertEquals("bar's value", args.get("bar"));
 			assertEquals("val1", args.get("name1"));
 			assertEquals("val2", args.get("name2"));
@@ -574,7 +575,7 @@ public class ArgsTest {
 			args.def("bar");
 			args.def("name1");
 			args.def("name2");
-			args.parse(String.format("if=[non-empty=[] then=[file = %s] else=[bar=b name1=n1 name2=n2]]", file2));
+			args.parse(String.format("condition=[if=[] then=[file = %s] else=[bar=b name1=n1 name2=n2]]", file2));
 			assertEquals("b", args.get("bar"));
 			assertEquals("n1", args.get("name1"));
 			assertEquals("n2", args.get("name2"));
@@ -590,7 +591,7 @@ public class ArgsTest {
 			args.def("name0");
 			args.def("name1");
 			args.def("name2");
-			args.parse("file = ArgsTest.fileE");
+			args.parse("include = ArgsTest.fileE");
 			assertEquals("val0", args.get("name0"));
 			assertEquals("val1", args.get("name1"));
 			assertEquals("val2", args.get("name2"));
@@ -606,7 +607,7 @@ public class ArgsTest {
 			args.def("name0");
 			args.def("name1");
 			args.def("name2");
-			args.parse("$VAR-SET-IN-LEVEL1=val2 file = ArgsTest.fileD");
+			args.parse("$VAR-SET-IN-LEVEL1=val2 include = ArgsTest.fileD");
 			assertEquals("val0", args.get("name0"));
 			assertEquals("val1", args.get("name1"));
 			assertEquals("val2", args.get("name2"));
@@ -622,7 +623,7 @@ public class ArgsTest {
 			args.def("name0");
 			args.def("name1");
 			args.def("name2");
-			args.parse("$VAR-SET-IN-LEVEL1=val2 $FILE=ArgsTest.fileF file = ArgsTest.fileC");
+			args.parse("$VAR-SET-IN-LEVEL1=val2 $FILE=ArgsTest.fileF include = ArgsTest.fileC");
 			assertEquals("val0", args.get("name0"));
 			assertEquals("val1", args.get("name1"));
 			assertEquals("val2", args.get("name2"));
@@ -638,7 +639,7 @@ public class ArgsTest {
 			args.def("name0");
 			args.def("name1");
 			args.def("name2");
-			args.parse("$VAR-SET-IN-LEVEL1=val2 $FILE=ArgsTest.fileD file = $$FILE");
+			args.parse("$VAR-SET-IN-LEVEL1=val2 $FILE=ArgsTest.fileD include = $$FILE");
 			assertEquals("val0", args.get("name0"));
 			assertEquals("val1", args.get("name1"));
 			assertEquals("val2", args.get("name2"));
@@ -654,7 +655,7 @@ public class ArgsTest {
 			args.def("bar");
 			args.def("x");
 			args.def("y");
-			args.parse("file = [" + file2 + "; name1 = x name2=y]");
+			args.parse("include = [" + file2 + " names=[name1 = x name2=y]]");
 			assertEquals("val1", args.get("x"));
 			assertEquals("val2", args.get("y"));
 			// bar not mapped
@@ -671,9 +672,10 @@ public class ArgsTest {
 			args.def("bar");
 			args.def("name1");
 			args.def("name2");
-			args.parse("file = " + file2 + " file = " + file3);
+			args.parse("include = " + file2 + " include = " + file3);
 			fail("expected an exception");
 		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
 			assertMessage(e.getCause(), U.U00209);
 		}
 	}

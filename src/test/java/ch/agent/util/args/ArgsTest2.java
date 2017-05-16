@@ -19,7 +19,7 @@ public class ArgsTest2 {
 			args.parse("a: {x !}y z}");
 			assertEquals("x }y z", args.get("a"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}

@@ -4,4 +4,4 @@ bar = baz
 multi = [a
 b
 c]
-file = ArgsTest.test2
+include = ArgsTest.test2
