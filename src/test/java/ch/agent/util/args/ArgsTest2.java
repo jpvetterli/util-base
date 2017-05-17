@@ -14,7 +14,7 @@ public class ArgsTest2 {
 	@Test
 	public void testCustomMetaChars01() {
 		try {
-			Args args = new Args();
+			Args args = new Args(null);
 			args.def("a");
 			args.parse("a: {x !}y z}");
 			assertEquals("x }y z", args.get("a"));

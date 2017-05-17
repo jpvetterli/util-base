@@ -31,7 +31,7 @@ public class ArgsTest {
 	
 	@Before
 	public void setUp() throws Exception {
-		args = new Args();
+		args = new Args(null);
 		file1 = "ArgsTest.test1";
 		file2 = "ArgsTest.test2";
 		file3 = "ArgsTest.test3";
@@ -319,10 +319,10 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.parse("foo = [bar=[baf=[xyzzy]]]");
-			Args args2 = new Args();
+			Args args2 = new Args(args.getVariables());
 			args2.def("bar");
 			args2.parse(args.get("foo"));
-			Args args3 = new Args();
+			Args args3 = new Args(args2.getVariables());
 			args3.def("baf");
 			args3.parse(args2.get("bar"));
 			assertEquals("xyzzy", args3.get("baf"));
@@ -336,10 +336,10 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.parse("$var1=val1 foo = [bar=[baf=[ xyzzy + $$var1 ]]]");
-			Args args2 = new Args();
+			Args args2 = new Args(args.getVariables());
 			args2.def("bar");
 			args2.parse(args.get("foo"));
-			Args args3 = new Args();
+			Args args3 = new Args(args2.getVariables());
 			args3.def("baf");
 			args3.parse(args2.get("bar"));
 			assertEquals(" xyzzy + val1 ", args3.get("baf"));
@@ -1092,7 +1092,7 @@ public class ArgsTest {
 			assertEquals("$ARG1=x $ARG2=y arg1=$$ARG1 arg2=$$ARG2", args.get("foox"));
 			assertEquals("$ARG1=a $ARG2=b arg1=$$ARG1 arg2=$$ARG2", args.get("fooa"));
 
-			Args args2 = new Args();
+			Args args2 = new Args(args.getVariables());
 			args2.def("arg1");
 			args2.def("arg2");
 			args2.parse(args.get("foox"));
@@ -1111,6 +1111,41 @@ public class ArgsTest {
 			assertEquals("b", args2.get("arg2"));
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testSubroutines2() {
+		try {
+			args.def("foox");
+			args.def("fooa");
+			args.parse(
+				"$BODY = [[arg1=$$ARG1 arg2=$$ARG2 ]] " + 
+				"foox=[$ARG1=x $ARG2=y [$$BODY]] " + 
+				"fooa=[$ARG1=a $ARG2=b [$$BODY]]");
+			assertEquals("$ARG1=x $ARG2=y [arg1=$$ARG1 arg2=$$ARG2 ]", args.get("foox"));
+			assertEquals("$ARG1=a $ARG2=b [arg1=$$ARG1 arg2=$$ARG2 ]", args.get("fooa"));
+
+			Args args2 = new Args(args.getVariables());
+			args2.def("arg1");
+			args2.def("arg2");
+			args2.parse(args.get("foox"));
+			assertEquals("x", args2.get("arg1"));
+			assertEquals("y", args2.get("arg2"));
+			
+			// without reset, the values are still x and y because "the first wins"
+			args2.parse(args.get("fooa"));
+			assertEquals("x", args2.get("arg1"));
+			assertEquals("y", args2.get("arg2"));
+
+			// after reset, all $variables have disappeared
+			args2.reset();
+			args2.parse(args.get("fooa"));
+			assertEquals("a", args2.get("arg1"));
+			assertEquals("b", args2.get("arg2"));
+		} catch (Exception e) {
+			if (true||DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}

@@ -621,31 +621,44 @@ public class Args implements Iterable<String> {
 	 */
 	public final static String FALSE = "false";
 	
-	private int clean;
-	private final static String VAR_PREFIX = "$";
+	private final static String SET_VAR_PREFIX = "$";
+	private final static String GET_VAR_PREFIX = "$$";
 	private final static String BLANK = " ";
 	
 	private Map<String, Value> args;
-	private Map<String, String> vars;
+	private Map<String, String> globals;
+	private Map<String, String> locals;
 	private TextFile textFile; // use only one for duplicate detection to work
 	private List<String[]> sequence;
 	private boolean loose;
 	private LoggerBridge logger;
 	private ArgsScanner scanner;
 	private ArgsIncluder includer;
-	private Args includeArgs;
-	private Args ifArgs;
 
 	/**
 	 * Constructor.
+	 * The constructor gets all variables from the next higher level,
+	 * which become its global variables. Global variables are
+	 * not affected by a {@link #reset} and are treated as read-only.
+	 * 
+	 * @param globals all variables from the next higher level
 	 */
-	public Args() {
+	public Args(Map<String, String> globals) {
 		args = new HashMap<String, Args.Value>();
 		def(COND);
 		def(INCLUDE);
-		vars = new HashMap<String, String>();
+		this.globals = globals == null ? new HashMap<String, String>() : globals;
+		locals = new HashMap<String, String>();
 		textFile = new TextFile();
 		scanner = new ArgsScanner(leftQuote, rightQuote, nameValueSeparator, escape);
+	}
+	
+	/**
+	 * Constructor with o global variables. 
+	 */
+	public Args() {
+		this(null);
+		int possibly_to_be_eliminated;
 	}
 	
 	private ArgsScanner getScanner() {
@@ -653,32 +666,22 @@ public class Args implements Iterable<String> {
 	}
 	
 	private Args parseIncludeArgs(String input) {
-		if (includeArgs == null) {
-			includeArgs = new Args();
-			includeArgs.def(""); // mandatory file name
-			includeArgs.def(INC_NAMES).init("");
-			includeArgs.def(INC_CLASS).init("");
-			includeArgs.def(INC_CONFIG).init("");
-		}
-		int remove_all_variables_then_add_global_variables; // WIP
-		includeArgs.reset();
-		includeArgs.setVariables(getVariables());
-		includeArgs.parse(input);
-		return includeArgs;
+		Args a = new Args(getVariables());
+		a.def(""); // mandatory file name
+		a.def(INC_NAMES).init("");
+		a.def(INC_CLASS).init("");
+		a.def(INC_CONFIG).init("");
+		a.parse(input);
+		return a;
 	}
 	
 	private Args parseIfArgs(String input) {
-		if (ifArgs == null) {
-			ifArgs = new Args();
-			ifArgs.def(COND_IF_NON_EMPTY);
-			ifArgs.def(COND_THEN);
-			ifArgs.def(COND_ELSE).init("");
-		}
-		int remove_all_variables_then_add_global_variables; // WIP
-		ifArgs.reset();
-		ifArgs.setVariables(getVariables());
-		ifArgs.parse(input);
-		return ifArgs;
+		Args a = new Args(getVariables());
+		a.def(COND_IF_NON_EMPTY);
+		a.def(COND_THEN);
+		a.def(COND_ELSE).init("");
+		a.parse(input);
+		return a;
 	}
 	
 	private ArgsIncluder getIncluder(String className) {
@@ -813,7 +816,6 @@ public class Args implements Iterable<String> {
 		for (String[] pair : pairs) {
 			switch (pair.length) {
 			case 1:
-				// resolve ${FOO} which can be anything, multiple name-value pairs, etc.
 				String resolved = resolve(pair[0]);
 				if (!resolved.equals(pair[0]))
 					parse(scan(resolved));
@@ -886,8 +888,8 @@ public class Args implements Iterable<String> {
 		if (!putKeyword(name, value)) {
 			Value v = args.get(name);
 			if (v == null) {
-				if (name.startsWith(VAR_PREFIX)) {
-					String variable = name.substring(VAR_PREFIX.length());
+				if (name.startsWith(SET_VAR_PREFIX)) {
+					String variable = name.substring(SET_VAR_PREFIX.length());
 					putVariable(variable, value);
 				} else {
 					if (loose) {
@@ -930,10 +932,15 @@ public class Args implements Iterable<String> {
 		return isEscape;
 	}
 	
+	private String getVariable(String name) {
+		String value = locals.get(name);
+		return value == null ? globals.get(name) : value;
+	}
+	
 	private String resolve(String value) {
 		StringBuilder s = new StringBuilder();
 		while (value.length() > 0) {
-			int prefix = value.indexOf("$$");
+			int prefix = value.indexOf(GET_VAR_PREFIX);
 			if (prefix < 0) {
 				s.append(value);
 				value = "";
@@ -941,19 +948,19 @@ public class Args implements Iterable<String> {
 				s.append(value.substring(0,  prefix));
 				value = value.substring(prefix + 2);
 				if (removeEscape(s)) {
-					s.append("$$");
+					s.append(GET_VAR_PREFIX);
 				} else if (value.length() == 0) {
-					s.append("$$");
+					s.append(GET_VAR_PREFIX);
 				} else if (Character.isWhitespace(value.charAt(0))) {
-					s.append("$$");
+					s.append(GET_VAR_PREFIX);
 				} else {
 					String[] nextStringAndRemainder = getScanner().immediateString(value);
 					if (nextStringAndRemainder[0] == null) {
 						// probably a name-value separator
-						s.append("$$");
+						s.append(GET_VAR_PREFIX);
 					} else {
 						// possibly a variable
-						String resolved = vars.get(nextStringAndRemainder[0]);
+						String resolved = getVariable(nextStringAndRemainder[0]);
 						if (resolved == null)
 							throw new IllegalArgumentException(msg(U.U00122, value, nextStringAndRemainder[0]));
 						else
@@ -1021,27 +1028,20 @@ public class Args implements Iterable<String> {
 	 */
 	public Map<String, String> getVariables() {
 		Map<String, String> result = new HashMap<String, String>();
-		for (Map.Entry<String, String> e : vars.entrySet()) {
+		for (Map.Entry<String, String> e : locals.entrySet()) {
+			result.put(e.getKey(), e.getValue());
+		}
+		for (Map.Entry<String, String> e : globals.entrySet()) {
 			result.put(e.getKey(), e.getValue());
 		}
 		return result;
 	}
 	
 	/**
-	 * Add all variables in a map. 
-	 * Any existing variable is replaced.
-	 * 
-	 * @param variables a map of variables
-	 */
-	public void setVariables(Map<String, String> variables) {
-		vars.putAll(variables);
-	}
-	
-	/**
-	 * Add a variable. If a variable with the same name exists nothing is done
-	 * (the principle is that <em>the first one wins</em>). If the value
-	 * contains embedded variables these are substituted before adding the
-	 * variable.
+	 * Set a local variable. If a global or local variable with the same name
+	 * exists nothing is done (the principle is that <em>the first one wins</em>
+	 * ). If the value contains embedded variables these are substituted before
+	 * adding the variable.
 	 * 
 	 * @param name
 	 *            the name of the variable
@@ -1052,8 +1052,8 @@ public class Args implements Iterable<String> {
 	 */
 	public boolean putVariable(String name, String value) {
 		boolean done = false;
-		if (vars.get(name) == null) {
-			vars.put(name, resolve(value));
+		if (globals.get(name) == null && locals.get(name) == null) {
+			locals.put(name, resolve(value));
 			done = true;
 		}
 		return done;
@@ -1068,8 +1068,8 @@ public class Args implements Iterable<String> {
 	}
 	
 	private void put(String name, Value value) {
-		if (name.startsWith(VAR_PREFIX))
-			throw new IllegalArgumentException(msg(U.U00121, name, VAR_PREFIX));
+		if (name.startsWith(SET_VAR_PREFIX))
+			throw new IllegalArgumentException(msg(U.U00121, name, SET_VAR_PREFIX));
 		args.put(name, value);
 	}
 
@@ -1140,14 +1140,14 @@ public class Args implements Iterable<String> {
 	/**
 	 * Reset the state of the parser. This method must be called between calls
 	 * to {@link #parse(String)} or {@link #parse(String[])} unless parsing
-	 * multiple inputs incrementally.
+	 * multiple inputs incrementally. Global variables are never cleared.
 	 */
 	public void reset() {
 		for (Value v : args.values()) {
 			v.set(null);
 		}
-		int must_only_clear_local_variables; // = here we are
-		vars.clear();
+		locals.clear();
+		textFile.setDuplicateDetection(true); // resets duplicate detection
 	}
 	
 }

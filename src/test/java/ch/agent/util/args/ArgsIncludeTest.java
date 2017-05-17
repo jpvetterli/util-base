@@ -10,7 +10,7 @@ public class ArgsIncludeTest {
 	@Test
 	public void testInclude01() {
 		try {
-			Args args = new Args();
+			Args args = new Args(null);
 			args.def("a");
 			args.def("name1");
 			args.def("name2");
@@ -31,7 +31,7 @@ public class ArgsIncludeTest {
 	@Test
 	public void testInclude02() {
 		try {
-			Args args = new Args();
+			Args args = new Args(null);
 			args.def("a");
 			args.def("foo1");
 			args.def("foo2");
@@ -48,7 +48,7 @@ public class ArgsIncludeTest {
 	@Test
 	public void testInclude03() {
 		try {
-			Args args = new Args();
+			Args args = new Args(null);
 			args.def("a");
 			args.def("foo1");
 			args.def("name2");
@@ -65,7 +65,7 @@ public class ArgsIncludeTest {
 	@Test
 	public void testInclude04() {
 		try {
-			Args args = new Args();
+			Args args = new Args(null);
 			args.def("a");
 			args.def("foo1");
 			args.def("name2");
@@ -84,7 +84,7 @@ public class ArgsIncludeTest {
 	@Test
 	public void testInclude05() {
 		try {
-			Args args = new Args();
+			Args args = new Args(null);
 			args.def("a");
 			args.def("foo1");
 			args.def("name2");
