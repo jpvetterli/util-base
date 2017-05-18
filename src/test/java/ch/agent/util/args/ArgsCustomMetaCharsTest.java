@@ -5,7 +5,7 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
-public class ArgsTest2 {
+public class ArgsCustomMetaCharsTest {
 
 	static {
 		System.setProperty(Args.ARGS_META, "{}:!");
@@ -14,7 +14,7 @@ public class ArgsTest2 {
 	@Test
 	public void testCustomMetaChars01() {
 		try {
-			Args args = new Args(null);
+			Args args = new Args();
 			args.def("a");
 			args.parse("a: {x !}y z}");
 			assertEquals("x }y z", args.get("a"));

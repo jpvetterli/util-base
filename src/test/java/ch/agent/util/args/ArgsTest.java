@@ -1,13 +1,11 @@
 package ch.agent.util.args;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.List;
-import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +29,7 @@ public class ArgsTest {
 	
 	@Before
 	public void setUp() throws Exception {
-		args = new Args(null);
+		args = new Args();
 		file1 = "ArgsTest.test1";
 		file2 = "ArgsTest.test2";
 		file3 = "ArgsTest.test3";
@@ -319,10 +317,10 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.parse("foo = [bar=[baf=[xyzzy]]]");
-			Args args2 = new Args(args.getVariables());
+			Args args2 = new Args();
 			args2.def("bar");
 			args2.parse(args.get("foo"));
-			Args args3 = new Args(args2.getVariables());
+			Args args3 = new Args();
 			args3.def("baf");
 			args3.parse(args2.get("bar"));
 			assertEquals("xyzzy", args3.get("baf"));
@@ -336,10 +334,10 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.parse("$var1=val1 foo = [bar=[baf=[ xyzzy + $$var1 ]]]");
-			Args args2 = new Args(args.getVariables());
+			Args args2 = new Args();
 			args2.def("bar");
 			args2.parse(args.get("foo"));
-			Args args3 = new Args(args2.getVariables());
+			Args args3 = new Args();
 			args3.def("baf");
 			args3.parse(args2.get("bar"));
 			assertEquals(" xyzzy + val1 ", args3.get("baf"));
@@ -777,178 +775,6 @@ public class ArgsTest {
 		}
 	}
 
-	@Test
-	public void testVars1() {
-		try {
-			args.def("foo");
-			args.parse("$a=b $c=$$a foo=$$c");
-			assertEquals("b", args.get("foo"));
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	
-	@Test
-	public void testVars2() {
-		try {
-			args.def("foo");
-			args.parse("$a=525 $c=$$a foo=$$c");
-			assertEquals(525, args.getVal("foo").intValue());
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	@Test
-	public void testVars3() {
-		try {
-			args.def("foo");
-			args.parse("$a=true $c=$$a foo=$$c");
-			assertEquals(Boolean.TRUE, args.getVal("foo").booleanValue());
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	@Test
-	public void testVars4() {
-		try {
-			args.def("foo").repeatable();
-			args.parse("$a=1 $b=2 foo=$$a foo=$$b");
-			int[] values = args.getVal("foo").intValues();
-			assertEquals(1, values[0]);
-			assertEquals(2, values[1]);
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	@Test
-	public void testVars5() {
-		try {
-			args.def("foo");
-			args.parse("$a=b $c=$$a foo=[ $$c ]");
-			assertEquals(" b ", args.get("foo"));
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	@Test
-	public void testVars6() {
-		try {
-			args.def("foo");
-			args.parse("$a=b $c=[ $$a ] foo=[ x$$cx ]");
-			fail("exception expected");
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			assertTrue(e.getMessage().startsWith("U00122"));
-		}
-	}
-	@Test
-	public void testVars6a() {
-		try {
-			args.def("foo");
-			args.parse("$a=b $c=[ $$a ] foo=[ x$$[c]x ]");
-			assertEquals(" x b x ", args.get("foo"));
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	@Test
-	public void testVars7() {
-		try {
-			args.def("foo");
-			args.parse("$a=b $c=\\$$a foo=$$c");
-			assertEquals("$$a", args.get("foo"));
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	@Test
-	public void testVars8() {
-		try {
-			args.def("foo");
-			args.parse("$a=b $c=$$a foo=\\$$c");
-			assertEquals("$$c", args.get("foo"));
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	
-	@Test
-	public void testVars9() {
-		try {
-			args.def("$foo");
-			fail("exception expected");
-		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith("U00121"));
-		}
-	}
-	@Test
-	public void testVars10() {
-		try {
-			args.def("foo");
-			args.put("foo", "$$bar");
-			fail("exception expected");
-		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith("U00122"));
-		}
-	}
-	@Test
-	public void testVars10a() {
-		try {
-			args.def("foo");
-			args.put("foo", "$$ bar");
-			assertEquals("$$ bar", args.get("foo"));
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	@Test
-	public void testVars10b() {
-		try {
-			args.def("foo");
-			args.put("foo", "$$");
-			assertEquals("$$", args.get("foo"));
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	@Test
-	public void testVars11() {
-		try {
-			// test "the first wins"
-			args.def("foo");
-			args.parse("$a=b $a=B $c=$$a foo=$$c");
-			assertEquals("b", args.get("foo"));
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	
-	@Test
-	public void testVars12() {
-		
-		try {
-			args.def("module");
-			args.parse("$VAR=varvalue module=[name=a class=x pred=$$VAR " + 
-						"conf=[svc = $$VAR] count=2]");
-			assertEquals("name=a class=x pred=varvalue " + 
-						"conf=[svc = varvalue ] count=2", args.get("module"));
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	
 	public enum Good {
 		good1, good2
 	}
@@ -1027,128 +853,6 @@ public class ArgsTest {
 		}
 	}
 
-	@Test
-	public void testVariables1() {
-		try {
-			args.def("foo");
-			args.parse("$HOP = hop $YET = another foo = [$$HOP la boum]");
-			assertEquals("hop la boum", args.get("foo"));
-			Map<String, String>vars = args.getVariables();
-			assertEquals("hop", vars.get("HOP"));
-			assertEquals("another", vars.get("YET"));
-		} catch (Exception e) {
-			fail("unexpected exception");
-		}
-	}
-	
-	@Test
-	public void testVariables1A() {
-		try {
-			args.def("foo");
-			args.parse("$ = hop foo = [$$[] la boum]");
-			assertEquals("hop la boum", args.get("foo"));
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	
-	@Test
-	public void testVariables2() {
-		try {
-			args.putVariable("HOP", "hop");
-			boolean result = args.putVariable("HOP", "hophop");
-			args.def("foo");
-			args.parse("foo = [$$HOP la boum]");
-			assertEquals("hop la boum", args.get("foo"));
-			assertFalse(result);
-		} catch (Exception e) {
-			fail("unexpected exception");
-		}
-	}
-	
-	@Test
-	public void testVariables3() {
-		try {
-			// infinite recursion?
-			args.putVariable("HOP", "$$HOP");
-			args.def("foo");
-			args.parse("foo = [$$HOP la boum]");
-			fail("exception expected");
-		} catch (Exception e) {
-			assertTrue("U00122", e.getMessage().indexOf("no variable named \"HOP\" found") > 0);
-		}
-	}
-	
-	@Test
-	public void testSubroutines1() {
-		try {
-			args.def("foox");
-			args.def("fooa");
-			args.parse(
-				"$BODY = [arg1=\\$$ARG1 arg2=\\$$ARG2] " + 
-				"foox=[$ARG1=x $ARG2=y $$BODY] " + 
-				"fooa=[$ARG1=a $ARG2=b $$BODY]");
-			assertEquals("$ARG1=x $ARG2=y arg1=$$ARG1 arg2=$$ARG2", args.get("foox"));
-			assertEquals("$ARG1=a $ARG2=b arg1=$$ARG1 arg2=$$ARG2", args.get("fooa"));
-
-			Args args2 = new Args(args.getVariables());
-			args2.def("arg1");
-			args2.def("arg2");
-			args2.parse(args.get("foox"));
-			assertEquals("x", args2.get("arg1"));
-			assertEquals("y", args2.get("arg2"));
-			
-			// without reset, the values are still x and y because "the first wins"
-			args2.parse(args.get("fooa"));
-			assertEquals("x", args2.get("arg1"));
-			assertEquals("y", args2.get("arg2"));
-
-			// after reset, all $variables have disappeared
-			args2.reset();
-			args2.parse(args.get("fooa"));
-			assertEquals("a", args2.get("arg1"));
-			assertEquals("b", args2.get("arg2"));
-		} catch (Exception e) {
-			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
-	
-	@Test
-	public void testSubroutines2() {
-		try {
-			args.def("foox");
-			args.def("fooa");
-			args.parse(
-				"$BODY = [[arg1=$$ARG1 arg2=$$ARG2 ]] " + 
-				"foox=[$ARG1=x $ARG2=y [$$BODY]] " + 
-				"fooa=[$ARG1=a $ARG2=b [$$BODY]]");
-			assertEquals("$ARG1=x $ARG2=y [arg1=$$ARG1 arg2=$$ARG2 ]", args.get("foox"));
-			assertEquals("$ARG1=a $ARG2=b [arg1=$$ARG1 arg2=$$ARG2 ]", args.get("fooa"));
-
-			Args args2 = new Args(args.getVariables());
-			args2.def("arg1");
-			args2.def("arg2");
-			args2.parse(args.get("foox"));
-			assertEquals("x", args2.get("arg1"));
-			assertEquals("y", args2.get("arg2"));
-			
-			// without reset, the values are still x and y because "the first wins"
-			args2.parse(args.get("fooa"));
-			assertEquals("x", args2.get("arg1"));
-			assertEquals("y", args2.get("arg2"));
-
-			// after reset, all $variables have disappeared
-			args2.reset();
-			args2.parse(args.get("fooa"));
-			assertEquals("a", args2.get("arg1"));
-			assertEquals("b", args2.get("arg2"));
-		} catch (Exception e) {
-			if (true||DEBUG) e.printStackTrace();
-			fail("unexpected exception");
-		}
-	}
 
 	@Test
 	public void testSplitString1() {
@@ -1256,6 +960,7 @@ public class ArgsTest {
 			int[] elem = args.getVal("foo").intValues();
 			assertEquals(0, elem.length);
 		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}

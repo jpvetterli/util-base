@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import ch.agent.util.STRINGS.U;
+import ch.agent.util.args.ArgsScanner.SymbolScanner;
 import ch.agent.util.base.Misc;
 import ch.agent.util.file.TextFile;
 import ch.agent.util.logging.LoggerBridge;
@@ -310,16 +311,37 @@ public class Args implements Iterable<String> {
 		/**
 		 * Return the value as a string. Throw an exception if the value is null
 		 * and no default value was defined.
+		 * <p>
+		 * If the value contains a single unresolved variable without any
+		 * surrounding text and a default value has been defined, the method
+		 * returns the default value. Except in this case an exception is thrown
+		 * in the presence of any unresolved variable.
 		 * 
 		 * @return a string
 		 */
 		public String stringValue() {
-			if (value == null) {
+			String result = value;
+			if (result == null) {
 				if (defaultValue == null)
 					throw new IllegalArgumentException(msg(U.U00105, getName()));
-				return defaultValue;
+				result = defaultValue;
+			} else {
+				List<String> parts = symScanner.split(result);
+				switch (parts.size()) {
+				case 0:
+				case 1:
+					break;
+				case 2:
+					if (defaultValue == null)
+						throw new IllegalArgumentException(msg(U.U00107, getName(), result));
+					result = defaultValue;
+					break;
+				default:
+					throw new IllegalArgumentException(msg(U.U00106, getName(), result));
+						
+				}
 			}
-			return value;
+			return result;
 		}
 		
 		/**
@@ -327,6 +349,8 @@ public class Args implements Iterable<String> {
 		 * space and meta characters. An <code>IllegalArgumentException</code>
 		 * is thrown if the number of strings is too small or too large, as
 		 * specified by two parameters. Negative parameters are ignored.
+		 * <p>
+		 * See {@link #stringValue} for explanations about unresolved variables. 
 		 * 
 		 * @param min
 		 *            minimal number of strings (no limit if negative)
@@ -343,11 +367,59 @@ public class Args implements Iterable<String> {
 		/**
 		 * Split value into a number of strings. Splitting is done on white
 		 * space and meta characters.
+		 * <p>
+		 * See {@link #stringValue} for explanations about unresolved variables. 
 		 * 
 		 * @return an array of strings
 		 */
 		public String[] stringValues() {
 			return stringValues(-1, -1);
+		}
+
+		/**
+		 * Return the value as a string. Throw an exception if the value is null
+		 * and no default value was defined. This method does not check for
+		 * unresolved variables.
+		 * 
+		 * @return a string
+		 */
+		public String rawValue() {
+			if (value == null) {
+				if (defaultValue == null)
+					throw new IllegalArgumentException(msg(U.U00105, getName()));
+				return defaultValue;
+			}
+			return value;
+		}
+		
+		/**
+		 * Split value into a number of strings. Splitting is done on white
+		 * space and meta characters. An <code>IllegalArgumentException</code>
+		 * is thrown if the number of strings is too small or too large, as
+		 * specified by two parameters. Negative parameters are ignored. This
+		 * method does not check for unresolved variables.
+		 * 
+		 * @param min
+		 *            minimal number of strings (no limit if negative)
+		 * @param max
+		 *            maximal number of strings (no limit if negative)
+		 * @return an array of strings
+		 */
+		public String[] rawValues(int min, int max) {
+			List<String> values = getScanner().asValues(rawValue());
+			checkSize(values.size(), min, max);
+			return values.toArray(new String[values.size()]);
+		}
+
+		/**
+		 * Split value into a number of strings. Splitting is done on white
+		 * space and meta characters. This method does not check for unresolved
+		 * variables.
+		 * 
+		 * @return an array of strings
+		 */
+		public String[] rawValues() {
+			return rawValues(-1, -1);
 		}
 
 		private void checkSize(int size, int min, int max) {
@@ -417,6 +489,8 @@ public class Args implements Iterable<String> {
 		/**
 		 * Return the value as a boolean. Throw an exception if the value cannot
 		 * be converted.
+		 * <p>
+		 * See {@link #stringValue} for explanations about unresolved variables. 
 		 * 
 		 * @return a boolean
 		 */
@@ -429,6 +503,8 @@ public class Args implements Iterable<String> {
 		 * booleans. Throw an exception if a string cannot be converted or if
 		 * the number of strings does not agree with the constraints. Return the
 		 * booleans in an array.
+		 * <p>
+		 * See {@link #stringValue} for explanations about unresolved variables. 
 		 * 
 		 * @param min
 		 *            the minimum number of booleans (no limit if negative)
@@ -453,6 +529,8 @@ public class Args implements Iterable<String> {
 		 * Split the value into a number of strings and convert them to
 		 * booleans. Throw an exception if a string cannot be converted. Return
 		 * the booleans in an array.
+		 * <p>
+		 * See {@link #stringValue} for explanations about unresolved variables. 
 		 * 
 		 * @return a boolean array
 		 */
@@ -463,6 +541,8 @@ public class Args implements Iterable<String> {
 		/**
 		 * Return the value as a double. Throw an exception if the value cannot
 		 * be converted.
+		 * <p>
+		 * See {@link #stringValue} for explanations about unresolved variables. 
 		 * 
 		 * @return a double
 		 */
@@ -475,6 +555,8 @@ public class Args implements Iterable<String> {
 		 * doubles. Throw an exception if a string cannot be converted or if
 		 * the number of strings does not agree with the constraints. Return the
 		 * doubles in an array.
+		 * <p>
+		 * See {@link #stringValue} for explanations about unresolved variables. 
 		 * 
 		 * @param min
 		 *            the minimum number of doubles (no limit if negative)
@@ -499,6 +581,8 @@ public class Args implements Iterable<String> {
 		 * Split the value into a number of strings and convert them to doubles.
 		 * Throw an exception if a string cannot be converted. Return the
 		 * doubles in an array.
+		 * <p>
+		 * See {@link #stringValue} for explanations about unresolved variables. 
 		 * 
 		 * @return a double array
 		 */
@@ -509,6 +593,8 @@ public class Args implements Iterable<String> {
 		/**
 		 * Return the value as an Enum constant. Throw an exception if the value
 		 * cannot be converted.
+		 * <p>
+		 * See {@link #stringValue} for explanations about unresolved variables. 
 		 * 
 		 * @param <T>
 		 *            the type of the enum value
@@ -525,6 +611,8 @@ public class Args implements Iterable<String> {
 		 * constants. Throw an exception if a string cannot be converted or if
 		 * the number of strings does not agree with the constraints. Return the
 		 * enum constants in an array.
+		 * <p>
+		 * See {@link #stringValue} for explanations about unresolved variables. 
 		 * 
 		 * @param <T>
 		 *            the type of the enum values
@@ -556,6 +644,8 @@ public class Args implements Iterable<String> {
 		 * Split the value into a number of strings and convert them to enum
 		 * constants. Throw an exception if a string cannot be converted. Return
 		 * the enum constants in an array.
+		 * <p>
+		 * See {@link #stringValue} for explanations about unresolved variables.
 		 * 
 		 * @param <T>
 		 *            the type of the enum values
@@ -611,7 +701,7 @@ public class Args implements Iterable<String> {
 		}
 
 	}
-
+	
 	/**
 	 * The string which is parsed as the boolean true value is "true".
 	 */
@@ -621,52 +711,41 @@ public class Args implements Iterable<String> {
 	 */
 	public final static String FALSE = "false";
 	
-	private final static String SET_VAR_PREFIX = "$";
-	private final static String GET_VAR_PREFIX = "$$";
 	private final static String BLANK = " ";
+	private final static char DOLLAR = '$';
+	private final static String DOLLARS = "$$";
 	
 	private Map<String, Value> args;
-	private Map<String, String> globals;
-	private Map<String, String> locals;
+	private Map<String, String> variables;
 	private TextFile textFile; // use only one for duplicate detection to work
 	private List<String[]> sequence;
 	private boolean loose;
 	private LoggerBridge logger;
-	private ArgsScanner scanner;
+	private ArgsScanner argsScanner;
+	private SymbolScanner symScanner;
+	private Map<String, Integer> symCycleDetector;
 	private ArgsIncluder includer;
 
 	/**
 	 * Constructor.
-	 * The constructor gets all variables from the next higher level,
-	 * which become its global variables. Global variables are
-	 * not affected by a {@link #reset} and are treated as read-only.
-	 * 
-	 * @param globals all variables from the next higher level
 	 */
-	public Args(Map<String, String> globals) {
+	public Args() {
 		args = new HashMap<String, Args.Value>();
 		def(COND);
 		def(INCLUDE);
-		this.globals = globals == null ? new HashMap<String, String>() : globals;
-		locals = new HashMap<String, String>();
+		variables = new HashMap<String, String>();
 		textFile = new TextFile();
-		scanner = new ArgsScanner(leftQuote, rightQuote, nameValueSeparator, escape);
-	}
-	
-	/**
-	 * Constructor with o global variables. 
-	 */
-	public Args() {
-		this(null);
-		int possibly_to_be_eliminated;
+		argsScanner = new ArgsScanner(leftQuote, rightQuote, nameValueSeparator, escape);
+		symScanner = new SymbolScanner(DOLLAR);
+		symCycleDetector = new HashMap<String, Integer>();
 	}
 	
 	private ArgsScanner getScanner() {
-		return scanner;
+		return argsScanner;
 	}
 	
 	private Args parseIncludeArgs(String input) {
-		Args a = new Args(getVariables());
+		Args a = new Args();
 		a.def(""); // mandatory file name
 		a.def(INC_NAMES).init("");
 		a.def(INC_CLASS).init("");
@@ -676,7 +755,7 @@ public class Args implements Iterable<String> {
 	}
 	
 	private Args parseIfArgs(String input) {
-		Args a = new Args(getVariables());
+		Args a = new Args();
 		a.def(COND_IF_NON_EMPTY);
 		a.def(COND_THEN);
 		a.def(COND_ELSE).init("");
@@ -807,24 +886,23 @@ public class Args implements Iterable<String> {
 	}
 	
 	/**
-	 * Parse <code>List</code> of name-value pairs.
+	 * Parse list of name-value pairs.
 	 * 
 	 * @param pairs
-	 *            a list of arrays of length 2 (name and value)
+	 *            a list of arrays of length 1 or 2 (name and value)
 	 */
 	private void parse(List<String[]> pairs) {
 		for (String[] pair : pairs) {
 			switch (pair.length) {
 			case 1:
-				String resolved = resolve(pair[0]);
-				if (!resolved.equals(pair[0]))
-					parse(scan(resolved));
-				else
-					put("", pair[0]);
+				pair[0] = resolve(pair[0]);
+				put("", pair[0]);
 				break;
 			case 2:
+				pair[0] = resolve(pair[0]);
+				pair[1] = resolve(pair[1]);
 				if (pair[0].equals(COND))
-					parse(parseIf(pair[1]));
+					parse(scan(parseIf(pair[1])));
 				else if (pair[0].equals(INCLUDE))
 					parse(parseInclude(pair[1]));
 				else
@@ -860,7 +938,7 @@ public class Args implements Iterable<String> {
 	 * with this name. If the parameter is a list parameter and the value is
 	 * null, all values are cleared.
 	 * <p>
-	 * If the name is prefixed with {@link Args#VAR_PREFIX} it is a substitution
+	 * If the name is prefixed with $ it is a substitution
 	 * variable, which is defined on the fly. If an existing substitution
 	 * variable is set a second time it is ignored. This allows to set
 	 * substitution variables with default values in parameter files and
@@ -888,10 +966,9 @@ public class Args implements Iterable<String> {
 		if (!putKeyword(name, value)) {
 			Value v = args.get(name);
 			if (v == null) {
-				if (name.startsWith(SET_VAR_PREFIX)) {
-					String variable = name.substring(SET_VAR_PREFIX.length());
-					putVariable(variable, value);
-				} else {
+				if (isVariable(name))
+					putVariable(name, value);
+				else {
 					if (loose) {
 						if (logger != null)
 							logger.debug(lazymsg(U.U00165, name.length() == 0 ? value : name));
@@ -899,13 +976,12 @@ public class Args implements Iterable<String> {
 						throw new IllegalArgumentException(msg(U.U00103, name.length() == 0 ? value : name));
 				}
 			} else {
-				String resolved = resolve(value);
 				if (v.isRepeatable())
-					v.append(resolved);
+					v.append(value);
 				else
-					v.set(resolved);
+					v.set(value);
 				if (sequence != null)
-					sequence.add(new String[] {name, resolved});
+					sequence.add(new String[] {name, value});
 			}
 		}
 	}
@@ -924,55 +1000,50 @@ public class Args implements Iterable<String> {
 		return keyword;
 	}
 	
-	private boolean removeEscape(StringBuilder s) {
-		int len = s.length();
-		boolean isEscape = len > 0 && s.charAt(len - 1) == escape;
-		if (isEscape)
-			s.deleteCharAt(len - 1);
-		return isEscape;
+	private String resolve(String input) {
+		symCycleDetector.clear();
+		return resolve0(input, 0, symCycleDetector);
 	}
 	
-	private String getVariable(String name) {
-		String value = locals.get(name);
-		return value == null ? globals.get(name) : value;
-	}
-	
-	private String resolve(String value) {
-		StringBuilder s = new StringBuilder();
-		while (value.length() > 0) {
-			int prefix = value.indexOf(GET_VAR_PREFIX);
-			if (prefix < 0) {
-				s.append(value);
-				value = "";
-			} else if (prefix >= 0) {
-				s.append(value.substring(0,  prefix));
-				value = value.substring(prefix + 2);
-				if (removeEscape(s)) {
-					s.append(GET_VAR_PREFIX);
-				} else if (value.length() == 0) {
-					s.append(GET_VAR_PREFIX);
-				} else if (Character.isWhitespace(value.charAt(0))) {
-					s.append(GET_VAR_PREFIX);
+	private String resolve0(String input, int level, Map<String, Integer> cycleDetector) {
+		if (input == null)
+			throw new IllegalArgumentException("input null");
+		boolean changed = false;
+		StringBuffer b = new StringBuffer();
+		Iterator<String> it = symScanner.split(input).iterator();
+		while (it.hasNext()) {
+			String s = it.next();
+			if (s == null) {
+				// null is a stand-in for $$
+				assert it.hasNext();
+				String symbol = it.next();
+				if (!checkForCycle(symbol, level, cycleDetector))
+					throw new IllegalArgumentException(msg(U.U00123, input, symbol));
+				String resolved = variables.get(symbol);
+				if (resolved == null) {
+					b.append(DOLLARS);
+					b.append(symbol);
 				} else {
-					String[] nextStringAndRemainder = getScanner().immediateString(value);
-					if (nextStringAndRemainder[0] == null) {
-						// probably a name-value separator
-						s.append(GET_VAR_PREFIX);
-					} else {
-						// possibly a variable
-						String resolved = getVariable(nextStringAndRemainder[0]);
-						if (resolved == null)
-							throw new IllegalArgumentException(msg(U.U00122, value, nextStringAndRemainder[0]));
-						else
-							s.append(resolved);
-						value = nextStringAndRemainder[1];
-					}
+					changed = true;
+					b.append(resolved);
 				}
-			}
+			} else 
+				b.append(s);
 		}
-		return s.toString();
+		// important! return input object if no change
+		return changed ? resolve0(b.toString(), ++level, cycleDetector) : input;
 	}
-
+	
+	private boolean checkForCycle(String symbol, int level, Map<String, Integer> cycleDetector) {
+		boolean pass = true;
+		Integer previousLevel = cycleDetector.get(symbol);
+		if (previousLevel != null && previousLevel != level)
+			pass = false;
+		else
+			cycleDetector.put(symbol, level);
+		return pass;
+	}
+	
 	/**
 	 * Return the value object for the parameter specified. An exception is
 	 * thrown if the the name is unknown. For a nameless parameter, pass an
@@ -1021,23 +1092,6 @@ public class Args implements Iterable<String> {
 	}
 
 	/**
-	 * Return a copy of all variables. Variables are arguments prefixed with a 
-	 * special prefix (by default a dollar sign) which do not need be defined.
-	 * 
-	 * @return a map containing all variables 
-	 */
-	public Map<String, String> getVariables() {
-		Map<String, String> result = new HashMap<String, String>();
-		for (Map.Entry<String, String> e : locals.entrySet()) {
-			result.put(e.getKey(), e.getValue());
-		}
-		for (Map.Entry<String, String> e : globals.entrySet()) {
-			result.put(e.getKey(), e.getValue());
-		}
-		return result;
-	}
-	
-	/**
 	 * Set a local variable. If a global or local variable with the same name
 	 * exists nothing is done (the principle is that <em>the first one wins</em>
 	 * ). If the value contains embedded variables these are substituted before
@@ -1052,13 +1106,19 @@ public class Args implements Iterable<String> {
 	 */
 	public boolean putVariable(String name, String value) {
 		boolean done = false;
-		if (globals.get(name) == null && locals.get(name) == null) {
-			locals.put(name, resolve(value));
+		symScanner.verify(name);
+		name = name.substring(1);
+		if (variables.get(name) == null) {
+			variables.put(name, value);
 			done = true;
 		}
 		return done;
 	}
 	
+	private boolean isVariable(String name) {
+		return name.length() > 0 && name.charAt(0) == DOLLAR;
+	}
+
 	private void putValue(String name, Value value) {
 		Misc.nullIllegal(name, "name null");
 		Value v = args.get(name);
@@ -1068,11 +1128,11 @@ public class Args implements Iterable<String> {
 	}
 	
 	private void put(String name, Value value) {
-		if (name.startsWith(SET_VAR_PREFIX))
-			throw new IllegalArgumentException(msg(U.U00121, name, SET_VAR_PREFIX));
+		if (isVariable(name))
+			throw new IllegalArgumentException(msg(U.U00121, name));
 		args.put(name, value);
 	}
-
+	
 	private Value internalGet(String name) {
 		return args.get(name);
 	}
@@ -1102,8 +1162,7 @@ public class Args implements Iterable<String> {
 		String ifValue = a.get(COND_IF_NON_EMPTY);
 		String thenValue = a.get(COND_THEN);
 		String elseValue = a.get(COND_ELSE);
-		String resolved = resolve(ifValue);
-		if (resolved.length() > 0)
+		if (ifValue.length() > 0)
 			result = thenValue;
 		else if (!Misc.isEmpty(elseValue))
 			result = elseValue;
@@ -1123,7 +1182,7 @@ public class Args implements Iterable<String> {
 			if (!Misc.isEmpty(names)) {
 				map = asMap(scan(names));
 			}
-			return argsIncluder.include(scanner, fileName, map, config);
+			return argsIncluder.include(argsScanner, fileName, map, config);
 		} finally {
 			argsIncluder = null;
 		}
@@ -1146,7 +1205,7 @@ public class Args implements Iterable<String> {
 		for (Value v : args.values()) {
 			v.set(null);
 		}
-		locals.clear();
+		variables.clear();
 		textFile.setDuplicateDetection(true); // resets duplicate detection
 	}
 	

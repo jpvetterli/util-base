@@ -129,10 +129,6 @@ public class ArgsScanner {
 			}
 		}
 
-		public String remainder() {
-			return input.substring(position + (test(position, closing) ? 1 : 0));
-		}
-		
 		/**
 		 * Get the current scanner position. First position is 1.
 		 * 
@@ -277,33 +273,234 @@ public class ArgsScanner {
 		}
 		
 		/**
-		 * Test if character at a given position is one of the given characters.
-		 * 
-		 * @param pos a position
-		 * @param chars characters to test
-		 * @return true if the character at position pos is one of the give characters, else false 
-		 */
-		private boolean test(int pos, char... chars) {
-			boolean result = false;
-			try {
-				for (char ch : chars) {
-					if (input.charAt(pos) == ch) {
-						result = true;
-						break;
-					}
-				}
-			} catch (IndexOutOfBoundsException e) {
-			}
-			return result;
-		}
-	
-		/**
 		 * Change position so that {@link #advance()} returns the current char
 		 * again.
 		 */
 		private void backtrack() {
 			position--;
 		}
+	}
+	
+	/**
+	 * The symbol scanner supports splitting a string to help locate references.
+	 * References look like $$foo, where foo is a variable. A reference is found
+	 * when $$ is directly followed by a symbol made of one or more letters or
+	 * digits (as determined by {@link Character#isLetterOrDigit}) except $.
+	 * When a reference is found, the input since the previous reference, a null
+	 * signifying the string $$ in its role as symbol prefix, and the symbol are
+	 * appended to the list. This continues until the end of the input is
+	 * reached, which is appended to the list.
+	 * <p>
+	 * A null part is inserted instead of $$ because $$ can appear by itself as
+	 * a valid part in a few corner cases ($$ at the end of input or $$$$x for
+	 * example). Using a null removes the ambiguity.
+	 * <p>
+	 * A valid identifier consists of one or more letters, digits, hyphens and
+	 * underscore. The character used as prefix, usually $, is not allowed
+	 * inside the identifier.
+	 * 
+	 * <p>
+	 * The scanner has no notion of escape characters. The client can handle
+	 * them; they are easy to find as they trail the part preceding any $$.
+	 */
+	public static class SymbolScanner {
+
+		private enum State {
+			INIT, DOLLAR1, DOLLAR2, DOLLAR3, SYMBOL, DOLLARSYMBOL, END
+		}
+		
+		private final char dollar;
+
+		private String input;
+		private int prefixPosition; // 0-based
+		private int symbolPosition; // 0-based
+		private int currentPosition; // 0-based
+		private State state;
+
+		/**
+		 * Constructor.
+		 * 
+		 * @param dollar
+		 *            the character which stands doubled in front of symbols
+		 */
+		public SymbolScanner(char dollar) {
+			this.dollar = dollar;
+		}
+		
+		/**
+		 * Verify the name syntax of a substitution variable.
+		 * 
+		 * @param name a name with the $ prefix not removed
+		 */
+		public void verify(String name) {
+			if (name.length() == 0)
+				throw new IllegalArgumentException(msg(U.U00126, dollar));
+			if (name.charAt(0) != dollar)
+				throw new IllegalArgumentException(msg(U.U00125, name, dollar));
+			if (name.length() == 1)
+				throw new IllegalArgumentException(msg(U.U00124, name));
+			for (int i = 1; i < name.length(); i++) {
+				char ch = name.charAt(i);
+				if (!isValid(ch)) {
+					throw new IllegalArgumentException(msg(U.U00125, name, dollar));
+				}
+			}
+		}
+		
+		/**
+		 * @param ch
+		 * @return
+		 */
+		private boolean isValid(char ch) {
+			return Character.isLetterOrDigit(ch) || ch == '-' || ch == '_' && ch != dollar;
+		}
+		
+		/**
+		 * Split the input into a list of strings to make it easy to find symbol
+		 * references. A symbol has one or more letter or digits and usually
+		 * stands directly after the sequence $$ (or any character passed to the
+		 * constructor, doubled). In some cases the symbol is surrounded by two
+		 * $ characters, to make it possible to put a symbol reference anywhere.
+		 * In such cases, the symbol is preceded by three $ and followed by one.
+		 * <p>
+		 * As an example, the input "abc$$xy1 def $$A5 $$[0] bx" is split into
+		 * the list ("abc", null, "xy1", " def ", null, "A5", " $$[0] bx"). The
+		 * last occurrence of $$ is not followed by a valid symbol, so it is
+		 * ignored.
+		 * <p>
+		 * When a part is null it is always followed by a part containing a
+		 * symbol. In some corner cases, a part can contain the string $$
+		 * without being a symbol prefix.
+		 * 
+		 * @param input
+		 *            a string
+		 * @return the string split into parts
+		 */
+		public List<String> split(String input) {
+			reset(input);
+			List<String> output = new ArrayList<String>();
+			boolean end = false;
+			while(!end) {
+				switch (split()) {
+				case 0:
+					break;
+				case 1:
+					if (input.charAt(symbolPosition) == dollar) {
+						if (symbolPosition - prefixPosition > 2)
+							output.add(input.substring(prefixPosition, symbolPosition - 2));
+						output.add(null);
+						output.add(input.substring(symbolPosition + 1, currentPosition - 1));
+						prefixPosition = currentPosition;
+					} else {
+						if (symbolPosition - prefixPosition > 2)
+							output.add(input.substring(prefixPosition, symbolPosition - 2));
+						output.add(null);
+						output.add(input.substring(symbolPosition, currentPosition));
+						prefixPosition = currentPosition;
+					}
+					symbolPosition = -1;
+					break;
+				case -1:
+					if (prefixPosition < input.length())
+						output.add(input.substring(prefixPosition));
+					end = true;
+					break;
+				default:
+					throw new RuntimeException("bug");
+				}
+			}
+			return output;
+		}
+		
+		private void reset(String input) {
+			if (input == null)
+				throw new IllegalArgumentException("input null");
+			this.input = input;
+			prefixPosition = 0; // = start of input
+			symbolPosition = -1;
+			currentPosition = -1;
+			state = State.INIT;
+		}
+
+		/**
+		 * Process the next char. Return 0 to indicate to continue,
+		 * 1 to indicate that a part is available, and -1 to indicate
+		 * the end of the input. The part available starts at {@link #lastPosition}
+		 * and extends to {@link #position).
+		 * 
+		 * @return 0 (continue) or 1 (part found) or -1 (end)
+		 */
+		private int split() {
+			boolean partFound = false;
+			char ch = state == State.END ? 0 : advance();
+			switch (state) {
+			case END:
+				break;
+			case INIT:
+				if (ch == dollar)
+					state = State.DOLLAR1;
+				else if (ch == 0)
+					state = State.END;
+				break;
+			case DOLLAR1: 
+				if (ch == dollar)
+					state = State.DOLLAR2;
+				else 
+					state = ch == 0 ? State.END : State.INIT;
+				break;
+			case DOLLAR2: 
+				if (isValid(ch)) {
+					// symbol cannot be empty
+					symbolPosition = currentPosition;
+					state = State.SYMBOL;
+				} else if (ch == dollar)
+					state = State.DOLLAR3; 
+				else
+					state = ch == 0 ? State.END : State.INIT;
+				break;
+			case DOLLAR3: 
+				if (isValid(ch)) {
+					// symbol as above + between 2 dollars
+					symbolPosition = currentPosition - 1;
+					state = State.DOLLARSYMBOL;
+				} else if (ch == dollar)
+					; // same 
+				else
+					state = ch == 0 ? State.END : State.INIT;
+				break;
+			case SYMBOL:
+				if (!isValid(ch)) {
+					partFound = true;
+					state = ch == 0 ? State.END : State.INIT;
+				}
+				break;
+			case DOLLARSYMBOL:
+				if (ch == dollar) {
+					partFound = true;
+					state = advance() == 0 ? State.END : State.INIT;
+				}
+				break;
+			default:
+				throw new RuntimeException("bug: " + state.name());
+			}
+			return partFound ? 1 : (ch == 0 ? -1 : 0);
+		}
+	
+		/**
+		 * Return the next char from the input or 0 if there is no more input.
+		 * 
+		 * @return the next char or 0
+		 */
+		private char advance() {
+			if (state == State.END)
+				throw new RuntimeException("bug");
+			try {
+				return input.charAt(++currentPosition);
+			} catch (IndexOutOfBoundsException e) {
+				return 0;
+			}
+		}
+		
 	}
 	
 	private enum NameValueState {
@@ -334,7 +531,7 @@ public class ArgsScanner {
 	public ArgsScanner() {
 		this('[', ']', '=', '\\');
 	}
-
+	
 	/**
 	 * Turn a string into a list of name-value pairs. An
 	 * <code>IllegalArgumentException</code> is thrown when parsing becomes
@@ -445,28 +642,4 @@ public class ArgsScanner {
 		return results;
 	}
 	
-	/**
-	 * Return the string token at the start of the input and the remaining
-	 * input. If the input starts with a string token it is returned in the
-	 * first element, else a null is returned in the first element. In the first
-	 * case, the remaining input is returned in the second element. In the
-	 * second case the second element is null.
-	 * 
-	 * @param input
-	 *            a string
-	 * @return an array of two strings
-	 */
-	public String[] immediateString(String input) {
-		String[] result = new String[2];
-		tokenizer.reset(input);
-		String token = tokenizer.token();
-		if (token != null) {
-			if (!token.equals(eq)) {
-				result[0] = token;
-				result[1] = tokenizer.remainder();
-			}
-		}
-		return result;
-	}
-
 }
