@@ -1,6 +1,5 @@
 package ch.agent.util.args;
 
-import static ch.agent.util.STRINGS.lazymsg;
 import static ch.agent.util.STRINGS.msg;
 
 import java.util.ArrayList;
@@ -13,7 +12,6 @@ import ch.agent.util.STRINGS.U;
 import ch.agent.util.args.ArgsScanner.SymbolScanner;
 import ch.agent.util.base.Misc;
 import ch.agent.util.file.TextFile;
-import ch.agent.util.logging.LoggerBridge;
 
 /**
  * Args is a parser for command line arguments. It is named after the parameter
@@ -103,10 +101,6 @@ import ch.agent.util.logging.LoggerBridge;
  * ("bar" and "flix" in the example). This trick is useful when extracting
  * specific parameters from existing configuration files where names are defined
  * by someone else.
- * <p>
- * Except in <em>loose mode</em> parameter names must have been defined before
- * parsing. Loose mode is activated by {@link #setLoose} and deactivated by
- * {@link #setStrict}.
  * 
  * @author Jean-Paul Vetterli
  * 
@@ -738,8 +732,6 @@ public class Args implements Iterable<String> {
 	private Map<String, String> variables;
 	private TextFile textFile; // use only one for duplicate detection to work
 	private List<String[]> sequence;
-	private boolean loose;
-	private LoggerBridge logger;
 	private ArgsScanner argsScanner;
 	private SymbolScanner symScanner;
 	private Map<String, Integer> symCycleDetector;
@@ -799,26 +791,6 @@ public class Args implements Iterable<String> {
 			inc = includer;
 		}
 		return inc;
-	}
-	
-	/**
-	 * Enable loose mode and optionally set a logger. If available the logger is
-	 * used to log unresolved names at log level "debug".
-	 * 
-	 * @param logger
-	 *            logger
-	 */
-	public void setLoose(LoggerBridge logger) {
-		loose = true;
-		this.logger = logger;
-	}
-	
-	/**
-	 * Disable loose mode and clear the logger.
-	 */
-	public void setStrict() {
-		loose = false;
-		logger = null;
 	}
 	
 	/**
@@ -991,13 +963,8 @@ public class Args implements Iterable<String> {
 			if (v == null) {
 				if (isVariable(name))
 					putVariable(name, value);
-				else {
-					if (loose) {
-						if (logger != null)
-							logger.debug(lazymsg(U.U00165, name.length() == 0 ? value : name));
-					} else
-						throw new IllegalArgumentException(msg(U.U00103, name.length() == 0 ? value : name));
-				}
+				else
+					throw new IllegalArgumentException(msg(U.U00103, name.length() == 0 ? value : name));
 			} else {
 				if (v.isRepeatable())
 					v.append(value);
