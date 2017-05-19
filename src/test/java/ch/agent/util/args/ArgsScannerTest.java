@@ -527,7 +527,7 @@ public class ArgsScannerTest {
 	@Test
 	public void testMetaChars02() {
 		try {
-			NameValueScanner customScanner = new NameValueScanner('(', ')', ':', '\\');
+			NameValueScanner customScanner = new NameValueScanner('(', ')', ':', '\\', '%');
 			List<String[]> result = customScanner.asValuesAndPairs("OOPS (f =(o) o) : (b\\ar (w h a t) b\\ar)");
 			assertEquals("f =(o) o", result.get(1)[0]);
 			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
@@ -539,7 +539,7 @@ public class ArgsScannerTest {
 	@Test
 	public void testMetaChars02a() {
 		try {
-			NameValueScanner customScanner = new NameValueScanner('(', ')', ':', '\\');
+			NameValueScanner customScanner = new NameValueScanner('(', ')', ':', '\\', '%');
 			List<String[]> result = customScanner.asValuesAndPairs("OOPS (f =\\(o\\) o) : (b\\ar (w h a t) b\\ar)");
 			assertEquals("f =(o) o", result.get(1)[0]);
 			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
@@ -551,7 +551,7 @@ public class ArgsScannerTest {
 	@Test
 	public void testMetaChars04() {
 		try {
-			NameValueScanner customScanner = new NameValueScanner('x', 'x', 'x', 'x');
+			NameValueScanner customScanner = new NameValueScanner('x', 'x', 'x', 'x', 'x');
 			List<String[]> result = customScanner.asValuesAndPairs("Tokenizer.MetaCharacters=xxxx OOPS (f =(o\\) o) : (b\\ar (w h a t\\) b\\ar)");
 			assertEquals("f =(o) o", result.get(1)[0]);
 			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
@@ -564,7 +564,7 @@ public class ArgsScannerTest {
 	@Test
 	public void testMetaChars05() {
 		try {
-			NameValueScanner customScanner = new NameValueScanner('\'', '\'', ':', '\\');
+			NameValueScanner customScanner = new NameValueScanner('\'', '\'', ':', '\\', '%');
 			customScanner.asValuesAndPairs("a: 'x y z'");
 			fail("expected an exception");
 		} catch (Exception e) {

@@ -20,60 +20,34 @@ import ch.agent.util.STRINGS.U;
  * <li>the closing quote (]), and
  * <li>the escape (\).
  * </ul>
- * For brevity the documentation assumes defaults are used.
+ * For brevity the documentation assumes defaults are used. White space, as
+ * defined by {@link Character#isWhitespace}, is either significant or ignored,
+ * depending on where it is used.
  * <p>
- * All four characters lose their special nature when preceded by \. White space
- * characters can also be escaped. Name and values are separated by =. If they
- * contain white space they must be written between [ and ]. Everything in
- * brackets is taken verbatim, and it is only necessary to escape unbalanced
- * closing quotes.
+ * The four special characters and white space characters lose their special 
+ * nature when preceded by an escape. A name is separated from a value by the =
+ * sign. White space can be freely used around the = sign. Name-value pairs and
+ * isolated values are separated by at least one white space character. Names
+ * and values which contain white space must be written between [ and ].
+ * Everything in brackets is taken verbatim, and it is only necessary to escape
+ * unbalanced brackets.
  * <p>
- * A few examples:
+ * A few examples are more useful than many words:
  * 
  * <pre>
  * <code>
  * "a b c" is scanned as three values "a", "b" and "c",
- * "a\ b\ c" as one value "a b c",
- * "a = [b c]" as name "a" and value "b c",
- * "a \= [b c]" as three values "a", "=" and "b c",
- * "[a b \c]" as value "a b \c",
- * "[a [b] c]" as value "a [b] c",
- * "[a b\] c]" as value "a b] c",
- * "[a \[b c]" as value "a [b c".
+ * "a\ b\ c"          as one value "a b c",
+ * "a=b"              as name "a" and value "b",
+ * " a = b "          as name "a" and value "b",
+ * "a = [b c]"        as name "a" and value "b c",
+ * "a \= [b c]"       as three values "a", "=" and "b c",
+ * "[a b \c]"         as value "a b \c",
+ * "[a [b] c]"        as value "a [b] c",
+ * "[a b\] c]"        as value "a b] c",
+ * "[a \[b c]"        as value "a [b c".
  * </code>
  * </pre>
- * 
- * 
- * Scanning support for {@link Args}. It is used to parse lists of name-value
- * pairs or isolated values. It supports embedded white space. To include white
- * space in a string, the string must be put inside brackets. Everything inside
- * brackets is taken verbatim. Empty brackets are used to specify an empty
- * string. Brackets can be nested: to terminate a string with two or more open
- * brackets two or more closing brackets are needed. This nesting effect can be
- * disabled by prefixing embedded brackets with an escape character. The escape
- * character has only an effect inside brackets and only before embedded
- * brackets or another escape: a double escape is replaced with a single escape.
- * This allows to write a string like "{}=!" as "{{!}=!!}" (where {} open and
- * close the bracket and ! escapes). The opening and closing bracket characters
- * can be included inside a normal string, and the name-value separator can be
- * included inside a string in brackets. An isolated name-value separator in
- * brackets is still a name-value separator.
- * <p>
- * The meta characters and their default values are:
- * <ul>
- * <li>opening bracket [
- * <li>closing bracket ]
- * <li>name-value separator =
- * <li>escape character \
- * </ul>
- * 
- * It is possible to redefine meta characters on the fly in the input using the
- * reserved name Tokenizer.MetaCharacters. The value must have length 4 and is
- * interpreted as the sequence opening bracket, closing bracket, name-value
- * separator, and escape character. These characters must be distinct.
- * 
- * @author Jean-Paul Vetterli
- * 
  */
 public class NameValueScanner {
 
@@ -82,31 +56,7 @@ public class NameValueScanner {
 	}
 	
 	/**
-	 * The tokenizer takes care of extracting tokens from the input.
-	 * <p>
-	 * Specification:
-	 * <ul>
-	 * <li>There are 3 meta characters (meta): [ ] =.
-	 * <li>Whitespace characters (ws) such that
-	 * {@link Character#isWhitespace} returns true.
-	 * <li>There is an escape character (esc): \
-	 * <li>\ turns meta, whitespace and escape characters into normal characters
-	 * anywhere in the input. In such cases, the escape itself is omitted from
-	 * the output. In all other cases it is included in the output. 
-	 * <li>\ at the end of the input produces an IllegalArgumentException
-	 * (unless escaped).
-	 * <li>[ starts a bracket and must be balanced with ] which terminates the
-	 * bracket.
-	 * <li>A bracket can contain a nested bracket.
-	 * <li>An unbalanced ] produces an IllegalArgumentException (unless
-	 * escaped).
-	 * <li>The token corresponding to a terminated bracket is the string between
-	 * [ and ], which are removed. Whitespace and = have no effect inside a
-	 * bracket.
-	 * <li>A simple string is a sequence of characters starting with no ws and
-	 * no metas (unless escaped).
-	 * <li>=is returned as a simple string containing only =.
-	 * </ul>
+	 * The tokenizer takes care of finding strings and equal signs in the input.
 	 */
 	private static class Tokenizer {
 
@@ -147,14 +97,16 @@ public class NameValueScanner {
 		}
 		
 		/**
-		 * Return next token or null when there is no more input. Tokens are
-		 * strings with surrounding white-space and enclosing brackets removed.
-		 * Escapes are also removed, but only inside brackets and when followed
-		 * by a closing bracket or another escape.
+		 * Return the next token. There are 3 possible tokens:
+		 * <ul>
+		 * <li>END_OF_INPUT
+		 * <li>EQUAL_TOKEN
+		 * <li>STRING_TOKEN
+		 * </ul>
 		 * 
-		 * @return the next token or null
+		 * @return the next token
 		 */
-		public Token token() {
+		public Token nextToken() {
 			state = State.INIT;
 			while(true) {
 				switch (process()) {
@@ -172,6 +124,11 @@ public class NameValueScanner {
 			}
 		}
 		
+		/**
+		 * Return the string associated to the token STRING_TOKEN.
+		 * 
+		 * @return a string
+		 */
 		public String getTokenString() {
 			return tokenString;
 		}
@@ -186,20 +143,21 @@ public class NameValueScanner {
 		}
 		
 		/**
-		 * Get the current scanner position. First position is 1.
+		 * Get the current 1-based position of the tokenizer.
 		 * 
 		 * @return a positive number
 		 */
 		public int getPosition() {
 			return position + 1;
 		}
+		
 		/**
 		 * Reset the input.
 		 * 
 		 * @param input
 		 *            a non-null string
 		 */
-		public void reset(String input) {
+		private void reset(String input) {
 			if (input == null)
 				throw new IllegalArgumentException("input null");
 			this.input = input;
@@ -336,40 +294,44 @@ public class NameValueScanner {
 	private String eq;
 
 	/**
-	 * Constructor for a scanner with custom meta characters.
+	 * Constructor for a scanner with custom meta characters. The variable
+	 * prefix is not used, but it must be compatible with the other meta
+	 * characters.
 	 * 
-	 * @param lq left quote
-	 * @param rq right quote
-	 * @param nvs name-value separator
-	 * @param esc escape
+	 * @param lq
+	 *            left quote
+	 * @param rq
+	 *            right quote
+	 * @param nvs
+	 *            name-value separator
+	 * @param esc
+	 *            escape
+	 * @param dollar
+	 *            variable prefix
 	 */
-	public NameValueScanner(char lq, char rq, char nvs, char esc) {
-		Args.validateMetaCharacters(lq, rq, nvs, esc);
+	public NameValueScanner(char lq, char rq, char nvs, char esc, char dollar) {
+		Args.validateMetaCharacters(lq, rq, nvs, esc, dollar);
 		tokenizer = new Tokenizer(lq, rq, nvs, esc);
 		eq = String.valueOf(nvs);
 	}
-	
+
 	/**
 	 * Constructor for a scanner using default meta characters. The defaults are
 	 * [, ], = and \.
 	 */
 	public NameValueScanner() {
-		this('[', ']', '=', '\\');
+		this('[', ']', '=', '\\', '$');
 	}
 	
 	/**
-	 * Turn a string into a list of name-value pairs. An
-	 * <code>IllegalArgumentException</code> is thrown when parsing becomes
-	 * impossible because of a badly formed input.
+	 * Turn a string into a list of isolated values.
 	 * 
-	 * @param string
-	 *            a string interpreted as a sequence of names, equals, and
-	 *            values
-	 * @return a list of 2-elements array representing name-value pairs
-	 * @throws IllegalArgumentException
+	 * @param input
+	 *            a string
+	 * @return a list of strings
 	 */
-	public List<String> asValues(String string) {
-		List<String[]> values = asValuesAndPairs(string, true);
+	public List<String> asValues(String input) {
+		List<String[]> values = asValuesAndPairs(input, true);
 		List<String> result = new ArrayList<String>(values.size());
 		for (String [] v : values) {
 			result.add(v[0]);
@@ -378,44 +340,17 @@ public class NameValueScanner {
 	}
 	
 	/**
-	 * Turn a string into a list of isolated values and name-value pairs. An
-	 * <code>IllegalArgumentException</code> is thrown when parsing becomes
-	 * impossible because of a badly formed input.
+	 * Turn a string into a list of name-value pairs and isolated values.
 	 * 
-	 * @param string
-	 *            a string interpreted as a sequence of isolated values and and
-	 *            name-value pairs, with name and value separated with an equal
-	 *            sign
+	 * @param input
+	 *            a string
 	 * @return a list of 1-element arrays representing isolated values and
 	 *         2-elements arrays representing where name-value pairs
-	 * @throws IllegalArgumentException
 	 */
-	public List<String[]> asValuesAndPairs(String string) {
-		return asValuesAndPairs(string, false);
+	public List<String[]> asValuesAndPairs(String input) {
+		return asValuesAndPairs(input, false);
 	}
 	
-	/**
-	 * Turn a string into a list of isolated values and name-value pairs.
-	 * <code>IllegalArgumentException</code> is thrown when parsing becomes
-	 * impossible because of a badly formed input.
-	 * <p>
-	 * In <code>valuesOnly</code> mode, the name-value separator does not play
-	 * any special role and all elements of the result list will be an array of
-	 * length 1.
-	 * <p>
-	 * It is illegal to invoke the method with <code>pairsOnly</code> and
-	 * <code>valuesOnly</code> both true.
-	 * 
-	 * @param string
-	 *            a string interpreted as a sequence of isolated values and and
-	 *            name-value pairs, with name and value separated with the name-
-	 *            value separator
-	 * @param valuesOnly
-	 *            if true, isolated values are forbidden
-	 * @return a list of 1-element arrays representing isolated values and
-	 *         2-elements arrays representing where name-value pairs
-	 * @throws IllegalArgumentException
-	 */
 	private List<String[]> asValuesAndPairs(String string, boolean valuesOnly) {
 		
 		List<String[]> results = new ArrayList<String[]>();
@@ -427,7 +362,7 @@ public class NameValueScanner {
 		while (state != NameValueState.END) {
 			switch (state) {
 			case INIT:
-				token1 = tokenizer.token();
+				token1 = tokenizer.nextToken();
 				token1String = tokenizer.getTokenString();
 				switch(token1) {
 				case END_OF_INPUT:
@@ -447,7 +382,7 @@ public class NameValueScanner {
 				}
 				break;
 			case NAME:
-				token2 = tokenizer.token();
+				token2 = tokenizer.nextToken();
 				String token2String = tokenizer.getTokenString();
 				switch(token2) {
 				case END_OF_INPUT:
@@ -473,7 +408,7 @@ public class NameValueScanner {
 				}
 				break;
 			case VALUE:
-				token2 = tokenizer.token();
+				token2 = tokenizer.nextToken();
 				token2String = tokenizer.getTokenString();
 				switch(token2) {
 				case END_OF_INPUT:

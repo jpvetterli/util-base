@@ -13,95 +13,124 @@ import ch.agent.util.base.Misc;
 import ch.agent.util.file.TextFile;
 
 /**
- * Args is a parser for command line arguments. It is named after the parameter
- * of the main method of Java programs, usually written like this:
+ * Args is a parser for command line arguments. It provides a simple language
+ * and a small set of built-in operators. It is named after the parameter of the
+ * main method of Java programs, usually written like this:
  * 
  * <pre>
  * <code>
  * public static void main(String[] <b>args</b>) {
  *    // etc.
  * }
- * </code></pre>
+ * </code>
+ * </pre>
  * 
- * Args consists of a simple language and a small set of built-in
- * operators. Application are of course free to use Args beyond parsing command
- * line arguments. Using Args consists of three steps: (1) defining parameters,
- * (2) parsing the input, and (3) extracting values of parameters.
- * 
- * <h3>Defining parameters</h3>
- * 
- * <h3>Parsing the input</h3>
- * 
- * The input is a single string. For convenience Args provides a method to parse
- * an array of strings, like the command line arguments of the main method, but
- * all elements are joined into a single string, with blanks inserted between.
+ * Of course, applications can use Args beyond parsing command line arguments.
+ * Using the parser consists of three steps:
  * <p>
- * The input is a succession of name-value pairs and standalone keywords. 
- * Name-value pairs have an equal sign character between them, 
- * possibly surrounded by one or more white space characters 
- * (characters for which {@link Character#isWhitespace} is true). 
+ * <ol>
+ * <li><b>Defining</b> parameters. All parameters are defined with the
+ * {@link #def} method; the definition can be customized using the
+ * {@link Definition} object returned.
  * 
+ * <li><b>Setting</b> values or parsing values from an input. Parameter values
+ * can be set using {@link #put} methods or parsed from text. Such text is
+ * written in a simple but flexible specification language, described shortly
+ * 
+ * <li><b>Getting</b> values of parameters. All values are basically strings
+ * encapsulated in a {@link Value} object. Methods are available to extract
+ * values of various types and as individual values or as arrays.
+ * 
+ * </ol>
+ * 
+ * <h3>The specification language</h3>
+ * 
+ * A specification consists of a series of <em>name-value pairs</em> and
+ * isolated values and keywords. In a name-value pair, the name corresponds to
+ * the a parameter definition. An isolated value is the value of a nameless
+ * parameter. To have multiple isolated values, the nameless parameter must have
+ * been defined as repeatable. Some isolated values are known as
+ * <em>keywords</em>; a keyword corresponds to a parameter defined with a
+ * default value of "false". The occurrence of the parameter name as an isolated
+ * value sets the value of the parameter to "true".
  * <p>
- * EXPLAIN THAT escape have only effect in brackets and in front of $$
- * </p>
- * 
- * <h3>Extracting values of parameters</h3>
+ * A parameter can only be used if it has been defined. Sometimes it is useful
+ * to define parameters on the fly and this is possible with <em>variables</em>.
+ * Variables have a name with a $ sign in front. They are referenced by
+ * prefixing them with $$. When a variable reference is seen in the text it is
+ * replaced by the value of the variable if available, else it is left as is.
+ * This is called an unresolved variable. When accessing a parameter value which
+ * contains unresolved variables, an error occurs, unless using special care.
+ * <p>
+ * The language syntax supports names and values with arbitrary content using a
+ * <em>nested</em> quoting notation. Suppose a piece of software uses Args to
+ * parse its parameters and suppose this software has multiple components which
+ * also use Args for their parameters. A top-level component can define its
+ * parameters without knowing any detail about the other components. It only
+ * needs to define a parameter for each such component to take opaque values and
+ * pass them along without bothering about unresolved variables. This feature
+ * allows to simulate subroutines in the specification language, which is quite
+ * useful when a specification is large.
+ * <p>
+ * When using nested Args, applications can pass variables from one level
+ * to the next using {@link #getVariables} and {@link #putVariable}.
+ * <p>
+ * Details about the syntax are available from the documentation of
+ * {@link NameValueScanner} and {@link SymbolScanner}.
+ * The specification language uses five meta characters (defaults in parentheses):
+ * <ul>
+ * <li>the opening quote ([),
+ * <li>the closing quote (]),
+ * <li>the name-value separator (=),
+ * <li>the escape (\),
+ * <li>the variable prefix ($).
+ * </ul>
+ * These can be overridden by passing a string of 5 characters as a System property 
+ * which will be interpreted in the above sequence. The property is 
+ * <code>ArgsMetaCharacters</code>.
  * 
  * <h3>Built-in operators</h3>
  * 
- * Variables. "file", "if", "file with mapping".
- * 
- * 
- * <pre>
- * ==================== ***** WORK IN PROGRESS ABOVE -- OLD DOC BELOW ******** ===================
- * </pre>
- * 
- * Support for parameter lists and parameter files. A parameter list is a
- * sequence of name-value pairs separated by white space, with names and values
- * separated by an equal sign (which can be surrounded by white space). It is
- * also possible to configure <code>Args</code> to have nameless values
- * (sometimes known as positional parameters). If a name or a value includes
- * white space or an equal sign it must be enclosed in square brackets. To
- * include a closing bracket it must be escaped with a backslash. Here is an
- * example:
+ * Args provides two built-in operators, <em>condition</em> for conditional 
+ * parsing and <em>include</em> for file inclusion.
+ * Syntactically, these operators are parameter names.
+ * <p>
+ * The complete syntax of the condition operator is
  * 
  * <pre>
  * <code>
- * foo = bar [qu ux]=[[what = ever\]] foo = [2nd val]
+ * condition = [if=[...] then=[...] else=[...]]
  * </code>
  * </pre>
  * 
- * In the example, parameter "foo" has two values: "bar" and "2nd val" while
- * parameter "qu ux" has one value, "[what = ever]".
+ * When the value of "if" is non-empty, the value of "then" is used, else the
+ * value of "else" is used. The "else" part is the only one which can be
+ * omitted.
+ * 
  * <p>
- * When a name is repeated the previous value is lost unless the parameter was
- * defined as a list parameter, like "foo" in the example.
- * <p>
- * Name-value parameters can be specified in files, but nameless values are not
- * allowed. Files are themselves specified using parameters, using the notation
- * <code>file=file-spec</code>. Files can reside in the file system or on the
- * class path. There can be multiple files and files can be nested. In parameter
- * files, lines starting with a hash sign are skipped, even inside brackets.
- * Since line terminators are handled as white space, values can be continued on
- * multiple lines by having opening and closing square brackets on multiple
- * lines (line terminators are replaced with spaces). File parameters are
- * processed immediately in the order in which they appear. The file name can be
- * followed with a semi-colon and one or more mappings. Here is an example:
+ * The complete syntax of the include operator is
  * 
  * <pre>
  * <code>
- * file = [/home/someone/parms.txt; foo=bar quux=flix]
+ * include = [<em>filename</em> names=[...] extractor=[...] extractor-parameters=[...]]
  * </code>
  * </pre>
- * <p>
- * When mappings are present, only parameters named in the mappings ("foo" and
- * "quux" in the example) will be considered. If they are found in the file the
- * corresponding values will be assigned to parameters using the mapping values
- * ("bar" and "flix" in the example). This trick is useful when extracting
- * specific parameters from existing configuration files where names are defined
- * by someone else.
  * 
- * @author Jean-Paul Vetterli
+ * The operator includes the contents of a file in the parser input. The file must
+ * be located either in the file system or the classpath. It is possible to include
+ * multiple files and includes can be nested.
+ * 
+ * Only the file name (a nameless value) is mandatory. In this case, the quoting
+ * brackets can usually be omitted. The names parameter take zero or more
+ * name-value pairs or isolated values. And isolated value gives the name of a
+ * parameter to extract from the file. The name in a name-value pair also gives
+ * the name of a parameter to extract and the value specifies a translation for
+ * that name. This allows to extract parameters from the configuration files of
+ * other applications and use them automatically under a name of our own
+ * choosing. The extractor parameter allows to specify a class to use for the
+ * extraction. The class must extend the {@link FileIncluder}, provided with
+ * Args. If necessary, a parameter can be passed to that class using
+ * extractor-parameters.
  * 
  */
 public class Args implements Iterable<String> {
@@ -120,59 +149,65 @@ public class Args implements Iterable<String> {
 		rightQuote = chars[1];
 		nameValueSeparator = chars[2];
 		escape = chars[3];
+		dollar = chars[4];
 	}
 	
 	/**
-	 * Validate a string of meta characters. There must be four characters and
+	 * Validate a string of meta characters. There must be five characters and
 	 * they must be different. The sequence (defaults in parentheses) is
 	 * <ol>
 	 * <li>left quote ([),
 	 * <li>right quote (]),
 	 * <li>name-value separator (=),
 	 * <li>escape (\).
+	 * <li>variable prefix ($).
 	 * </ol>
 	 * The characters are returned in an array in that sequence. If the input is
 	 * null default meta characters are returned.
 	 * 
 	 * @param metaChars
-	 *            a string of length 4
-	 * @return an array of length 4
+	 *            a string of length 5
+	 * @return an array of length 5
 	 */
 	public static char[] validateMetaCharacters(String metaChars) {
 		if (metaChars == null)
-			return new char[] { '[', ']', '=', '\\' };
+			return new char[] { '[', ']', '=', '\\', '$'};
 		else {
-			if (metaChars.length() != 4)
+			if (metaChars.length() != 5)
 				throw new IllegalArgumentException(msg(U.U00164, metaChars));
 			char lq = metaChars.charAt(0);
 			char rq = metaChars.charAt(1);
 			char nvs = metaChars.charAt(2);
 			char esc = metaChars.charAt(3);
-			validateMetaCharacters(lq, rq, nvs, esc);
-			return new char[] { lq, rq, nvs, esc };
+			char dol = metaChars.charAt(4);
+			validateMetaCharacters(lq, rq, nvs, esc, dol);
+			return new char[] { lq, rq, nvs, esc, dol };
 		}
 	}
 	
 	/**
-	 * Validate four meta characters. 
-	 * The four characters must be different.
+	 * Validate five meta characters. 
+	 * The five characters must be different.
 	 *
 	 * @param leftQuote the left quote 
 	 * @param rightQuote the right quote 
 	 * @param nameValueSeparator the name-value separator
 	 * @param escape the escape
+	 * @param dollar the variable prefix
 	 */
-	public static void validateMetaCharacters(char leftQuote, char rightQuote, char nameValueSeparator, char escape) {
-		if (leftQuote == rightQuote || leftQuote == nameValueSeparator || leftQuote == escape 
-			|| rightQuote == nameValueSeparator || rightQuote == escape 
-			|| nameValueSeparator == escape)
-			throw new IllegalArgumentException(msg(U.U00163, leftQuote, rightQuote, nameValueSeparator, escape));
+	public static void validateMetaCharacters(char leftQuote, char rightQuote, char nameValueSeparator, char escape, char dollar) {
+		if (leftQuote == rightQuote || leftQuote == nameValueSeparator || leftQuote == escape || leftQuote == dollar
+			|| rightQuote == nameValueSeparator || rightQuote == escape || rightQuote == dollar
+			|| nameValueSeparator == escape || nameValueSeparator == dollar
+			|| escape == dollar)
+			throw new IllegalArgumentException(msg(U.U00163, leftQuote, rightQuote, nameValueSeparator, escape, dollar));
 	}
 
 	private final static char leftQuote;
 	private final static char rightQuote;
 	private final static char nameValueSeparator;
 	private final static char escape;
+	private final static char dollar;
 	
 	private final static String COND = "condition";
 	private final static String COND_IF_NON_EMPTY = "if";
@@ -724,8 +759,6 @@ public class Args implements Iterable<String> {
 	public final static String FALSE = "false";
 	
 	private final static String BLANK = " ";
-	private final static char DOLLAR = '$';
-	private final static String DOLLARS = "$$";
 	
 	private Map<String, Value> args;
 	private Map<String, String> variables;
@@ -744,8 +777,8 @@ public class Args implements Iterable<String> {
 		def(INCLUDE);
 		variables = new HashMap<String, String>();
 		textFile = new TextFile();
-		argsScanner = new NameValueScanner(leftQuote, rightQuote, nameValueSeparator, escape);
-		symScanner = new SymbolScanner(DOLLAR);
+		argsScanner = new NameValueScanner(leftQuote, rightQuote, nameValueSeparator, escape, dollar);
+		symScanner = new SymbolScanner(dollar);
 		symCycleDetector = new HashMap<String, Integer>();
 	}
 	
@@ -995,7 +1028,8 @@ public class Args implements Iterable<String> {
 				String symbol = it.next();
 				String resolved = variables.get(symbol);
 				if (resolved == null) {
-					b.append(DOLLARS);
+					b.append(dollar);
+					b.append(dollar);
 					b.append(symbol);
 				} else {
 					if (!checkForCycle(symbol, level, cycleDetector))
@@ -1067,6 +1101,12 @@ public class Args implements Iterable<String> {
 		return getVal(name).stringValues();
 	}
 
+	public Map<String, String> getVariables() {
+		Map<String, String> result = new HashMap<String, String>();
+		result.putAll(variables);
+		return result;
+	}
+	
 	/**
 	 * Set a local variable. If a global or local variable with the same name
 	 * exists nothing is done (the principle is that <em>the first one wins</em>
@@ -1092,7 +1132,7 @@ public class Args implements Iterable<String> {
 	}
 	
 	private boolean isVariable(String name) {
-		return name.length() > 0 && name.charAt(0) == DOLLAR;
+		return name.length() > 0 && name.charAt(0) == dollar;
 	}
 
 	private void putValue(String name, Value value) {
