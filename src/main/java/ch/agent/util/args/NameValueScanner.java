@@ -8,6 +8,42 @@ import java.util.List;
 import ch.agent.util.STRINGS.U;
 
 /**
+ * The name-value scanner supports splitting a string into a list of String
+ * arrays of length 2 for name-value pairs and length 1 for isolated values.
+ * <p>
+ * The scanner understands four special characters which can be configured using
+ * the constructor. When using the no-args constructor provides defaults. These
+ * characters are (defaults in parentheses):
+ * <ul>
+ * <li>the name-value separator (=),
+ * <li>the opening quote ([),
+ * <li>the closing quote (]), and
+ * <li>the escape (\).
+ * </ul>
+ * For brevity the documentation assumes defaults are used.
+ * <p>
+ * All four characters lose their special nature when preceded by \. White space
+ * characters can also be escaped. Name and values are separated by =. If they
+ * contain white space they must be written between [ and ]. Everything in
+ * brackets is taken verbatim, and it is only necessary to escape unbalanced
+ * closing quotes.
+ * <p>
+ * A few examples:
+ * 
+ * <pre>
+ * <code>
+ * "a b c" is scanned as three values "a", "b" and "c",
+ * "a\ b\ c" as one value "a b c",
+ * "a = [b c]" as name "a" and value "b c",
+ * "a \= [b c]" as three values "a", "=" and "b c",
+ * "[a b \c]" as value "a b \c",
+ * "[a [b] c]" as value "a [b] c",
+ * "[a b\] c]" as value "a b] c",
+ * "[a \[b c]" as value "a [b c".
+ * </code>
+ * </pre>
+ * 
+ * 
  * Scanning support for {@link Args}. It is used to parse lists of name-value
  * pairs or isolated values. It supports embedded white space. To include white
  * space in a string, the string must be put inside brackets. Everything inside
@@ -39,8 +75,12 @@ import ch.agent.util.STRINGS.U;
  * @author Jean-Paul Vetterli
  * 
  */
-public class ArgsScanner {
+public class NameValueScanner {
 
+	private enum Token {
+		END_OF_INPUT, EQUAL_TOKEN, STRING_TOKEN
+	}
+	
 	/**
 	 * The tokenizer takes care of extracting tokens from the input.
 	 * <p>
@@ -71,7 +111,7 @@ public class ArgsScanner {
 	private static class Tokenizer {
 
 		private enum State {
-			INIT, STRING, BRACKET, ESCAPE, END
+			BRACKET, END, EQUAL, ESCAPE, INIT, STRING 
 		}
 		
 		private final char opening;
@@ -81,7 +121,7 @@ public class ArgsScanner {
 
 		private String input;
 		private int position; // first is 0
-		private String token;
+		private String tokenString;
 		private StringBuffer buffer;
 		private State escapedState;
 		private State state;
@@ -114,21 +154,37 @@ public class ArgsScanner {
 		 * 
 		 * @return the next token or null
 		 */
-		public String token() {
+		public Token token() {
+			state = State.INIT;
 			while(true) {
 				switch (process()) {
 				case 0:
 					break;
 				case 1:
-					return token;
+					return Token.STRING_TOKEN;
+				case 2:
+					return Token.EQUAL_TOKEN;
 				case -1:
-					return null;
+					return Token.END_OF_INPUT;
 				default:
 					throw new RuntimeException("bug");
 				}
 			}
 		}
-
+		
+		public String getTokenString() {
+			return tokenString;
+		}
+		
+		private void setTokenString(boolean emptyOk) {
+			if (depth != 0)
+				throw new IllegalArgumentException(msg(U.U00155, closing, getPosition(), input));
+			if (emptyOk || buffer.length() > 0) {
+				tokenString = buffer.toString();
+				buffer.setLength(0);
+			}
+		}
+		
 		/**
 		 * Get the current scanner position. First position is 1.
 		 * 
@@ -160,7 +216,7 @@ public class ArgsScanner {
 		 * @return true to continue or false to stop
 		 */
 		private int process() {
-			token = null;
+			tokenString = null;
 			char ch = advance();
 			switch (state) {
 			case END:
@@ -172,19 +228,20 @@ public class ArgsScanner {
 					if (!isMeta(ch) && ch != esc && !Character.isWhitespace(ch))
 						buffer.append(esc);
 					buffer.append(ch);
-					state = escapedState;
+					state = escapedState == State.INIT ? State.STRING : escapedState;
 				}
 				break;
 			case INIT:
 				if (ch == 0) {
-					addToken(false);
+					setTokenString(false);
 					state = State.END;
 				} else if (ch == esc) {
 					escapedState = state;
 					state = State.ESCAPE;
 				} else if (ch == equals) {
+					state = State.EQUAL;
 					buffer.append(equals);
-					addToken(false);
+					setTokenString(false);
 				} else if (ch == opening) {
 					state = State.BRACKET;
 					depth = 1;
@@ -198,7 +255,7 @@ public class ArgsScanner {
 				break;
 			case STRING:
 				if (ch == 0) {
-					addToken(false);
+					setTokenString(false);
 					state = State.END;
 				} else if (ch == esc) {
 					escapedState = state;
@@ -208,16 +265,16 @@ public class ArgsScanner {
 						// must do this test here to support ArgsScanner#immediate
 						throw new IllegalArgumentException(msg(U.U00154, closing, getPosition(), input));
 					}
-					addToken(false);
+					setTokenString(false);
 					backtrack();
 				} else if (Character.isWhitespace(ch))
-					addToken(false);
+					setTokenString(false);
 				else
 					buffer.append(ch);
 				break;
 			case BRACKET:
 				if (ch == 0) {
-					addToken(false);
+					setTokenString(false);
 					state = State.END;
 				} else if (ch == esc) {
 					escapedState = state;
@@ -230,7 +287,7 @@ public class ArgsScanner {
 						throw new IllegalArgumentException(msg(U.U00154, closing, input, getPosition()));
 					--depth;
 					if (depth == 0)
-						addToken(true);
+						setTokenString(true);
 					else
 						buffer.append(ch);
 				} else {
@@ -242,23 +299,13 @@ public class ArgsScanner {
 			default:
 				throw new RuntimeException("bug: " + state.name());
 			}
-			return token != null ? 1 : (ch == 0 ? -1 : 0);
+			return tokenString != null ? (state == State.EQUAL ? 2 : 1) : (ch == 0 ? -1 : 0);
 		}
 
 		private boolean isMeta(char ch) {
 			return ch == equals || ch == opening || ch == closing;
 		}
 		
-		private void addToken(boolean emptyOk) {
-			if (depth != 0)
-				throw new IllegalArgumentException(msg(U.U00155, closing, getPosition(), input));
-			if (emptyOk || buffer.length() > 0) {
-				token = buffer.toString();
-				buffer.setLength(0);
-			}
-			state = State.INIT;
-		}
-
 		/**
 		 * Return the next char from the input or 0 if there is no more input.
 		 * 
@@ -280,231 +327,9 @@ public class ArgsScanner {
 			position--;
 		}
 	}
-	
-	/**
-	 * The symbol scanner supports splitting a string to help locate references.
-	 * References look like $$foo, where foo is a variable. A reference is found
-	 * when $$ is directly followed by a symbol made of one or more letters or
-	 * digits (as determined by {@link Character#isLetterOrDigit}) except $.
-	 * When a reference is found, the input since the previous reference, a null
-	 * signifying the string $$ in its role as symbol prefix, and the symbol are
-	 * appended to the list. This continues until the end of the input is
-	 * reached, which is appended to the list.
-	 * <p>
-	 * A null part is inserted instead of $$ because $$ can appear by itself as
-	 * a valid part in a few corner cases ($$ at the end of input or $$$$x for
-	 * example). Using a null removes the ambiguity.
-	 * <p>
-	 * A valid identifier consists of one or more letters, digits, hyphens and
-	 * underscore. The character used as prefix, usually $, is not allowed
-	 * inside the identifier.
-	 * 
-	 * <p>
-	 * The scanner has no notion of escape characters. The client can handle
-	 * them; they are easy to find as they trail the part preceding any $$.
-	 */
-	public static class SymbolScanner {
 
-		private enum State {
-			INIT, DOLLAR1, DOLLAR2, DOLLAR3, SYMBOL, DOLLARSYMBOL, END
-		}
-		
-		private final char dollar;
-
-		private String input;
-		private int prefixPosition; // 0-based
-		private int symbolPosition; // 0-based
-		private int currentPosition; // 0-based
-		private State state;
-
-		/**
-		 * Constructor.
-		 * 
-		 * @param dollar
-		 *            the character which stands doubled in front of symbols
-		 */
-		public SymbolScanner(char dollar) {
-			this.dollar = dollar;
-		}
-		
-		/**
-		 * Verify the name syntax of a substitution variable.
-		 * 
-		 * @param name a name with the $ prefix not removed
-		 */
-		public void verify(String name) {
-			if (name.length() == 0)
-				throw new IllegalArgumentException(msg(U.U00126, dollar));
-			if (name.charAt(0) != dollar)
-				throw new IllegalArgumentException(msg(U.U00125, name, dollar));
-			if (name.length() == 1)
-				throw new IllegalArgumentException(msg(U.U00124, name));
-			for (int i = 1; i < name.length(); i++) {
-				char ch = name.charAt(i);
-				if (!isValid(ch)) {
-					throw new IllegalArgumentException(msg(U.U00125, name, dollar));
-				}
-			}
-		}
-		
-		/**
-		 * @param ch
-		 * @return
-		 */
-		private boolean isValid(char ch) {
-			return Character.isLetterOrDigit(ch) || ch == '-' || ch == '_' && ch != dollar;
-		}
-		
-		/**
-		 * Split the input into a list of strings to make it easy to find symbol
-		 * references. A symbol has one or more letter or digits and usually
-		 * stands directly after the sequence $$ (or any character passed to the
-		 * constructor, doubled). In some cases the symbol is surrounded by two
-		 * $ characters, to make it possible to put a symbol reference anywhere.
-		 * In such cases, the symbol is preceded by three $ and followed by one.
-		 * <p>
-		 * As an example, the input "abc$$xy1 def $$A5 $$[0] bx" is split into
-		 * the list ("abc", null, "xy1", " def ", null, "A5", " $$[0] bx"). The
-		 * last occurrence of $$ is not followed by a valid symbol, so it is
-		 * ignored.
-		 * <p>
-		 * When a part is null it is always followed by a part containing a
-		 * symbol. In some corner cases, a part can contain the string $$
-		 * without being a symbol prefix.
-		 * 
-		 * @param input
-		 *            a string
-		 * @return the string split into parts
-		 */
-		public List<String> split(String input) {
-			reset(input);
-			List<String> output = new ArrayList<String>();
-			boolean end = false;
-			while(!end) {
-				switch (split()) {
-				case 0:
-					break;
-				case 1:
-					if (input.charAt(symbolPosition) == dollar) {
-						if (symbolPosition - prefixPosition > 2)
-							output.add(input.substring(prefixPosition, symbolPosition - 2));
-						output.add(null);
-						output.add(input.substring(symbolPosition + 1, currentPosition - 1));
-						prefixPosition = currentPosition;
-					} else {
-						if (symbolPosition - prefixPosition > 2)
-							output.add(input.substring(prefixPosition, symbolPosition - 2));
-						output.add(null);
-						output.add(input.substring(symbolPosition, currentPosition));
-						prefixPosition = currentPosition;
-					}
-					symbolPosition = -1;
-					break;
-				case -1:
-					if (prefixPosition < input.length())
-						output.add(input.substring(prefixPosition));
-					end = true;
-					break;
-				default:
-					throw new RuntimeException("bug");
-				}
-			}
-			return output;
-		}
-		
-		private void reset(String input) {
-			if (input == null)
-				throw new IllegalArgumentException("input null");
-			this.input = input;
-			prefixPosition = 0; // = start of input
-			symbolPosition = -1;
-			currentPosition = -1;
-			state = State.INIT;
-		}
-
-		/**
-		 * Process the next char. Return 0 to indicate to continue,
-		 * 1 to indicate that a part is available, and -1 to indicate
-		 * the end of the input. The part available starts at {@link #lastPosition}
-		 * and extends to {@link #position).
-		 * 
-		 * @return 0 (continue) or 1 (part found) or -1 (end)
-		 */
-		private int split() {
-			boolean partFound = false;
-			char ch = state == State.END ? 0 : advance();
-			switch (state) {
-			case END:
-				break;
-			case INIT:
-				if (ch == dollar)
-					state = State.DOLLAR1;
-				else if (ch == 0)
-					state = State.END;
-				break;
-			case DOLLAR1: 
-				if (ch == dollar)
-					state = State.DOLLAR2;
-				else 
-					state = ch == 0 ? State.END : State.INIT;
-				break;
-			case DOLLAR2: 
-				if (isValid(ch)) {
-					// symbol cannot be empty
-					symbolPosition = currentPosition;
-					state = State.SYMBOL;
-				} else if (ch == dollar)
-					state = State.DOLLAR3; 
-				else
-					state = ch == 0 ? State.END : State.INIT;
-				break;
-			case DOLLAR3: 
-				if (isValid(ch)) {
-					// symbol as above + between 2 dollars
-					symbolPosition = currentPosition - 1;
-					state = State.DOLLARSYMBOL;
-				} else if (ch == dollar)
-					; // same 
-				else
-					state = ch == 0 ? State.END : State.INIT;
-				break;
-			case SYMBOL:
-				if (!isValid(ch)) {
-					partFound = true;
-					state = ch == 0 ? State.END : State.INIT;
-				}
-				break;
-			case DOLLARSYMBOL:
-				if (ch == dollar) {
-					partFound = true;
-					state = advance() == 0 ? State.END : State.INIT;
-				}
-				break;
-			default:
-				throw new RuntimeException("bug: " + state.name());
-			}
-			return partFound ? 1 : (ch == 0 ? -1 : 0);
-		}
-	
-		/**
-		 * Return the next char from the input or 0 if there is no more input.
-		 * 
-		 * @return the next char or 0
-		 */
-		private char advance() {
-			if (state == State.END)
-				throw new RuntimeException("bug");
-			try {
-				return input.charAt(++currentPosition);
-			} catch (IndexOutOfBoundsException e) {
-				return 0;
-			}
-		}
-		
-	}
-	
 	private enum NameValueState {
-		INIT, END, NAME, VALUE
+		END, INIT, NAME, VALUE
 	}
 
 	private Tokenizer tokenizer;
@@ -518,7 +343,7 @@ public class ArgsScanner {
 	 * @param nvs name-value separator
 	 * @param esc escape
 	 */
-	public ArgsScanner(char lq, char rq, char nvs, char esc) {
+	public NameValueScanner(char lq, char rq, char nvs, char esc) {
 		Args.validateMetaCharacters(lq, rq, nvs, esc);
 		tokenizer = new Tokenizer(lq, rq, nvs, esc);
 		eq = String.valueOf(nvs);
@@ -528,7 +353,7 @@ public class ArgsScanner {
 	 * Constructor for a scanner using default meta characters. The defaults are
 	 * [, ], = and \.
 	 */
-	public ArgsScanner() {
+	public NameValueScanner() {
 		this('[', ']', '=', '\\');
 	}
 	
@@ -596,43 +421,71 @@ public class ArgsScanner {
 		List<String[]> results = new ArrayList<String[]>();
 		tokenizer.reset(string);
 		NameValueState state = NameValueState.INIT;
-		String token1 = null;
-		String token2 = null;
+		Token token1 = null;
+		String token1String = null;
+		Token token2 = null;
 		while (state != NameValueState.END) {
 			switch (state) {
 			case INIT:
 				token1 = tokenizer.token();
-				if (token1 == null) {
+				token1String = tokenizer.getTokenString();
+				switch(token1) {
+				case END_OF_INPUT:
 					state = NameValueState.END;
-				} else {
-					if (token1.equals(eq) && !valuesOnly)
+					break;
+				case EQUAL_TOKEN:
+					if (!valuesOnly)
 						throw new IllegalArgumentException(msg(U.U00156, eq, tokenizer.getPosition(), string));
 					else
 						state = NameValueState.NAME;
+					break;
+				case STRING_TOKEN:
+					state = NameValueState.NAME;
+					break;
+				default:
+					throw new RuntimeException("bug " + state.name());
 				}
 				break;
 			case NAME:
 				token2 = tokenizer.token();
-				if (token2 == null) {
-					results.add(new String[]{token1});
+				String token2String = tokenizer.getTokenString();
+				switch(token2) {
+				case END_OF_INPUT:
+					results.add(new String[]{token1String});
 					state = NameValueState.END;
-				} else {
-					if (token2.equals(eq) && !valuesOnly)
+					break;
+				case EQUAL_TOKEN:
+					if (!valuesOnly)
 						state = NameValueState.VALUE;
 					else {
-						results.add(new String[]{token1});
-						token1 = token2;
+						results.add(new String[]{token1String});
+						token1String = token2String; // token2String is "="
 						state = NameValueState.NAME; // (no state transition)
 					}
+					break;
+				case STRING_TOKEN:
+					results.add(new String[]{token1String});
+					token1String = token2String;
+					state = NameValueState.NAME; // (no state transition)
+					break;
+				default:
+					throw new RuntimeException("bug " + state.name());
 				}
 				break;
 			case VALUE:
 				token2 = tokenizer.token();
-				if (token2 == null) {
-					throw new IllegalArgumentException(msg(U.U00159, eq, token1, string));
-				} else {
-					results.add(new String[]{token1, token2});
+				token2String = tokenizer.getTokenString();
+				switch(token2) {
+				case END_OF_INPUT:
+					throw new IllegalArgumentException(msg(U.U00159, eq, token1String, string));
+				case EQUAL_TOKEN:
+					throw new IllegalArgumentException(msg(U.U00156, eq, tokenizer.getPosition(), string));
+				case STRING_TOKEN:
+					results.add(new String[]{token1String, token2String});
 					state = NameValueState.INIT;
+					break;
+				default:
+					throw new RuntimeException("bug " + state.name());
 				}
 				break;
 			default:
@@ -641,5 +494,5 @@ public class ArgsScanner {
 		}
 		return results;
 	}
-	
+
 }

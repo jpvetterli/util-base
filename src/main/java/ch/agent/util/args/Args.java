@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import ch.agent.util.STRINGS.U;
-import ch.agent.util.args.ArgsScanner.SymbolScanner;
 import ch.agent.util.base.Misc;
 import ch.agent.util.file.TextFile;
 
@@ -731,10 +730,10 @@ public class Args implements Iterable<String> {
 	private Map<String, Value> args;
 	private Map<String, String> variables;
 	private TextFile textFile; // use only one for duplicate detection to work
-	private ArgsScanner argsScanner;
+	private NameValueScanner argsScanner;
 	private SymbolScanner symScanner;
 	private Map<String, Integer> symCycleDetector;
-	private ArgsIncluder includer;
+	private FileIncluder includer;
 
 	/**
 	 * Constructor.
@@ -745,12 +744,12 @@ public class Args implements Iterable<String> {
 		def(INCLUDE);
 		variables = new HashMap<String, String>();
 		textFile = new TextFile();
-		argsScanner = new ArgsScanner(leftQuote, rightQuote, nameValueSeparator, escape);
+		argsScanner = new NameValueScanner(leftQuote, rightQuote, nameValueSeparator, escape);
 		symScanner = new SymbolScanner(DOLLAR);
 		symCycleDetector = new HashMap<String, Integer>();
 	}
 	
-	private ArgsScanner getScanner() {
+	private NameValueScanner getScanner() {
 		return argsScanner;
 	}
 	
@@ -773,18 +772,18 @@ public class Args implements Iterable<String> {
 		return a;
 	}
 	
-	private ArgsIncluder getIncluder(String className) {
-		ArgsIncluder inc = null;
+	private FileIncluder getIncluder(String className) {
+		FileIncluder inc = null;
 		if (className != null) {
 			try {
-				inc = (ArgsIncluder) Class.forName(className).newInstance();
+				inc = (FileIncluder) Class.forName(className).newInstance();
 				inc.setTextFileReader(textFile);
 			} catch (Exception e) {
 				throw new IllegalArgumentException(msg(U.U00161, className), e);
 			}
 		} else {
 			if (includer == null) {
-				includer = new ArgsIncluder();
+				includer = new FileIncluder();
 				includer.setTextFileReader(textFile);
 			}
 			inc = includer;
@@ -1147,7 +1146,7 @@ public class Args implements Iterable<String> {
 	}
 	
 	private List<String[]> parseInclude(String text) {
-		ArgsIncluder argsIncluder = null;
+		FileIncluder argsIncluder = null;
 		try {
 			Args a = parseIncludeArgs(text);
 			String fileName = a.get("");

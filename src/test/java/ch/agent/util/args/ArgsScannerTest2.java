@@ -13,11 +13,11 @@ import ch.agent.util.STRINGS.U;
 
 public class ArgsScannerTest2 {
 
-	private ArgsScanner scanner;
+	private NameValueScanner scanner;
 
 	@Before
 	public void setUp() throws Exception {
-		scanner = new ArgsScanner();
+		scanner = new NameValueScanner();
 	}
 
 	@Test

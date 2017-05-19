@@ -13,13 +13,120 @@ import ch.agent.util.STRINGS.U;
 
 public class ArgsScannerTest {
 
-	private ArgsScanner scanner;
+	private static final boolean PRINT = false;
+	
+	private static void assertMessage(Throwable e, String prefix) {
+		assertEquals(prefix, e.getMessage().substring(0, 6));
+	}
+
+	private NameValueScanner scanner;
 
 	@Before
 	public void setUp() throws Exception {
-		scanner = new ArgsScanner();
+		scanner = new NameValueScanner();
 	}
 
+	@Test
+	public void testDoc0() {
+		List<String[]> result = scanner.asValuesAndPairs("a b c");
+		assertEquals("a", result.get(0)[0]);
+		assertEquals("b", result.get(1)[0]);
+		assertEquals("c", result.get(2)[0]);
+	}
+	
+	@Test
+	public void testDoc0a() {
+		assertEquals("a b c", scanner.asValuesAndPairs("a\\ b\\ c").get(0)[0]);
+	}
+	
+	@Test
+	public void testDoc0b() {
+		try {
+			List<String[]> result = scanner.asValuesAndPairs("a = [=]");
+			assertEquals("a", result.get(0)[0]);
+			assertEquals("=", result.get(0)[1]);
+		} catch (Exception e) {
+			assertMessage(e, U.U00103);
+		}
+	}
+	
+	@Test
+	public void testDoc0c() {
+		try {
+			scanner.asValuesAndPairs("a==");
+			fail("exception expected");
+		} catch (Exception e) {
+			if (PRINT) e.printStackTrace();
+			assertMessage(e, U.U00156);
+		}
+	}
+	
+	@Test
+	public void testDoc0d() {
+		try {
+			scanner.asValuesAndPairs("= = =");
+			fail("exception expected");
+		} catch (Exception e) {
+			if (PRINT) e.printStackTrace();
+			assertMessage(e, U.U00156);
+		}
+	}
+
+	@Test
+	public void testDoc0e() {
+		List<String[]> result = scanner.asValuesAndPairs("[][][]");
+		assertEquals("", result.get(0)[0]);
+		assertEquals("", result.get(1)[0]);
+		assertEquals("", result.get(2)[0]);
+	}
+
+	@Test
+	public void testDoc1() {
+		List<String[]> result = scanner.asValuesAndPairs("a = [b c]");
+		assertEquals("a", result.get(0)[0]);
+		assertEquals("b c", result.get(0)[1]);
+	}
+	
+	@Test
+	public void testDoc1a() {
+		List<String[]> result = scanner.asValuesAndPairs("a = b");
+		assertEquals("a", result.get(0)[0]);
+		assertEquals("b", result.get(0)[1]);
+	}
+	
+	@Test
+	public void testDoc2() {
+		List<String[]> result = scanner.asValuesAndPairs("a \\= [b c]");
+		assertEquals("a", result.get(0)[0]);
+		assertEquals("=", result.get(1)[0]);
+		assertEquals("b c", result.get(2)[0]);
+	}
+	
+	@Test
+	public void testDoc2a() {
+		List<String[]> result = scanner.asValuesAndPairs("a [=] [b c]");
+		assertEquals("a", result.get(0)[0]);
+		assertEquals("=", result.get(1)[0]);
+		assertEquals("b c", result.get(2)[0]);
+	}
+
+	@Test
+	public void testDoc3() {
+		assertEquals("a b \\c", scanner.asValuesAndPairs("[a b \\c]").get(0)[0]);
+	}
+	@Test
+	public void testDoc4() {
+		assertEquals("a [b] c", scanner.asValuesAndPairs("[a [b] c]").get(0)[0]);
+	}
+	@Test
+	public void testDoc5() {
+		assertEquals("a b] c", scanner.asValuesAndPairs("[a b\\] c]").get(0)[0]);
+	}
+	@Test
+	public void testDoc6() {
+		assertEquals("a [b c", scanner.asValuesAndPairs("[a \\[b c]").get(0)[0]);
+	}
+	
 	@Test
 	public void testOneString() {
 		assertEquals("foo", scanner.asValuesAndPairs("foo").get(0)[0]);
@@ -420,7 +527,7 @@ public class ArgsScannerTest {
 	@Test
 	public void testMetaChars02() {
 		try {
-			ArgsScanner customScanner = new ArgsScanner('(', ')', ':', '\\');
+			NameValueScanner customScanner = new NameValueScanner('(', ')', ':', '\\');
 			List<String[]> result = customScanner.asValuesAndPairs("OOPS (f =(o) o) : (b\\ar (w h a t) b\\ar)");
 			assertEquals("f =(o) o", result.get(1)[0]);
 			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
@@ -432,7 +539,7 @@ public class ArgsScannerTest {
 	@Test
 	public void testMetaChars02a() {
 		try {
-			ArgsScanner customScanner = new ArgsScanner('(', ')', ':', '\\');
+			NameValueScanner customScanner = new NameValueScanner('(', ')', ':', '\\');
 			List<String[]> result = customScanner.asValuesAndPairs("OOPS (f =\\(o\\) o) : (b\\ar (w h a t) b\\ar)");
 			assertEquals("f =(o) o", result.get(1)[0]);
 			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
@@ -444,7 +551,7 @@ public class ArgsScannerTest {
 	@Test
 	public void testMetaChars04() {
 		try {
-			ArgsScanner customScanner = new ArgsScanner('x', 'x', 'x', 'x');
+			NameValueScanner customScanner = new NameValueScanner('x', 'x', 'x', 'x');
 			List<String[]> result = customScanner.asValuesAndPairs("Tokenizer.MetaCharacters=xxxx OOPS (f =(o\\) o) : (b\\ar (w h a t\\) b\\ar)");
 			assertEquals("f =(o) o", result.get(1)[0]);
 			assertEquals("b\\ar (w h a t) b\\ar", result.get(1)[1]);
@@ -457,7 +564,7 @@ public class ArgsScannerTest {
 	@Test
 	public void testMetaChars05() {
 		try {
-			ArgsScanner customScanner = new ArgsScanner('\'', '\'', ':', '\\');
+			NameValueScanner customScanner = new NameValueScanner('\'', '\'', ':', '\\');
 			customScanner.asValuesAndPairs("a: 'x y z'");
 			fail("expected an exception");
 		} catch (Exception e) {

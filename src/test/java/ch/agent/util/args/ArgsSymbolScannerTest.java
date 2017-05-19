@@ -8,8 +8,6 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import ch.agent.util.args.ArgsScanner.SymbolScanner;
-
 public class ArgsSymbolScannerTest {
 
 	private static final boolean DEBUG = false;

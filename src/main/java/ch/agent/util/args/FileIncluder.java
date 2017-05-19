@@ -9,7 +9,18 @@ import java.util.Map;
 import ch.agent.util.STRINGS.U;
 import ch.agent.util.file.TextFile;
 
-public class ArgsIncluder {
+/**
+ * Support for including parameters from a file. Features are:
+ * <ul>
+ * <li>Files can reside on the file system or on the classpath.
+ * <li>Cyclical inclusion can be detected.
+ * <li>Lines with a # as the first non-whitespace characters are skipped.
+ * <li>There a <em>simple</em> mode, where all lines not looking like a
+ * name-value pair are skipped (the separator is =).
+ * </ul>
+ * Subclasses can be written to support more complex requirements.
+ */
+public class FileIncluder {
 
 	private static final String SEPARATOR = " ";
 	private static final String COMMENT = "#";
@@ -49,12 +60,14 @@ public class ArgsIncluder {
 	/**
 	 * Constructor.
 	 */
-	public ArgsIncluder() {
+	public FileIncluder() {
 	}
 	
 	/**
 	 * Set the text file reader to use. Using the same reader when there are
-	 * recursive includes makes it possible to detect cycles.
+	 * recursive includes makes it possible to detect cycles. If this method is
+	 * not used or if a null reader is passed, a new reader is created each time
+	 * one is needed.
 	 * 
 	 * @param textFile
 	 *            a text file reader
@@ -64,11 +77,14 @@ public class ArgsIncluder {
 	}
 	
 	/**
-	 * Return the content of a file as a list of name-value pairs. The second
-	 * parameter is a map where keys are the names to include. If the
-	 * corresponding value is an non-empty string it is used to translate the
-	 * name. Only names present in the map will be returned. Mapping can be
-	 * disabled by passing a null map.
+	 * Return the content of a file as a list of name-value pairs and isolated
+	 * values. The second parameter is a map where keys are the names to
+	 * include. If the corresponding value is an non-empty string it is used to
+	 * translate the name. Only names present in the map will be returned.
+	 * Mapping can be disabled by passing a null map.
+	 * <p>
+	 * Passing the keyword <em>simple</em> as additional configuration enables a
+	 * mode where all lines not containing an equal sign are skipped.
 	 * 
 	 * @param scanner
 	 *            the scanner to use
@@ -80,7 +96,7 @@ public class ArgsIncluder {
 	 *            additional configuration
 	 * @return a list of String arrays of length 1 or 2
 	 */
-	public List<String[]> include(ArgsScanner scanner, String fileName, Map<String, String> names, String configuration) {
+	public List<String[]> include(NameValueScanner scanner, String fileName, Map<String, String> names, String configuration) {
 		boolean skipIfNotEqual = configuration == null ? true : configuration.equals("simple");
 		List<String[]> scanned = include(scanner, fileName, skipIfNotEqual);
 		if (names != null) {
@@ -99,7 +115,7 @@ public class ArgsIncluder {
 	
 	/**
 	 * Return the content of a file as a list of name-value pairs and or
-	 * standalone values.
+	 * isolated values.
 	 * 
 	 * @param scanner
 	 *            the scanner to use
@@ -107,13 +123,13 @@ public class ArgsIncluder {
 	 *            the file to include
 	 * @return a list of String arrays of length 1 or 2
 	 */
-	public List<String[]> include(ArgsScanner scanner, String fileName) {
+	public List<String[]> include(NameValueScanner scanner, String fileName) {
 		return include(scanner, fileName, false);
 	}
 	
 	/**
 	 * Return the content of a file as a list of name-value pairs and or
-	 * standalone values.
+	 * isolated values.
 	 * 
 	 * @param scanner
 	 *            the scanner to use
@@ -124,7 +140,7 @@ public class ArgsIncluder {
 	 * 
 	 * @return a list of String arrays of length 1 or 2
 	 */
-	protected List<String[]> include(ArgsScanner scanner, String fileName, boolean skipIfNotEqual) {
+	protected List<String[]> include(NameValueScanner scanner, String fileName, boolean skipIfNotEqual) {
 		ArgsFileVisitor visitor = new ArgsFileVisitor(skipIfNotEqual);
 		if (textFile == null)
 			textFile = new TextFile();
