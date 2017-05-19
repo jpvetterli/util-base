@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Before;
@@ -233,11 +234,10 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.def("b a]z");
-			args.setSequenceTrackingMode(true);
-			args.parse("foo = [b a r] [b a\\]z]=barf");
+			List<String[]> sequence = new ArrayList<String[]>();
+			args.parse("foo = [b a r] [b a\\]z]=barf", sequence);
 			assertEquals("b a r", args.get("foo"));
 			assertEquals("barf", args.get("b a]z"));
-			List<String[]> sequence = args.getSequence();
 			assertEquals("foo", sequence.get(0)[0]);
 			assertEquals("b a]z", sequence.get(1)[0]);
 		} catch (Exception e) {
@@ -261,12 +261,11 @@ public class ArgsTest {
 		try {
 			args.def("foo");
 			args.def("b a]z");
-			args.setSequenceTrackingMode(true);
-			args.parse("foo = [[b a r] [2nd value]] [b a\\]z]=barf");
+			List<String[]> sequence = new ArrayList<String[]>();
+			args.parse("foo = [[b a r] [2nd value]] [b a\\]z]=barf", sequence);
 			assertEquals("b a r", args.split("foo")[0]);
 			assertEquals("2nd value", args.getVal("foo").stringValues()[1]);
 			assertEquals("barf", args.getVal("b a]z").stringValue());
-			List<String[]> sequence = args.getSequence();
 			assertEquals("foo", sequence.get(0)[0]);
 			assertEquals("[b a r] [2nd value]", sequence.get(0)[1]);
 			assertEquals("b a]z", sequence.get(1)[0]);

@@ -731,7 +731,6 @@ public class Args implements Iterable<String> {
 	private Map<String, Value> args;
 	private Map<String, String> variables;
 	private TextFile textFile; // use only one for duplicate detection to work
-	private List<String[]> sequence;
 	private ArgsScanner argsScanner;
 	private SymbolScanner symScanner;
 	private Map<String, Integer> symCycleDetector;
@@ -794,32 +793,6 @@ public class Args implements Iterable<String> {
 	}
 	
 	/**
-	 * Activate or deactivate the parser sequence tracking mode. This mode must
-	 * be set before using {@link #parse} for the {@link #getSequence} method to
-	 * return a non-null result. By default this mode is not active.
-	 * 
-	 * @param track
-	 *            if true, sequence tracking will be activated, else it will be deactivated
-	 */
-	public void setSequenceTrackingMode(boolean track) {
-		if (track)
-			sequence = new ArrayList<String[]>();
-		else
-			sequence = null;
-	}
-
-	/**
-	 * Get the name-value pairs in original sequence. This method returns null
-	 * when sequence tracking is not active. See
-	 * {@link #setSequenceTrackingMode}.
-	 * 
-	 * @return a list of pairs or null
-	 */
-	public List<String[]> getSequence() {
-		return sequence;
-	}
-	
-	/**
 	 * Return an iterator over all parameter names.
 	 * Parameter names are not returned in any predictable order.
 	 * 
@@ -867,11 +840,21 @@ public class Args implements Iterable<String> {
 	 * @throws IllegalArgumentException
 	 */
 	public void parse(String string) {
-		if (sequence != null)
-			sequence.clear();
-		parse(scan(string));
+		parse(scan(string), null);
 	}
-	
+
+	/**
+	 * Parse input and collect parameters in sequence.
+	 * Name-values are collected in arrays of length 2 and keywords
+	 * in arrays of length 1. 
+	 * 
+	 * @param input a string
+	 * @param collector a list taking names and values or null
+	 */
+	public void parse(String input, List<String[]> collector) {
+		parse(scan(input), collector);
+	}
+
 	private List<String[]> scan(String string) {
 		return getScanner().asValuesAndPairs(string);
 	}
@@ -882,26 +865,26 @@ public class Args implements Iterable<String> {
 	 * @param pairs
 	 *            a list of arrays of length 1 or 2 (name and value)
 	 */
-	private void parse(List<String[]> pairs) {
+	private void parse(List<String[]> pairs, List<String[]> collector) {
 		for (String[] pair : pairs) {
 			switch (pair.length) {
 			case 1:
 				// lone value changed by resolution could be name-value, parse recursively 
 				String resolved = resolve(pair[0]);
 				if (resolved != pair[0])
-					parse(scan(resolved));
+					parse(scan(resolved), collector);
 				else 
-					put("", pair[0]);
+					put("", pair[0], collector);
 				break;
 			case 2:
 				pair[0] = resolve(pair[0]);
 				pair[1] = resolve(pair[1]);
 				if (pair[0].equals(COND))
-					parse(scan(parseIf(pair[1])));
+					parse(scan(parseIf(pair[1])), collector);
 				else if (pair[0].equals(INCLUDE))
-					parse(parseInclude(pair[1]));
+					parse(parseInclude(pair[1]), collector);
 				else
-					put(pair[0], pair[1]);
+					put(pair[0], pair[1], collector);
 				break;
 			default:
 				throw new RuntimeException("bug: " + pair.length);
@@ -925,6 +908,10 @@ public class Args implements Iterable<String> {
 	public Definition def(String name) {
 		putValue(name, new Value(name));
 		return new Definition(this, name);
+	}
+	
+	public void put(String name, String value) {
+		put(name, value, null);
 	}
 	
 	/**
@@ -956,9 +943,9 @@ public class Args implements Iterable<String> {
 	 *            the value of the parameter
 	 * @throws IllegalArgumentException
 	 */
-	public void put(String name, String value) {
+	public void put(String name, String value, List<String[]> collector) {
 		Misc.nullIllegal(name, "name null");
-		if (!putKeyword(name, value)) {
+		if (!putKeyword(name, value, collector)) {
 			Value v = args.get(name);
 			if (v == null) {
 				if (isVariable(name))
@@ -970,21 +957,21 @@ public class Args implements Iterable<String> {
 					v.append(value);
 				else
 					v.set(value);
-				if (sequence != null)
-					sequence.add(new String[] {name, value});
+				if (collector != null)
+					collector.add(new String[] {name, value});
 			}
 		}
 	}
 	
-	private boolean putKeyword(String name, String value) {
+	private boolean putKeyword(String name, String value, List<String[]> collector) {
 		boolean keyword = false;
 		if (name.length() == 0) {
 			Value v = args.get(value); // value, not name
 			if (v != null && v.getDefault().equals(FALSE)) {
 				v.set(TRUE);
 				keyword = true;
-				if (sequence != null)
-					sequence.add(new String[] {value, ""});
+				if (collector != null)
+					collector.add(new String[] {value});
 			}
 		}
 		return keyword;

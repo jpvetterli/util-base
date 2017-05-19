@@ -127,18 +127,18 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 				syntax.def(spec.getName()).repeatable().init("");
 			map.put(spec.getName(), spec);
 		}
-		syntax.setSequenceTrackingMode(true);
+		List<String[]> sequence = new ArrayList<String[]>();
 		try {
 			if (getExecution() != null)
-				syntax.parse(getExecution());
+				syntax.parse(getExecution(), sequence);
 		} catch (Exception e) {
 			throw new ConfigurationException(msg(U.C24), e);
 		}
-		for (String[] statement : syntax.getSequence()) {
+		for (String[] statement : sequence) {
 			CommandSpecification spec = map.get(statement[0]);
-			if (spec.isParameterless() && statement[1].length() > 0)
+			if (spec.isParameterless() && statement.length > 1)
 				throw new ConfigurationException(msg(U.C25, statement[0], statement[1]));
-			executables.add(new ExecutableCommandSpecification(spec, spec.isParameterless() ? "" : statement[1]));
+			executables.add(new ExecutableCommandSpecification(spec, statement.length == 2 ? statement[1] : ""));
 		}
 		return executables;
 	}
