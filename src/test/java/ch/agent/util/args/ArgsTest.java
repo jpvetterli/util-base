@@ -108,6 +108,18 @@ public class ArgsTest {
 	}
 	
 	@Test
+	public void testRepeatedPut() {
+		try {
+			args.def("foo");
+			args.put("foo", "value1");
+			args.put("foo", "value2");
+			assertEquals("value2", args.get("foo"));
+		} catch (Exception e) {
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
 	public void testIntegerParameter() {
 		try {
 			args.def("foo").init("42");
