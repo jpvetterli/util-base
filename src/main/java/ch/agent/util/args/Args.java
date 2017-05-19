@@ -253,6 +253,13 @@ public class Args implements Iterable<String> {
 			return this;
 		}
 		
+		/**
+		 * Set the parameter as repeatable. A repeatable can have zero or more
+		 * values. The values are returned in an array. See for example
+		 * {@link Value#stringValues}.
+		 * 
+		 * @return the definition
+		 */
 		public Definition repeatable() {
 			Value v = args().internalGet(name());
 			if (v == null)
@@ -337,7 +344,13 @@ public class Args implements Iterable<String> {
 					result = defaultValue;
 					break;
 				default:
-					throw new IllegalArgumentException(msg(U.U00106, getName(), result));
+					List<String> unresolved = new ArrayList<String>();
+					Iterator<String> it = parts.iterator();
+					while (it.hasNext()) {
+						if (it.next() == null)
+							unresolved.add(it.next());
+					}
+					throw new IllegalArgumentException(msg(U.U00106, getName(), Misc.join(", ", unresolved), result));
 						
 				}
 			}
@@ -350,7 +363,11 @@ public class Args implements Iterable<String> {
 		 * is thrown if the number of strings is too small or too large, as
 		 * specified by two parameters. Negative parameters are ignored.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables. 
+		 * If there is no value and no default value was set, an exception is
+		 * thrown unless the parameter is repeatable, in which case the method
+		 * returns an empty array, constraints permitting.
+		 * <p>
+		 * See {@link #stringValue} for explanations about unresolved variables.
 		 * 
 		 * @param min
 		 *            minimal number of strings (no limit if negative)
@@ -359,7 +376,9 @@ public class Args implements Iterable<String> {
 		 * @return an array of strings
 		 */
 		public String[] stringValues(int min, int max) {
-			List<String> values = getScanner().asValues(stringValue());
+			List<String> values = 
+				(isRepeatable() && value == null && defaultValue == null) ? 
+				new ArrayList<String>() : getScanner().asValues(stringValue());
 			checkSize(values.size(), min, max);
 			return values.toArray(new String[values.size()]);
 		}
@@ -895,8 +914,14 @@ public class Args implements Iterable<String> {
 		for (String[] pair : pairs) {
 			switch (pair.length) {
 			case 1:
-				pair[0] = resolve(pair[0]);
-				put("", pair[0]);
+				// is it an isolated variable reference?
+				String resolved = resolveSimpleReference(pair[0]);
+				if (resolved != null)
+					parse(resolved);
+				else {
+					pair[0] = resolve(pair[0]);
+					put("", pair[0]);
+				}
 				break;
 			case 2:
 				pair[0] = resolve(pair[0]);
@@ -1017,13 +1042,13 @@ public class Args implements Iterable<String> {
 				// null is a stand-in for $$
 				assert it.hasNext();
 				String symbol = it.next();
-				if (!checkForCycle(symbol, level, cycleDetector))
-					throw new IllegalArgumentException(msg(U.U00123, input, symbol));
 				String resolved = variables.get(symbol);
 				if (resolved == null) {
 					b.append(DOLLARS);
 					b.append(symbol);
 				} else {
+					if (!checkForCycle(symbol, level, cycleDetector))
+						throw new IllegalArgumentException(msg(U.U00123, input, symbol));
 					changed = true;
 					b.append(resolved);
 				}
@@ -1032,6 +1057,25 @@ public class Args implements Iterable<String> {
 		}
 		// important! return input object if no change
 		return changed ? resolve0(b.toString(), ++level, cycleDetector) : input;
+	}
+	
+	/**
+	 * Resolve simple reference if possible.
+	 * 
+	 * @param input
+	 *            a string
+	 * @return the simple reference resolved or null if unresolved or not a
+	 *         simple reference
+	 */
+	private String resolveSimpleReference(String input) {
+		if (input == null)
+			throw new IllegalArgumentException("input null");
+		String resolved = null;
+		List<String> parts = symScanner.split(input);
+		if (parts.size() == 2) {
+			resolved = variables.get(parts.get(1));
+		}
+		return resolved;
 	}
 	
 	private boolean checkForCycle(String symbol, int level, Map<String, Integer> cycleDetector) {
@@ -1207,6 +1251,10 @@ public class Args implements Iterable<String> {
 		}
 		variables.clear();
 		textFile.setDuplicateDetection(true); // resets duplicate detection
+	}
+	
+	public static void main(String[] ign) {
+		System.out.println("foo" + '+'+ "bar");
 	}
 	
 }

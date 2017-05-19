@@ -263,6 +263,16 @@ public class ArgsTest {
 	}
 	
 	@Test
+	public void testParser1() {
+		try {
+			args.parse("");
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
 	public void testParser2() {
 		try {
 			args.def("foo");
@@ -342,6 +352,7 @@ public class ArgsTest {
 			args3.parse(args2.get("bar"));
 			assertEquals(" xyzzy + val1 ", args3.get("baf"));
 		} catch (Exception e) {
+			e.printStackTrace();
 			fail("unexpected exception");
 		}
 	}
@@ -911,6 +922,61 @@ public class ArgsTest {
 		}
 	}
 	
+	@Test
+	public void testRepeatable1() {
+		try {
+			args.def("list").repeatable();
+			args.put("list", "1");
+			args.put("list", "2");
+			args.put("list", "3");
+			String[] list = args.split("list");
+			assertEquals(3, list.length);
+			int[] ints = args.getVal("list").intValues();
+			assertEquals(1, ints[0]);
+			assertEquals(2, ints[1]);
+			assertEquals(3, ints[2]);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testRepeatable2() {
+		try {
+			args.def("list").repeatable();
+			String[] list = args.split("list");
+			assertEquals(0, list.length);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testRepeatable3() {
+		try {
+			args.def("list").repeatable();
+			double[] list = args.getVal("list").doubleValues();
+			assertEquals(0, list.length);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testRepeatable4() {
+		try {
+			args.def("list").repeatable();
+			args.getVal("list").doubleValues(1, 2);
+			fail("exception expected");
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			assertMessage(e, U.U00110);
+		}
+	}
+
 	@Test
 	public void testSplitInt1() {
 		try {

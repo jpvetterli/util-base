@@ -126,7 +126,6 @@ public class ArgsSymbolScannerTest {
 	public void testSplit16() {
 		try {
 			List<String> output = scanner.split("$$one");
-			System.out.println(output);
 			assertEquals(2, output.size());
 			assertEquals(null, output.get(0));
 			assertEquals("one", output.get(1));

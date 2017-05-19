@@ -319,6 +319,91 @@ public class ArgsVariablesTest {
 	}
 	
 	@Test
+	public void testInfLoop3() {
+		// bug in util-ioc-akka ServiceTest#test4: unresolved variables
+		try {
+			args.def("x");
+			
+			// this does not loop:
+			args.parse("$RESOLVED=resolved x=[a=$$UNRESOLVED b=x]");
+			assertEquals("a=$$UNRESOLVED b=x", args.getVal("x").rawValue());
+			args.reset(); 
+	
+			// this does not loop:
+			args.parse("$RESOLVED=resolved x=[a=$$UNRESOLVED b=$$UNRESOLVED2]");
+			assertEquals("a=$$UNRESOLVED b=$$UNRESOLVED2", args.getVal("x").rawValue());
+			args.reset(); 
+			
+			// this loops:
+			args.parse("$RESOLVED=resolved x=[a=$$UNRESOLVED b=$$RESOLVED]"); 
+			assertEquals("a=$$UNRESOLVED b=resolved", args.getVal("x").rawValue());
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
+	
+	@Test
+	public void testInfLoop3_ServiceTest_test4_a() {
+		// version with non-empty $SVC-REQ
+		try {
+			String[] spec = new String[]{
+				"$SVC-AC=CaseChangerServiceActor" ,
+				"$SVC-BODY=[name = $$SVC-NAME $$SVC-REQ actor-class=$$SVC-AC]", 
+				"module=[$SVC-NAME=CCS1 $SVC-REQ=[require=FOO] $$SVC-BODY]", 
+			};
+			
+			args.def("module").repeatable();
+			args.parse(spec);
+			String expect = "$SVC-NAME=CCS1 $SVC-REQ=[require=FOO] name = $$SVC-NAME $$SVC-REQ actor-class=CaseChangerServiceActor";
+			assertEquals(expect, args.getVal("module").rawValues()[0]);
+
+			Args args2 = new Args();
+			args2.def("name");
+			args2.def("require").repeatable();
+			args2.def("actor-class");
+			args2.parse(expect);
+			assertEquals("CCS1", args2.get("name"));
+			assertEquals("FOO", args2.split("require")[0]);
+			assertEquals("CaseChangerServiceActor", args2.get("actor-class"));
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testInfLoop3_ServiceTest_test4_b() {
+		// version with empty $SVC-REQ
+		try {
+			String[] spec = new String[]{
+				"$SVC-AC=CaseChangerServiceActor" ,
+				"$SVC-BODY=[name = $$SVC-NAME $$SVC-REQ actor-class=$$SVC-AC]", 
+				"module=[$SVC-NAME=CCS1 $SVC-REQ=[] $$SVC-BODY]", 
+			};
+			
+			args.def("module").repeatable();
+			args.parse(spec);
+			String expect = "$SVC-NAME=CCS1 $SVC-REQ=[] name = $$SVC-NAME $$SVC-REQ actor-class=CaseChangerServiceActor";
+			assertEquals(expect, args.getVal("module").rawValues()[0]);
+
+			Args args2 = new Args();
+			args2.def("name");
+			args2.def("require").repeatable();
+			args2.def("actor-class");
+			args2.parse(expect);
+			assertEquals("CCS1", args2.get("name"));
+			assertEquals(0, args2.split("require").length);
+			assertEquals("CaseChangerServiceActor", args2.get("actor-class"));
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
 	public void testBadVariable1() {
 		try {
 			args.putVariable("", "val0");
