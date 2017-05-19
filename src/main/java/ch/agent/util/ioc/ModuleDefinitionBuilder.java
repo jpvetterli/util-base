@@ -92,12 +92,13 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 	 */
 	@SuppressWarnings("unchecked")
 	protected MD build(Args p) {
+		// get configuration in raw mode because unresolved variables are okay at this point
 		return (MD) new ModuleDefinition<M>(
 				p.get(MODULE_NAME), 
 				p.get(MODULE_CLASS), 
 				p.split(MODULE_REQUIREMENT), 
 				p.split(MODULE_PREDECESSOR),
-				p.get(MODULE_CONFIG));
+				p.getVal(MODULE_CONFIG).rawValue());
 	}
 
 }

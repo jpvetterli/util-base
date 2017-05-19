@@ -42,7 +42,7 @@ public class ConfigurationTest {
 					p.get(MODULE_CLASS), 
 					p.split(MODULE_REQUIREMENT), 
 					p.split(MODULE_PREDECESSOR),
-					p.get(MODULE_CONFIG));
+					p.getVal(MODULE_CONFIG).rawValue());
 		}
 
 		@Override

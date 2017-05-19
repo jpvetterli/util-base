@@ -115,7 +115,8 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 */
 	@SuppressWarnings("unchecked")
 	protected C build(Args p) {
-		String[] moduleStatements = p.split(MODULE);
+		// get in raw mode because unresolved variables are okay at this point
+		String[] moduleStatements = p.getVal(MODULE).rawValues();
 		String exec = p.get(EXEC);
 		List<D> sortedModules = parseModuleSpecifications(moduleStatements);
 		return (C) new Configuration<D,M>(sortedModules, exec);
