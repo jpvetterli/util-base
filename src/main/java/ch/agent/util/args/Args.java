@@ -914,14 +914,12 @@ public class Args implements Iterable<String> {
 		for (String[] pair : pairs) {
 			switch (pair.length) {
 			case 1:
-				// is it an isolated variable reference?
-				String resolved = resolveSimpleReference(pair[0]);
-				if (resolved != null)
-					parse(resolved);
-				else {
-					pair[0] = resolve(pair[0]);
+				// lone value changed by resolution could be name-value, parse recursively 
+				String resolved = resolve(pair[0]);
+				if (resolved != pair[0])
+					parse(scan(resolved));
+				else 
 					put("", pair[0]);
-				}
 				break;
 			case 2:
 				pair[0] = resolve(pair[0]);
@@ -1057,25 +1055,6 @@ public class Args implements Iterable<String> {
 		}
 		// important! return input object if no change
 		return changed ? resolve0(b.toString(), ++level, cycleDetector) : input;
-	}
-	
-	/**
-	 * Resolve simple reference if possible.
-	 * 
-	 * @param input
-	 *            a string
-	 * @return the simple reference resolved or null if unresolved or not a
-	 *         simple reference
-	 */
-	private String resolveSimpleReference(String input) {
-		if (input == null)
-			throw new IllegalArgumentException("input null");
-		String resolved = null;
-		List<String> parts = symScanner.split(input);
-		if (parts.size() == 2) {
-			resolved = variables.get(parts.get(1));
-		}
-		return resolved;
 	}
 	
 	private boolean checkForCycle(String symbol, int level, Map<String, Integer> cycleDetector) {
