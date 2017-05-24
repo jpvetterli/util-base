@@ -115,6 +115,21 @@ public class MiscTest {
 	}
 	
 	@Test
+	public void testJoin5() {
+		try {
+			Collection<String> s = new ArrayList<String>();
+			s.add("a");
+			s.add("b");
+			s.add("c");
+			assertEquals("[1, 2, 3]", Misc.join("[", ", ", "]", new Integer[]{1, 2, 3}));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
+	
+	@Test
 	public void testSplit01() {
 		try {
 			String[] parts = Misc.split("a:b", ":", 2);

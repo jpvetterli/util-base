@@ -1,5 +1,6 @@
 package ch.agent.util.base;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -9,7 +10,6 @@ import java.util.Iterator;
  *
  */
 public class Misc {
-
 	/**
 	 * Ensure a reference is not null. The description passed in the second
 	 * argument is usually very short (like "foo null"), as it should only help
@@ -40,32 +40,47 @@ public class Misc {
 	}
 	
 	/**
-	 * Join elements of an array of items into a string using a separator.
-	 * Elements are turned into a string using {@link #toString}.
+	 * Join elements of an array of items into a string using zero or more
+	 * separators. Elements are turned into strings using {@link #toString}.
 	 * 
-	 * @param <T> the type of items in the array
+	 * @param <T>
+	 *            the type of collection items
 	 * @param separator
 	 *            a non-null separator
 	 * @param items
-	 *            an non-null array of items
+	 *            an non-null collection of items
 	 * @return a string
 	 */
-	public static <T>String join(String separator, T[] items) {
-		nullIllegal(separator, "separator null");
+	public static <T> String join(String separator, T[] items) {
 		nullIllegal(items, "items null");
-		StringBuilder b = new StringBuilder();
-		if (items.length > 0)
-			b.append(items[0].toString());
-		for (int i = 1; i < items.length; i++) {
-			b = b.append(separator);
-			b = b.append(items[i].toString());
-		}
-		return b.toString();
+		return join("", separator, "", Arrays.asList(items));
+	}
+	
+	/**
+	 * Join elements of an array of items into a string using a prefix, zero or
+	 * more separators, and a suffix. Elements are turned into strings using
+	 * {@link #toString}.
+	 * 
+	 * @param <T>
+	 *            the type of collection items
+	 * @param prefix
+	 *            a non-null prefix
+	 * @param separator
+	 *            a non-null separator
+	 * @param suffix
+	 *            a non-null suffix
+	 * @param items
+	 *            an non-null collection of items
+	 * @return a string
+	 */
+	public static <T> String join(String prefix, String separator, String suffix, T[] items) {
+		nullIllegal(items, "items null");
+		return join(prefix, separator, suffix, Arrays.asList(items));
 	}
 	
 	/**
 	 * Join elements of a collection of items into a string using a separator.
-	 * Elements are turned into a string using {@link #toString}.
+	 * Elements are turned into strings using {@link #toString}.
 	 * 
 	 * @param <T> the type of collection items
 	 * @param separator
@@ -75,9 +90,34 @@ public class Misc {
 	 * @return a string
 	 */
 	public static <T>String join(String separator, Collection<T> items) {
+		nullIllegal(items, "items null");
+		return join("", separator, "", items);
+	}
+	
+	/**
+	 * Join elements of a collection of items into a string using a prefix, zero
+	 * or more separators, and a suffix. Elements are turned into strings using
+	 * {@link #toString}.
+	 * 
+	 * @param <T>
+	 *            the type of collection items
+	 * @param prefix
+	 *            a non-null prefix
+	 * @param separator
+	 *            a non-null separator
+	 * @param suffix
+	 *            a non-null suffix
+	 * @param items
+	 *            an non-null collection of items
+	 * @return a string
+	 */
+	public static <T>String join(String prefix, String separator, String suffix, Collection<T> items) {
+		nullIllegal(prefix, "prefix null");
 		nullIllegal(separator, "separator null");
+		nullIllegal(suffix, "suffix null");
 		nullIllegal(items, "items null");
 		StringBuilder b = new StringBuilder();
+		b.append(prefix);
 		Iterator<T> it = items.iterator();
 		if (it.hasNext())
 			b.append(it.next().toString());
@@ -85,6 +125,7 @@ public class Misc {
 			b = b.append(separator);
 			b = b.append(it.next().toString());
 		}
+		b.append(suffix);
 		return b.toString();
 	}
 

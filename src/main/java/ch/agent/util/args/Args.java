@@ -14,7 +14,27 @@ import ch.agent.util.file.TextFile;
 
 /**
  * Args is a parser for command line arguments. It provides a simple language
- * and a small set of built-in operators. It is named after the parameter of the
+ * and a small set of built-in operators. Here is a short example:
+ * <pre>
+ * <code>
+ * $greeting = hello $subject = world
+ * config = [greet=$$greeting]
+ * exec = [hello.say=[$$subject]]
+ * </code>
+ * </pre>
+ * Put the example in file {@code hello.config} and run an hypothetical 
+ * application coded with Args (command split on 2 lines):
+ * <pre>
+ * <code>
+ * prompt&gt; java -jar example.jar $subject= "zäme [you all]" \
+ *      $subject = "you too" $greeting = Hoi include=hello.config
+ * Hoi zäme
+ * Hoi you all
+ * Hoi you too
+ * </code>
+ * </pre>
+ * 
+ * Args is named after the parameter of the
  * main method of Java programs, usually written like this:
  * 
  * <pre>
@@ -240,7 +260,7 @@ public class Args implements Iterable<String> {
 	 * </code>
 	 * </pre>
 	 * 
-	 * The object is returned by method {@link #def} first.
+	 * The object is returned by method {@link Args#def} first.
 	 */
 	public class Definition {
 		private Args args; 
@@ -1151,8 +1171,8 @@ public class Args implements Iterable<String> {
 	
 	/**
 	 * Return the value object for the parameter specified. An exception is
-	 * thrown if the the name is unknown. For a nameless parameter, pass an
-	 * empty name.
+	 * thrown if the name is unknown. For a nameless parameter, pass an empty
+	 * name.
 	 * 
 	 * @param name
 	 *            the name of the parameter

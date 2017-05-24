@@ -20,7 +20,8 @@ public class LogBuffer {
 	}
 	
 	private final static int OFFSET = 3;
-	private PrintStream stderr;
+	private PrintStream capturedErr;
+	private PrintStream capturedOut;
 	private ByteArrayOutputStream capture = new ByteArrayOutputStream();
 	private String name;
 
@@ -35,19 +36,23 @@ public class LogBuffer {
 	}
 	
 	public void capture() {
-		if (stderr != null)
-			throw new IllegalStateException("stderr != null");
-		stderr = System.err;
+		if (capturedErr != null || capturedOut != null)
+			throw new IllegalStateException("err or out already captured");
+		capturedErr = System.err;
+		capturedOut = System.out;
 		capture.reset();
 		System.setErr(new PrintStream(capture));
+		System.setOut(new PrintStream(capture));
 		System.err.println("======== " + name + " ========");
 	}
 	
 	public void reset() {
-		if (stderr == null)
-			throw new IllegalStateException("stderr == null");
-		System.setErr(stderr);
-		stderr = null;
+		if (capturedErr == null || capturedOut == null)
+			throw new IllegalStateException("err or out not captured");
+		System.setErr(capturedErr);
+		System.setOut(capturedOut);
+		capturedErr = null;
+		capturedOut = null;
 	}
 	
 	public void cleanup() {
