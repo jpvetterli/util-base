@@ -29,13 +29,13 @@ public class FileIncluder {
 	private class ArgsFileVisitor implements TextFile.Visitor {
 
 		
-		private StringBuffer buffer;
+		private StringBuilder buffer;
 		private boolean skipIfNoEqual;
 		
 		public ArgsFileVisitor(boolean skipIfNoEqual) {
 			super();
 			this.skipIfNoEqual = skipIfNoEqual;
-			buffer = new StringBuffer();
+			buffer = new StringBuilder();
 		}
 
 		@Override

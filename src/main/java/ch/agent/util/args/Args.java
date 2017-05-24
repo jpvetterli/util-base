@@ -1133,7 +1133,7 @@ public class Args implements Iterable<String> {
 		if (input == null)
 			throw new IllegalArgumentException("input null");
 		boolean changed = false;
-		StringBuffer b = new StringBuffer();
+		StringBuilder b = new StringBuilder();
 		Iterator<String> it = symScanner.split(input).iterator();
 		while (it.hasNext()) {
 			String s = it.next();

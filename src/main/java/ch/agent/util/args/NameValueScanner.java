@@ -72,7 +72,7 @@ public class NameValueScanner {
 		private String input;
 		private int position; // first is 0
 		private String tokenString;
-		private StringBuffer buffer;
+		private StringBuilder buffer;
 		private State escapedState;
 		private State state;
 		private int depth; // nested BRACKET
@@ -162,7 +162,7 @@ public class NameValueScanner {
 				throw new IllegalArgumentException("input null");
 			this.input = input;
 			position = -1;
-			buffer = new StringBuffer();
+			buffer = new StringBuilder();
 			state = State.INIT;
 		}
 
