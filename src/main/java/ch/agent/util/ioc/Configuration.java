@@ -172,8 +172,6 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 		for (ExecutableCommandSpecification spec : executables) {
 			try {
 				registry.getModules().get(spec.getModule()).execute(spec.getCommand(), spec.getParameters());
-			} catch (EscapeException e) {
-				throw e;
 			} catch (Exception e) {
 				throw new Exception(msg(U.C22, spec.getCommand(), spec.getModule(), spec.getParameters()), e);
 			}

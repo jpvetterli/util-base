@@ -128,8 +128,6 @@ public class Container {
 			configuration.configure(registry);
 			configuration.initialize(registry);
 			configuration.executeCommands(registry, configuration.parseCommands(registry.getCommands().values()));
-		} catch (EscapeException e) {
-			logger.warn(lazymsg(U.C19, e.getMessage()));
 		} catch (Exception e) {
 			logger.error(lazymsg(U.C23, e.getClass().getSimpleName()));
 			Throwable cause = e;
