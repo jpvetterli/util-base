@@ -33,7 +33,7 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	 */
 	public AbstractCommand(String name) {
 		if (Misc.isEmpty(name) || name.indexOf(CommandSpecification.NAME_SEPARATOR) >= 0)
-			throw new ConfigurationException(msg(U.C50));
+			throw new IllegalArgumentException(msg(U.C50));
 		this.name = name;
 	}
 
@@ -50,7 +50,7 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	@Override
 	public void rename(String name) {
 		if (Misc.isEmpty(name))
-			throw new ConfigurationException(msg(U.C51));
+			throw new IllegalArgumentException(msg(U.C51));
 		this.name = name;
 	}
 

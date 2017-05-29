@@ -59,15 +59,15 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 		Set<String> duplicates = new HashSet<String>();
 		for (String req : required) {
 			if (name.equals(req))
-				throw new ConfigurationException(msg(U.C06, name));
+				throw new IllegalArgumentException(msg(U.C06, name));
 			if (!duplicates.add(req))
-				throw new ConfigurationException(msg(U.C13, name, req));
+				throw new IllegalArgumentException(msg(U.C13, name, req));
 		}
 		for (String prec : predecessors) {
 			if (name.equals(prec))
-				throw new ConfigurationException(msg(U.C06, name));
+				throw new IllegalArgumentException(msg(U.C06, name));
 			if (!duplicates.add(prec))
-				throw new ConfigurationException(msg(U.C13, name, prec));
+				throw new IllegalArgumentException(msg(U.C13, name, prec));
 		}
 
 		this.name = name;
@@ -107,7 +107,7 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 			Constructor<M> constructor = classe.getConstructor(String.class);
 			return constructor.newInstance(getName());
 		} catch (Exception e) {
-			throw new ConfigurationException(msg(U.C03, getName(), getClassName()), e);
+			throw new IllegalArgumentException(msg(U.C03, getName(), getClassName()), e);
 		}
 	}
 
@@ -233,7 +233,7 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 				message = msg(U.C53, requiring.getName(), Misc.join("\", \"", missing));
 			else
 				message = msg(U.C54, requiring.getName(), Misc.join("\", \"", rejected), Misc.join("\", \"", missing));
-			throw new ConfigurationException(message);
+			throw new IllegalArgumentException(message);
 		}
 	}
 

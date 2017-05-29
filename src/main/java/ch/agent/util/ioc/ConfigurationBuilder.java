@@ -160,9 +160,9 @@ public class ConfigurationBuilder<C extends Configuration<D, M>, B extends Modul
 			try {
 				D def = moduleDefinitionBuilder.build(spec);
 				if (definitions.put(def.getName(), def) != null)
-					throw new ConfigurationException(msg(U.C11, def.getName()));
+					throw new IllegalArgumentException(msg(U.C11, def.getName()));
 			} catch (Exception e) {
-				throw new ConfigurationException(msg(U.C15, spec), e);
+				throw new IllegalArgumentException(msg(U.C15, spec), e);
 			}
 		}
 	}
@@ -194,7 +194,7 @@ public class ConfigurationBuilder<C extends Configuration<D, M>, B extends Modul
 			}
 		}
 		if (missing.size() > 0)
-			throw new ConfigurationException(msg(U.C16, Misc.join("\", \"", missing)));
+			throw new IllegalArgumentException(msg(U.C16, Misc.join("\", \"", missing)));
 	}
 
 	/**
@@ -246,7 +246,7 @@ public class ConfigurationBuilder<C extends Configuration<D, M>, B extends Modul
 		try {
 			sequence = dag.sort();
 		} catch (Exception e) {
-			throw new ConfigurationException(msg(U.C09), e);
+			throw new IllegalArgumentException(msg(U.C09), e);
 		}
 		List<D> sorted = new ArrayList<D>(definitions.size());
 		for (String name : sequence) {

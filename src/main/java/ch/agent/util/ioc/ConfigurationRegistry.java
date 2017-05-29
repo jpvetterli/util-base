@@ -72,7 +72,7 @@ public class ConfigurationRegistry<M extends Module<?>> implements Serializable 
 	public void addUnique(CommandSpecification spec) {
 		CommandSpecification existing = commands.get(spec.getName());
 		if (existing != null)
-			throw new ConfigurationException(msg(U.C12, spec.getModule(), spec.getCommand()));
+			throw new IllegalArgumentException(msg(U.C12, spec.getModule(), spec.getCommand()));
 		commands.put(spec.getName(), spec);
 	}
 

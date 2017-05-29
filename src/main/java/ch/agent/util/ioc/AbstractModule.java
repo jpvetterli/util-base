@@ -39,7 +39,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	 */
 	public AbstractModule(String name) {
 		if (Misc.isEmpty(name))
-			throw new ConfigurationException(msg(U.C51));
+			throw new IllegalArgumentException(msg(U.C51));
 		this.name = name;
 		this.commandTable = new HashMap<String, Command<?>>();
 	}
@@ -100,7 +100,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	public void execute(String name, String parameters) throws Exception {
 		Command<?> command = commandTable.get(name);
 		if (command == null)
-			throw new ConfigurationException(msg(U.C17, name, getName()));
+			throw new IllegalArgumentException(msg(U.C17, name, getName()));
 		command.execute(parameters);
 	}
 
@@ -109,7 +109,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 		if (commandsLocked)
 			throw new IllegalStateException(msg(U.C56, command.getName(), getName()));
 		if (commandTable.put(command.getName(), command) != null)
-			throw new ConfigurationException(msg(U.C14, command.getName(), getName()));
+			throw new IllegalArgumentException(msg(U.C14, command.getName(), getName()));
 
 	}
 
