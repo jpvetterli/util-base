@@ -23,10 +23,9 @@ import ch.agent.util.base.Misc;
  * 
  * <pre>
  * <code>
- * module=[<em>string containing the module specification</em>]
- * module=[<em>string containing the module specification</em>]
+ * module=[<em>string containing the specification of module 1</em>]
  * ...
- * module=[<em>string containing the module specification</em>]
+ * module=[<em>string containing the specification of module N</em>]
  * </code>
  * </pre>
  * 
@@ -34,12 +33,11 @@ import ch.agent.util.base.Misc;
  * and delegates their handling to a <em>module definition builder</em> passed
  * to the constructor.
  * <p>
- * The builder also extracts the <em>execution</em>
- * specification from:
+ * The builder also extracts the <em>execution</em> specification from:
  * 
  * <pre>
  * <code>
- * execution=[<em>execution string</em>]  (abbreviated exec)
+ * execution=[<em>execution string</em>]
  * </code>
  * </pre>
  * 
@@ -52,25 +50,25 @@ import ch.agent.util.base.Misc;
  * @param <M>
  *            the module type
  */
-public class ConfigurationBuilder<C extends Configuration<D,M>, B extends ModuleDefinitionBuilder<D,M>, D extends ModuleDefinition<M>, M extends Module<?>> {
+public class ConfigurationBuilder<C extends Configuration<D, M>, B extends ModuleDefinitionBuilder<D, M>, D extends ModuleDefinition<M>, M extends Module<?>> {
 
 	public static final String MODULE = "module";
 	public static final String EXEC = "execution";
 	public static final String EXEC_AKA = "exec";
-	
+
 	private B moduleDefinitionBuilder;
 	private Args parameters;
-	
+
 	/**
 	 * Constructor.
 	 * 
-	 * @param builder the module definition builder to use
+	 * @param builder
+	 *            the module definition builder to use
 	 */
 	public ConfigurationBuilder(B builder) {
-		super();
 		this.moduleDefinitionBuilder = builder;
 	}
-	
+
 	/**
 	 * Build a configuration from a textual specification.
 	 * <p>
@@ -80,8 +78,8 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 * @param specification
 	 *            a string containing the specification
 	 * @return a configuration
-	 * @throws ConfigurationException
-	 *             if something is wrong
+	 * @throws IllegalArgumentException
+	 *             if there is an error in the specification
 	 */
 	public C build(String specification) {
 		if (parameters == null) {
@@ -92,7 +90,7 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 		parameters.parse(specification);
 		return build(parameters);
 	}
-	
+
 	/**
 	 * Define the parameter syntax.
 	 * 
@@ -110,8 +108,8 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 * @param p
 	 *            the object taking parameters
 	 * @return a configuration
-	 * @throws ConfigurationException
-	 *             if something is wrong
+	 * @throws IllegalArgumentException
+	 *             if there is a problem with parameters
 	 */
 	@SuppressWarnings("unchecked")
 	protected C build(Args p) {
@@ -119,7 +117,7 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 		String[] moduleStatements = p.getVal(MODULE).rawValues();
 		String exec = p.get(EXEC);
 		List<D> sortedModules = parseModuleSpecifications(moduleStatements);
-		return (C) new Configuration<D,M>(sortedModules, exec);
+		return (C) new Configuration<D, M>(sortedModules, exec);
 	}
 
 	/**
@@ -131,13 +129,14 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 * This method encapsulates some of the essential logic of the builder and
 	 * can be reused when overriding {@link #build(Args)}. Subclasses which need
 	 * to enforce constraints on dependency requirements should override
-	 * {@link #sortDependencies} and/or {@link #validatePrerequisite}.
+	 * {@link #sortDependencies(Map)} and/or
+	 * {@link #validatePrerequisite(ModuleDefinition, ModuleDefinition, boolean)}.
 	 * 
 	 * @param specifications
 	 *            an array of module specifications
 	 * @return a list of module definitions
-	 * @throws ConfigurationException
-	 *             when a configuration error is detected
+	 * @throws IllegalArgumentException
+	 *             if there is a parsing failure
 	 */
 	protected List<D> parseModuleSpecifications(String[] specifications) {
 		Map<String, D> definitions = new LinkedHashMap<String, D>(specifications.length);
@@ -153,8 +152,8 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 *            array of specifications
 	 * @param definitions
 	 *            a map of module definitions keyed by module name
-	 * @throws ConfigurationException
-	 *             when a configuration error is detected
+	 * @throws IllegalArgumentException
+	 *             if there is a parsing failure
 	 */
 	protected void parseModuleSpecifications(String[] specifications, Map<String, D> definitions) {
 		for (String spec : specifications) {
@@ -173,8 +172,8 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 * 
 	 * @param definitions
 	 *            a map of module definitions keyed by name
-	 * @throws ConfigurationException
-	 *             if one or more required modules are missing
+	 * @throws IllegalArgumentException
+	 *             if one or more required modules are missing or are rejected
 	 */
 	protected void validatePrerequisites(Map<String, D> definitions) {
 		List<String> missing = new ArrayList<String>();
@@ -197,7 +196,7 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 		if (missing.size() > 0)
 			throw new ConfigurationException(msg(U.C16, Misc.join("\", \"", missing)));
 	}
-	
+
 	/**
 	 * Validate a prerequisite for a module. This method is a hook for
 	 * subclasses.
@@ -208,15 +207,15 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 *            the definition of the prerequisite
 	 * @param requirement
 	 *            true if it is a requirement, false if it is a predecessor
-	 * @throws ConfigurationException
+	 * @throws IllegalArgumentException
 	 *             if the requirement is rejected
 	 */
 	protected void validatePrerequisite(D module, D prerequisite, boolean requirement) {
 	}
-	
+
 	/**
 	 * Determine a valid sequence in which modules can be initialized. At
-	 * {@link Container#shutdown}, the modules are stopped in the inverse
+	 * {@link Container#shutdown()}, the modules are stopped in the inverse
 	 * sequence.
 	 * <p>
 	 * The only constraint in this implementation is that a requirement or a
@@ -226,16 +225,17 @@ public class ConfigurationBuilder<C extends Configuration<D,M>, B extends Module
 	 * <p>
 	 * Additional constraints are delegated to subclasses. Typically, the
 	 * overriding method would call the super method, inspect the result list,
-	 * and throw a {@link ConfigurationException} if something is wrong.
+	 * and throw a {@link IllegalArgumentException} if something is wrong.
 	 * 
 	 * @param definitions
 	 *            a map of module definitions keyed by name
 	 * @return a list module definitions in valid initialization sequence
-	 * @throws ConfigurationException
+	 * @throws IllegalArgumentException
 	 *             if it is impossible to compute a valid sequence
 	 */
 	protected List<D> sortDependencies(Map<String, D> definitions) {
-		// an exception during construction is a bug because the input is clean ...
+		// an exception during construction is a bug because the input is clean
+		// ...
 		DAG<String> dag = new DAG<String>();
 		dag.add(definitions.keySet());
 		for (ModuleDefinition<M> spec : definitions.values()) {

@@ -171,7 +171,7 @@ public class TextFileTest {
 			});
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00208));
+			assertTrue(e.getCause().getMessage().startsWith(U.U00208));
 		}
 	}
 	
@@ -191,7 +191,7 @@ public class TextFileTest {
 			});
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00209));
+			assertTrue(e.getCause().getMessage().startsWith(U.U00209));
 		}
 	}
 	
@@ -219,7 +219,7 @@ public class TextFileTest {
 			textFile.write("a.txt", false, text.iterator());
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00205));
+			assertTrue(e.getCause().getMessage().startsWith(U.U00205));
 		}
 	}
 	
@@ -229,7 +229,7 @@ public class TextFileTest {
 			textFile.write("b/a.txt", false, text.iterator());
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertTrue(e.getMessage().startsWith(U.U00205));
+			assertTrue(e.getCause().getMessage().startsWith(U.U00205));
 		}
 	}
 	
@@ -258,8 +258,8 @@ public class TextFileTest {
 		try {
 			textFile.write("/a.txt", false, text.iterator());
 			fail("expected an exception");
-		} catch (FileNotFoundException e) {
-			assertTrue(e.getMessage().equals("/a.txt (Permission denied)"));
+		} catch (IllegalArgumentException e) {
+			assertTrue(e.getCause().getMessage().equals("/a.txt (Permission denied)"));
 		} catch (Exception e) {
 			fail("unexpected exception");
 		}

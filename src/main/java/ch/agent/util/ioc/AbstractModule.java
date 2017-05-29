@@ -28,7 +28,15 @@ public abstract class AbstractModule<T> implements Module<T> {
 	private boolean commandsLocked;
 	private boolean shutdown;
 	private Map<String, Command<?>> commandTable;
-	
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param name
+	 *            the module name
+	 * @throws IllegalArgumentException
+	 *             if the name is empty
+	 */
 	public AbstractModule(String name) {
 		if (Misc.isEmpty(name))
 			throw new ConfigurationException(msg(U.C51));
@@ -40,7 +48,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	public String getName() {
 		return name;
 	}
-	
+
 	@Override
 	public T getObject() {
 		return null;
@@ -50,15 +58,21 @@ public abstract class AbstractModule<T> implements Module<T> {
 	 * Define configuration parameters.
 	 * <p>
 	 * Subclasses should usually call the super method first, before adding
-	 * their own definitions.
+	 * their own definitions. They should throw an
+	 * {@link IllegalArgumentException} when something is wrong; this is usually
+	 * achieved by not catching exceptions when using {@link Args} or
+	 * {@link Args.Definition} methods.
 	 * 
 	 * @param config
 	 *            the configuration object
+	 * @throws IllegalArgumentException
+	 *             as described in the comment
 	 */
-	public void defineParameters(Args config) {}
-	
+	public void defineParameters(Args config) {
+	}
+
 	/**
-	 * Configure the module.
+	 * Configure the module using an Args object.
 	 * <p>
 	 * Subclasses should usually call the super method first, before performing
 	 * their own configuration.
@@ -66,9 +80,10 @@ public abstract class AbstractModule<T> implements Module<T> {
 	 * @param config
 	 *            the configuration object
 	 * @throws IllegalArgumentException
-	 *             if there is an error
+	 *             if there is a problem with configuration parameters
 	 */
-	public void configure(Args config) {}
+	public void configure(Args config) {
+	}
 
 	@Override
 	public void configure(String specs) {
@@ -80,7 +95,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 		config.parse(specs);
 		configure(config);
 	}
-	
+
 	@Override
 	public void execute(String name, String parameters) throws Exception {
 		Command<?> command = commandTable.get(name);
@@ -97,7 +112,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 			throw new ConfigurationException(msg(U.C14, command.getName(), getName()));
 
 	}
-	
+
 	@Override
 	public Collection<Command<?>> getCommands() {
 		commandsLocked = true;
@@ -147,5 +162,5 @@ public abstract class AbstractModule<T> implements Module<T> {
 	public String toString() {
 		return "module " + getName();
 	}
-	
+
 }

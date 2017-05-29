@@ -705,7 +705,7 @@ public class ArgsTest {
 			args.def(null).aka("b");
 			fail("expected an exception");
 		} catch (Exception e) {
-			assertEquals("name null", e.getMessage());
+			assertEquals("canonical null", e.getMessage());
 		}
 	}
 	
@@ -969,6 +969,19 @@ public class ArgsTest {
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
 			assertMessage(e, U.U00110);
+		}
+	}
+	
+	@Test
+	public void testRepeatable5() {
+		try {
+			// repeatable with no value and no default only okay with array getters
+			args.def("list").repeatable();
+			args.getVal("list").doubleValue();
+			fail("exception expected");
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			assertMessage(e, U.U00105);
 		}
 	}
 

@@ -5,7 +5,7 @@ import java.util.ResourceBundle;
 import ch.agent.util.base.LazyString;
 
 /**
- * Error messages for base utilities.
+ * Diagnostic messages used by utility classes.
  */
 public class STRINGS extends LazyString {
 
@@ -37,7 +37,6 @@ public class STRINGS extends LazyString {
 		public static final String U00124 = "U00124";
 		public static final String U00125 = "U00125";
 		public static final String U00126 = "U00126";
-		public static final String U00131 = "U00131";
 		public static final String U00153 = "U00153";
 		public static final String U00154 = "U00154";
 		public static final String U00155 = "U00155";
@@ -53,8 +52,13 @@ public class STRINGS extends LazyString {
 		public static final String U00207 = "U00207";
 		public static final String U00208 = "U00208";
 		public static final String U00209 = "U00209";
+		public static final String U00210 = "U00210";
+		public static final String U00212 = "U00212";
+		public static final String U00220 = "U00220";
 		
 		public static final String U00300 = "U00300";
+		public static final String U00303 = "U00303";
+		public static final String U00304 = "U00304";
 		
 		public static final String C03 = "C03";
 		public static final String C06 = "C06";
@@ -103,8 +107,9 @@ public class STRINGS extends LazyString {
 	}
 	
 	/**
-	 * Short hand for 
-	 * <pre><code>new UtilMsg(key, args).toString()</code></pre>
+	 * Format a message immediately.
+	 * The method is short-hand for 
+	 * <pre><code>new STRINGS(key, args).toString()</code></pre>
 	 * 
 	 * @param key message key
 	 * @param args message arguments
@@ -114,6 +119,13 @@ public class STRINGS extends LazyString {
 		return new STRINGS(key, args).toString();
 	}
 
+	/**
+	 * Create a message to be formatted later, only if necessary.
+	 * 
+	 * @param key message key
+	 * @param args message arguments
+	 * @return the lazy message 
+	 */
 	public static LazyString lazymsg(String key, Object... args) {
 		return new STRINGS(key, args);
 	}

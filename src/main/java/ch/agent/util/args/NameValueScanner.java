@@ -8,8 +8,8 @@ import java.util.List;
 import ch.agent.util.STRINGS.U;
 
 /**
- * The name-value scanner supports splitting a string into a list of String
- * arrays of length 2 for name-value pairs and length 1 for isolated values.
+ * The name-value scanner splits a string into a list of arrays of length 2 for
+ * name-value pairs and length 1 for isolated values.
  * <p>
  * The scanner understands four special characters which can be configured using
  * the constructor. When using the no-args constructor provides defaults. These
@@ -21,10 +21,10 @@ import ch.agent.util.STRINGS.U;
  * <li>the escape (\).
  * </ul>
  * For brevity the documentation assumes defaults are used. White space, as
- * defined by {@link Character#isWhitespace}, is either significant or ignored,
- * depending on where it is used.
+ * defined by {@link Character#isWhitespace(char)}, is either significant or
+ * ignored, depending on where it is used.
  * <p>
- * The four special characters and white space characters lose their special 
+ * The four special characters and white space characters lose their special
  * nature when preceded by an escape. A name is separated from a value by the =
  * sign. White space can be freely used around the = sign. Name-value pairs and
  * isolated values are separated by at least one white space character. Names
@@ -54,16 +54,16 @@ public class NameValueScanner {
 	private enum Token {
 		END_OF_INPUT, EQUAL_TOKEN, STRING_TOKEN
 	}
-	
+
 	/**
 	 * The tokenizer takes care of finding strings and equal signs in the input.
 	 */
 	private static class Tokenizer {
 
 		private enum State {
-			BRACKET, END, EQUAL, ESCAPE, INIT, STRING 
+			BRACKET, END, EQUAL, ESCAPE, INIT, STRING
 		}
-		
+
 		private final char opening;
 		private final char closing;
 		private final char equals;
@@ -95,7 +95,7 @@ public class NameValueScanner {
 			this.equals = equals;
 			this.esc = esc;
 		}
-		
+
 		/**
 		 * Return the next token. There are 3 possible tokens:
 		 * <ul>
@@ -108,7 +108,7 @@ public class NameValueScanner {
 		 */
 		public Token nextToken() {
 			state = State.INIT;
-			while(true) {
+			while (true) {
 				switch (process()) {
 				case 0:
 					break;
@@ -123,7 +123,7 @@ public class NameValueScanner {
 				}
 			}
 		}
-		
+
 		/**
 		 * Return the string associated to the token STRING_TOKEN.
 		 * 
@@ -132,7 +132,7 @@ public class NameValueScanner {
 		public String getTokenString() {
 			return tokenString;
 		}
-		
+
 		private void setTokenString(boolean emptyOk) {
 			if (depth != 0)
 				throw new IllegalArgumentException(msg(U.U00155, closing, getPosition(), input));
@@ -141,7 +141,7 @@ public class NameValueScanner {
 				buffer.setLength(0);
 			}
 		}
-		
+
 		/**
 		 * Get the current 1-based position of the tokenizer.
 		 * 
@@ -150,7 +150,7 @@ public class NameValueScanner {
 		public int getPosition() {
 			return position + 1;
 		}
-		
+
 		/**
 		 * Reset the input.
 		 * 
@@ -167,9 +167,9 @@ public class NameValueScanner {
 		}
 
 		/**
-		 * Process the next char. Return 0 to indicate to continue,
-		 * 1 to indicate that a token is available, and -1 to indicate
-		 * the end of the input.
+		 * Process the next char. Return 0 to indicate to continue, 1 to
+		 * indicate that a token is available, and -1 to indicate the end of the
+		 * input.
 		 * 
 		 * @return true to continue or false to stop
 		 */
@@ -220,7 +220,8 @@ public class NameValueScanner {
 					state = State.ESCAPE;
 				} else if (isMeta(ch)) {
 					if (ch == closing) {
-						// must do this test here to support ArgsScanner#immediate
+						// must do this test here to support
+						// ArgsScanner#immediate
 						throw new IllegalArgumentException(msg(U.U00154, closing, getPosition(), input));
 					}
 					setTokenString(false);
@@ -263,7 +264,7 @@ public class NameValueScanner {
 		private boolean isMeta(char ch) {
 			return ch == equals || ch == opening || ch == closing;
 		}
-		
+
 		/**
 		 * Return the next char from the input or 0 if there is no more input.
 		 * 
@@ -276,7 +277,7 @@ public class NameValueScanner {
 				return 0;
 			}
 		}
-		
+
 		/**
 		 * Change position so that {@link #advance()} returns the current char
 		 * again.
@@ -294,9 +295,8 @@ public class NameValueScanner {
 	private String eq;
 
 	/**
-	 * Constructor for a scanner with custom meta characters. The variable
-	 * prefix is not used, but it must be compatible with the other meta
-	 * characters.
+	 * Constructor for a scanner with custom meta characters. If is illegal for
+	 * any two meta characters to be equal.
 	 * 
 	 * @param lq
 	 *            left quote
@@ -306,11 +306,12 @@ public class NameValueScanner {
 	 *            name-value separator
 	 * @param esc
 	 *            escape
-	 * @param dollar
-	 *            variable prefix
+	 * @throws IllegalArgumentException
+	 *             if any two metacharacters are equal
 	 */
-	public NameValueScanner(char lq, char rq, char nvs, char esc, char dollar) {
-		Args.validateMetaCharacters(lq, rq, nvs, esc, dollar);
+	public NameValueScanner(char lq, char rq, char nvs, char esc) {
+		if (lq == rq || lq == nvs || lq == esc || rq == nvs || rq == esc || nvs == esc)
+			throw new IllegalArgumentException(msg(U.U00163, lq, rq, nvs, esc, ""));
 		tokenizer = new Tokenizer(lq, rq, nvs, esc);
 		eq = String.valueOf(nvs);
 	}
@@ -320,39 +321,43 @@ public class NameValueScanner {
 	 * [, ], = and \.
 	 */
 	public NameValueScanner() {
-		this('[', ']', '=', '\\', '$');
+		this('[', ']', '=', '\\');
 	}
-	
+
 	/**
 	 * Turn a string into a list of isolated values.
 	 * 
 	 * @param input
 	 *            a string
 	 * @return a list of strings
+	 * @throws IllegalArgumentException
+	 *             on invalid input
 	 */
 	public List<String> asValues(String input) {
 		List<String[]> values = asValuesAndPairs(input, true);
 		List<String> result = new ArrayList<String>(values.size());
-		for (String [] v : values) {
+		for (String[] v : values) {
 			result.add(v[0]);
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Turn a string into a list of name-value pairs and isolated values.
 	 * 
 	 * @param input
 	 *            a string
-	 * @return a list of 1-element arrays representing isolated values and
+	 * @return a list of 1-element arrays representing isolated values or
 	 *         2-elements arrays representing where name-value pairs
+	 * @throws IllegalArgumentException
+	 *             on invalid input
 	 */
 	public List<String[]> asValuesAndPairs(String input) {
 		return asValuesAndPairs(input, false);
 	}
-	
+
 	private List<String[]> asValuesAndPairs(String string, boolean valuesOnly) {
-		
+
 		List<String[]> results = new ArrayList<String[]>();
 		tokenizer.reset(string);
 		NameValueState state = NameValueState.INIT;
@@ -364,7 +369,7 @@ public class NameValueScanner {
 			case INIT:
 				token1 = tokenizer.nextToken();
 				token1String = tokenizer.getTokenString();
-				switch(token1) {
+				switch (token1) {
 				case END_OF_INPUT:
 					state = NameValueState.END;
 					break;
@@ -384,22 +389,22 @@ public class NameValueScanner {
 			case NAME:
 				token2 = tokenizer.nextToken();
 				String token2String = tokenizer.getTokenString();
-				switch(token2) {
+				switch (token2) {
 				case END_OF_INPUT:
-					results.add(new String[]{token1String});
+					results.add(new String[] { token1String });
 					state = NameValueState.END;
 					break;
 				case EQUAL_TOKEN:
 					if (!valuesOnly)
 						state = NameValueState.VALUE;
 					else {
-						results.add(new String[]{token1String});
+						results.add(new String[] { token1String });
 						token1String = token2String; // token2String is "="
 						state = NameValueState.NAME; // (no state transition)
 					}
 					break;
 				case STRING_TOKEN:
-					results.add(new String[]{token1String});
+					results.add(new String[] { token1String });
 					token1String = token2String;
 					state = NameValueState.NAME; // (no state transition)
 					break;
@@ -410,13 +415,13 @@ public class NameValueScanner {
 			case VALUE:
 				token2 = tokenizer.nextToken();
 				token2String = tokenizer.getTokenString();
-				switch(token2) {
+				switch (token2) {
 				case END_OF_INPUT:
 					throw new IllegalArgumentException(msg(U.U00159, eq, token1String, string));
 				case EQUAL_TOKEN:
 					throw new IllegalArgumentException(msg(U.U00156, eq, tokenizer.getPosition(), string));
 				case STRING_TOKEN:
-					results.add(new String[]{token1String, token2String});
+					results.add(new String[] { token1String, token2String });
 					state = NameValueState.INIT;
 					break;
 				default:

@@ -418,7 +418,7 @@ td.colOne a:link, td.colOne a:active, td.colOne a:visited, td.colOne a:hover, td
 }
 td.colFirst, th.colFirst {
     border-left:1px solid #9eadc0;
-    white-space:nowrap;
+    /*white-space:nowrap; (please wrap very long parametric class names) */
 }
 td.colLast, th.colLast {
     border-right:1px solid #9eadc0;

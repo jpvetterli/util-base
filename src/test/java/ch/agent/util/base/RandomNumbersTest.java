@@ -177,7 +177,7 @@ public class RandomNumbersTest {
 	@Test
 	public void test100() {
 		try {
-			Uniform uni = new Uniform(-20, -15, false);
+			Uniform uni = new Uniform(-20, -15);
 			assertEquals("[-20, -15]", uni.toString());
 			int[] counters = new int[6];
 			for (int i = 0; i < 6000; i++) {
@@ -196,7 +196,7 @@ public class RandomNumbersTest {
 	@Test
 	public void test102() {
 		try {
-			Uniform uni = new Uniform(-20, -20, false);
+			Uniform uni = new Uniform(-20, -20);
 			assertEquals("[-20, -20]", uni.toString());
 			for (int i = 0; i < 10; i++) {
 				assertEquals(-20, uni.next());

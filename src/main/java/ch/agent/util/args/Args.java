@@ -13,17 +13,25 @@ import ch.agent.util.base.Misc;
 import ch.agent.util.file.TextFile;
 
 /**
- * Args is a parser for command line arguments. It provides a simple language
- * and a small set of built-in operators. Here is a short example:
+ * Args defines parameters and parses strings and configuration files. It
+ * provides a simple language and a small set of built-in operators. Here is a
+ * short example, intentionally ugly:
+ * 
  * <pre>
  * <code>
- * $greeting = hello $subject = world
- * config = [greet=$$greeting]
+ * $greeting = hello $subject 
+ *   = world
+ * config = [
+ *   greet=$$greeting
+ * ]
  * exec = [hello.say=[$$subject]]
  * </code>
  * </pre>
- * Put the example in file {@code hello.config} and run an hypothetical 
- * application coded with Args (command split on 2 lines):
+ * 
+ * Put the example in file {@code hello.config} and run an hypothetical
+ * application, coded with Args, from the command line (\ indicates continuation
+ * on next line):
+ * 
  * <pre>
  * <code>
  * prompt&gt; java -jar example.jar $subject= "zäme [you all]" \
@@ -34,8 +42,8 @@ import ch.agent.util.file.TextFile;
  * </code>
  * </pre>
  * 
- * Args is named after the parameter of the
- * main method of Java programs, usually written like this:
+ * Args is named after the parameter of the main method of Java programs,
+ * usually written like this:
  * 
  * <pre>
  * <code>
@@ -48,29 +56,30 @@ import ch.agent.util.file.TextFile;
  * Using the parser consists of three steps:
  * <ol>
  * <li><b>Defining</b> parameters. All parameters are defined with the
- * {@link #def} method; the definition can be customized using the
+ * {@link #def(String)} method; the definition can be customized using the
  * {@link Definition} object returned.
  * 
- * <li><b>Setting</b> values or parsing values from an input. Parameter values
- * can be set using {@link #put} methods or parsed from text. Such text is
- * written in a simple but flexible specification language, described shortly
+ * <li><b>Setting</b> values or <b>parsing</b> values from an input. Parameter
+ * values can be set using a put method, like {@link #put(String, String)}, or
+ * parsed from text using {@link #parse(String)}. Such text is written in a
+ * simple but flexible specification language, described shortly.
  * 
  * <li><b>Getting</b> values of parameters. All values are basically strings
  * encapsulated in a {@link Value} object. Methods are available to extract
- * values of various types and as individual values or as arrays.
+ * values of various types as either scalars or arrays.
  * 
  * </ol>
  * 
  * <h3>The specification language</h3>
  * 
  * A specification consists of a series of <em>name-value pairs</em> and
- * isolated values and keywords. In a name-value pair, the name corresponds to
- * the a parameter definition. An isolated value is the value of a nameless
- * parameter. To have multiple isolated values, the nameless parameter must have
- * been defined as repeatable. Some isolated values are known as
- * <em>keywords</em>; a keyword corresponds to a parameter defined with a
- * default value of "false". The occurrence of the parameter name as an isolated
- * value sets the value of the parameter to "true".
+ * isolated values and keywords. In a name-value pair, the name corresponds to a
+ * parameter definition. An isolated value is the value of a nameless parameter
+ * (a parameter with an empty name). To have multiple isolated values, the
+ * nameless parameter must have been defined as repeatable. Some isolated values
+ * are known as <em>keywords</em>; a keyword corresponds to a parameter defined
+ * with a default value of "false". The occurrence of the parameter name as an
+ * isolated value sets the value of the parameter to "true".
  * <p>
  * A parameter can only be used if it has been defined. Sometimes it is useful
  * to define parameters on the fly and this is possible with <em>variables</em>.
@@ -78,23 +87,50 @@ import ch.agent.util.file.TextFile;
  * prefixing them with $$. When a variable reference is seen in the text it is
  * replaced by the value of the variable if available, else it is left as is.
  * This is called an unresolved variable. When accessing a parameter value which
- * contains unresolved variables, an error occurs, unless using special care.
+ * contains unresolved variables, an error occurs, unless using a raw getter.
  * <p>
- * An other important difference between parameters and variables is their
- * behavior with respect to repeated values. With a (non-repeatable) parameter,
- * the last value wins. For variables, the first wins. This allows to override
- * default values of variables in configuration files (see the include operator,
+ * One difference between parameters and variables is their behavior with
+ * respect to repeated values. With a (non-repeatable) parameter, the last value
+ * wins. For variables, the first wins. This allows to override default values
+ * of variables in configuration files (see the <em>include</em> operator,
  * below) with values specified before the file is included.
  * <p>
  * The language syntax supports names and values with arbitrary content using a
- * <em>nested</em> quoting notation. Suppose a piece of software uses Args to
- * parse its parameters and suppose this software has multiple components which
- * also use Args for their parameters. A top-level component can define its
- * parameters without knowing any detail about the other components. It only
- * needs to define a parameter for each such component to take opaque values and
- * pass them along without bothering about unresolved variables. This feature
- * allows to simulate subroutines in the specification language, which is quite
- * useful when a specification is large.
+ * <em>nested</em> quoting notation. A value with blanks can be passed as
+ * 
+ * <pre>
+ * <code>
+ *  name=[a value with blanks]
+ * </code>
+ * </pre>
+ * 
+ * When accessed as a scalar, the value will be the string
+ * "a value with blanks". When accessed as an array, the value will be an array
+ * with elements "a", "value", "with", and "blanks". Nested quotes can be used
+ * when list elements contain blanks. The elements "a", "[list", "of]", and
+ * "four elements" can be extracted from (notice the two escapes):
+ * 
+ * <pre>
+ * <code>
+ * list=[a \[list of\] [four elements]]
+ * </code>
+ * </pre>
+ * 
+ * Nesting can be used to powerful effect. Suppose a piece of software uses Args
+ * to parse its parameters and suppose this software has multiple components
+ * which also use Args for their parameters. A top-level component can define
+ * its parameters without knowing any detail about the other components. It only
+ * needs to define one parameter for each such component and pass along an
+ * opaque value.
+ * <p>
+ * Quote parsing and variable resolution are distinct processing steps in Args.
+ * Quote parsing is done one nesting level at a time, but variable resolution is
+ * done on the full input, irrespective of quotes. This separation is useful in
+ * practice but there are some caveats, like the fact that the $ and $$ prefixes
+ * of variables cannot be escaped with \, as mentionned below. Variables can
+ * remain unresolved until accessed by a non-raw getter. Raw getters are used to
+ * get values passed to the next parsing level. Non-raw getters are used when
+ * values are actually required.
  * <p>
  * When finding an isolated value, the parser resolves it for variables. If
  * resolution effectively changes the value, it is parsed again recursively.
@@ -102,8 +138,12 @@ import ch.agent.util.file.TextFile;
  * behavior does not apply to name-value pairs which are resolved but not
  * recursively parsed.
  * <p>
+ * The way quoting and variable resolution interact allows to simulate
+ * subroutines in the specification language, which is quite useful when a
+ * specification is large.
+ * <p>
  * When using nested Args, applications can pass variables from one level to the
- * next using {@link #getVariables} and {@link #putVariable}.
+ * next using {@link #getVariables()} and {@link #putVariable(String, String)}.
  * <p>
  * Details about the syntax are available from the documentation of
  * {@link NameValueScanner} and {@link SymbolScanner}. The specification
@@ -115,9 +155,12 @@ import ch.agent.util.file.TextFile;
  * <li>the escape (\),
  * <li>the variable prefix ($).
  * </ul>
+ * <p>
  * These can be overridden by passing a string of 5 characters as a System
- * property which will be interpreted in the above sequence. The property is
- * <code>ArgsMetaCharacters</code>.
+ * property named <code>ArgsMetaCharacters</code> which will be interpreted in
+ * the above sequence. The escape character is used to suppress the normal
+ * behavior of quotes, the name-value separator, and the escape itself. It
+ * cannot be used to escape the variable prefix.
  * 
  * <h3>Built-in operators</h3>
  * 
@@ -147,32 +190,31 @@ import ch.agent.util.file.TextFile;
  * </pre>
  * 
  * The operator includes the contents of a file in the parser input. The file
- * must be located either in the file system or the classpath. It is possible to
- * include multiple files and includes can be nested.
- * 
- * Only the file name (a nameless value) is mandatory. In this case, the quoting
- * brackets can usually be omitted. The names parameter take zero or more
- * name-value pairs or isolated values. And isolated value gives the name of a
- * parameter to extract from the file. The name in a name-value pair also gives
- * the name of a parameter to extract and the value specifies a translation for
- * that name. This allows to extract parameters from the configuration files of
- * other applications and use them automatically under a name of our own
- * choosing. The extractor parameter allows to specify a class to use for the
- * extraction. The class must extend the {@link FileIncluder}, provided with
- * Args. If necessary, a parameter can be passed to that class using
- * extractor-parameters.
+ * must be located either in the file system or on the classpath. It is possible
+ * to include multiple files and includes can be nested.
+ * <p>
+ * Only the file name (a nameless parameter) is mandatory. In this case, the
+ * quoting brackets can usually be omitted. The "names" parameter takes zero or
+ * more name-value pairs or isolated values. An isolated value specifies the
+ * name of a parameter to extract from the file. The name in a name-value pair
+ * also specifies the name of a parameter to extract while the value specifies a
+ * translation for that name. This allows to extract parameters from
+ * configuration files belonging to other applications and use them
+ * automatically under a new name. The "extractor" parameter allows to specify a
+ * class to use for extraction. The class must extend {@link FileIncluder},
+ * provided with Args. If necessary, a parameter can be passed to that class
+ * using "extractor-parameters".
  * 
  */
 public class Args implements Iterable<String> {
-	
-	
+
 	/**
 	 * It is possible to configure the meta characters with a system property
 	 * named <b>ArgsMetaCharacters</b>. The property is ignored unless it
-	 * contains exactly 4 characters. 
+	 * contains exactly 4 characters.
 	 */
 	public static final String ARGS_META = "ArgsMetaCharacters";
-	
+
 	static {
 		char[] chars = validateMetaCharacters(System.getProperty(ARGS_META));
 		leftQuote = chars[0];
@@ -181,7 +223,7 @@ public class Args implements Iterable<String> {
 		escape = chars[3];
 		dollar = chars[4];
 	}
-	
+
 	/**
 	 * Validate a string of meta characters. There must be five characters and
 	 * they must be different. The sequence (defaults in parentheses) is
@@ -198,10 +240,12 @@ public class Args implements Iterable<String> {
 	 * @param metaChars
 	 *            a string of length 5
 	 * @return an array of length 5
+	 * @throws IllegalArgumentException
+	 *             unless there are 5 meta characters, all different
 	 */
 	public static char[] validateMetaCharacters(String metaChars) {
 		if (metaChars == null)
-			return new char[] { '[', ']', '=', '\\', '$'};
+			return new char[] { '[', ']', '=', '\\', '$' };
 		else {
 			if (metaChars.length() != 5)
 				throw new IllegalArgumentException(msg(U.U00164, metaChars));
@@ -214,22 +258,25 @@ public class Args implements Iterable<String> {
 			return new char[] { lq, rq, nvs, esc, dol };
 		}
 	}
-	
+
 	/**
-	 * Validate five meta characters. 
-	 * The five characters must be different.
-	 *
-	 * @param leftQuote the left quote 
-	 * @param rightQuote the right quote 
-	 * @param nameValueSeparator the name-value separator
-	 * @param escape the escape
-	 * @param dollar the variable prefix
+	 * Validate five meta characters. The five characters must be different.
+	 * 
+	 * @param leftQuote
+	 *            the left quote
+	 * @param rightQuote
+	 *            the right quote
+	 * @param nameValueSeparator
+	 *            the name-value separator
+	 * @param escape
+	 *            the escape
+	 * @param dollar
+	 *            the variable prefix
+	 * @throws IllegalArgumentException
+	 *             if any two meta characters are equal
 	 */
 	public static void validateMetaCharacters(char leftQuote, char rightQuote, char nameValueSeparator, char escape, char dollar) {
-		if (leftQuote == rightQuote || leftQuote == nameValueSeparator || leftQuote == escape || leftQuote == dollar
-			|| rightQuote == nameValueSeparator || rightQuote == escape || rightQuote == dollar
-			|| nameValueSeparator == escape || nameValueSeparator == dollar
-			|| escape == dollar)
+		if (leftQuote == rightQuote || leftQuote == nameValueSeparator || leftQuote == escape || leftQuote == dollar || rightQuote == nameValueSeparator || rightQuote == escape || rightQuote == dollar || nameValueSeparator == escape || nameValueSeparator == dollar || escape == dollar)
 			throw new IllegalArgumentException(msg(U.U00163, leftQuote, rightQuote, nameValueSeparator, escape, dollar));
 	}
 
@@ -238,17 +285,17 @@ public class Args implements Iterable<String> {
 	private final static char nameValueSeparator;
 	private final static char escape;
 	private final static char dollar;
-	
+
 	private final static String COND = "condition";
 	private final static String COND_IF_NON_EMPTY = "if";
 	private final static String COND_THEN = "then";
 	private final static String COND_ELSE = "else";
-	
+
 	private final static String INCLUDE = "include";
 	private final static String INC_NAMES = "names";
 	private final static String INC_CLASS = "extractor";
 	private final static String INC_CONFIG = "extractor-parameters";
-	
+
 	/**
 	 * A Definition object allows to customize a parameter. It supports the
 	 * method chaining coding style. For example, to define a parameter with two
@@ -260,39 +307,42 @@ public class Args implements Iterable<String> {
 	 * </code>
 	 * </pre>
 	 * 
-	 * The object is returned by method {@link Args#def} first.
+	 * The object is returned by method {@link Args#def(String)}.
 	 */
 	public class Definition {
-		private Args args; 
+		private Args args;
 		private String name;
-		
+
 		private Definition(Args args, String name) {
 			Misc.nullIllegal(args, "args null");
 			Misc.nullIllegal(name, "name null");
 			this.args = args;
 			this.name = name;
 		}
-		
+
 		private Args args() {
 			return args;
 		}
-		
+
 		private String name() {
 			return name;
 		}
-		
+
 		/**
 		 * Set an alias. An exception is thrown if the alias is already in use
 		 * for this parameter or an another one.
 		 * 
 		 * @param alias
-		 *            an alternate name for the parameter
+		 *            a non-null alternate name for the parameter
 		 * @return this definition
+		 * @throws IllegalArgumentException
+		 *             as described in the comment
 		 */
 		public Definition aka(String alias) {
+			Misc.nullIllegal(alias, "alias null");
 			Value v = args().internalGet(name());
 			if (v == null)
-				throw new IllegalArgumentException("bug: " + name());
+				throw new RuntimeException("bug: " + name());
 			if (args().internalGet(alias) != null)
 				throw new IllegalArgumentException(msg(U.U00104, alias));
 			args().put(alias, v);
@@ -302,7 +352,7 @@ public class Args implements Iterable<String> {
 		/**
 		 * Set a default value for the parameter. A parameter with a non-null
 		 * default value can be omitted. A parameter without a default value is
-		 * mandatory unless it is repeatable.
+		 * mandatory unless it is repeatable and accessed with an array getter.
 		 * 
 		 * @param value
 		 *            the default value of the parameter
@@ -311,40 +361,41 @@ public class Args implements Iterable<String> {
 		public Definition init(String value) {
 			Value v = args().internalGet(name());
 			if (v == null)
-				throw new IllegalArgumentException("bug: " + name());
+				throw new RuntimeException("bug: " + name());
 			v.setDefault(value);
 			return this;
 		}
-		
+
 		/**
-		 * Make the parameter as repeatable. A repeatable can have zero or more
-		 * values. The values are returned in an array. See for example
-		 * {@link Value#stringValues}.
+		 * Make the parameter repeatable. A repeatable parameters can have zero
+		 * or more values. The values are returned by array getters. See for
+		 * example {@link Value#stringValues()}.
 		 * 
-		 * @return the definition
+		 * @return this definition
 		 */
 		public Definition repeatable() {
 			Value v = args().internalGet(name());
 			if (v == null)
-				throw new IllegalArgumentException("bug: " + name());
+				throw new RuntimeException("bug: " + name());
 			v.setRepeatable(true);
 			return this;
 		}
-		
+
 	}
-	
+
 	/**
 	 * A Value encapsulates a parameter value. It provides many methods to get a
-	 * value or values of various types from a parameter. Attempting to get a
-	 * parameter value which was not set results in an exception, unless a
-	 * default value was defined.
+	 * scalar value or an array of values of various types from a parameter.
+	 * Attempting to get a parameter value which was not set results in an
+	 * exception, unless a default value was defined.
 	 * <p>
 	 * Accessing the value of a parameter which contains one or more unresolved
 	 * variables also results in an exception in most cases. The only methods
-	 * which are always safe in this case are {@link #rawValue} and the two
-	 * {@link Value#rawValues} methods. Another case not resulting in an
-	 * exception is when the value contains a single unresolved variable without
-	 * any surrounding text and a default value is available.
+	 * which are always safe in this case are the raw getters
+	 * {@link #rawValue()}, {@link #rawValues()} and
+	 * {@link #rawValues(int, int)}. Another case not resulting in an exception
+	 * is when the value contains a single unresolved variable without any
+	 * surrounding text and a default value is available.
 	 */
 	public class Value {
 		private String canonical;
@@ -355,12 +406,14 @@ public class Args implements Iterable<String> {
 		/**
 		 * Constructor.
 		 * 
-		 * @param canonical canonical name of parameter
+		 * @param canonical
+		 *            canonical name of parameter, not null
 		 */
 		public Value(String canonical) {
+			Misc.nullIllegal(canonical, "canonical null");
 			this.canonical = canonical;
 		}
-		
+
 		/**
 		 * Get the canonical name of the parameter.
 		 * 
@@ -373,7 +426,8 @@ public class Args implements Iterable<String> {
 		/**
 		 * Set the value of the parameter.
 		 * 
-		 * @param value a string or null
+		 * @param value
+		 *            a string or null
 		 */
 		public void set(String value) {
 			this.value = value;
@@ -382,17 +436,15 @@ public class Args implements Iterable<String> {
 		/**
 		 * Append a value to the current value of the parameter. Appending is
 		 * done in a way that allows to access the element as an array element
-		 * with for example {@link #stringValues}.
+		 * with for example {@link #stringValues()}.
 		 * 
 		 * @param value
 		 *            a string
 		 */
 		public void append(String value) {
-			this.value = this.value == null ?
-					new StringBuilder(value.length() + 2).append(leftQuote).append(value).append(rightQuote).toString() :
-					new StringBuilder(this.value.length() + value.length() + 3).append(this.value).append(BLANK).append(leftQuote).append(value).append(rightQuote).toString();
+			this.value = this.value == null ? new StringBuilder(value.length() + 2).append(leftQuote).append(value).append(rightQuote).toString() : new StringBuilder(this.value.length() + value.length() + 3).append(this.value).append(BLANK).append(leftQuote).append(value).append(rightQuote).toString();
 		}
-		
+
 		/**
 		 * Get the default value.
 		 * 
@@ -405,12 +457,13 @@ public class Args implements Iterable<String> {
 		/**
 		 * Set the default value.
 		 * 
-		 * @param value a string or null
+		 * @param value
+		 *            a string or null
 		 */
 		public void setDefault(String value) {
 			this.defaultValue = value;
 		}
-		
+
 		/**
 		 * Test if a parameter is repeatable.
 		 * 
@@ -423,7 +476,8 @@ public class Args implements Iterable<String> {
 		/**
 		 * Set a parameter as repeatable.
 		 * 
-		 * @param b if true the parameter will be repeatable
+		 * @param b
+		 *            if true the parameter will be repeatable
 		 */
 		public void setRepeatable(boolean b) {
 			this.repeatable = b;
@@ -438,10 +492,12 @@ public class Args implements Iterable<String> {
 		 * returns the default value. Except in this case an exception is thrown
 		 * in the presence of any unresolved variable.
 		 * <p>
-		 * Since this method is the basis for all other access methods, all of 
-		 * them behave similarly with respect to unresolved variables.
+		 * Since this method is the basis for all other non-raw access methods,
+		 * all of them behave similarly with respect to unresolved variables.
 		 * 
 		 * @return a string
+		 * @throws IllegalArgumentException
+		 *             as described in the comment
 		 */
 		public String stringValue() {
 			String result = value;
@@ -468,12 +524,12 @@ public class Args implements Iterable<String> {
 							unresolved.add(it.next());
 					}
 					throw new IllegalArgumentException(msg(U.U00106, getName(), Misc.join(", ", unresolved), result));
-						
+
 				}
 			}
 			return result;
 		}
-		
+
 		/**
 		 * Split value into a number of strings. Splitting is done on white
 		 * space and meta characters. An <code>IllegalArgumentException</code>
@@ -484,18 +540,19 @@ public class Args implements Iterable<String> {
 		 * thrown unless the parameter is repeatable, in which case the method
 		 * returns an empty array, constraints permitting.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables.
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @param min
 		 *            minimal number of strings (no limit if negative)
 		 * @param max
 		 *            maximal number of strings (no limit if negative)
 		 * @return an array of strings
+		 * @throws IllegalArgumentException
+		 *             as described in the comment
 		 */
 		public String[] stringValues(int min, int max) {
-			List<String> values = 
-				(isRepeatable() && value == null && defaultValue == null) ? 
-				new ArrayList<String>() : getScanner().asValues(stringValue());
+			List<String> values = (isRepeatable() && value == null && defaultValue == null) ? new ArrayList<String>() : getScanner().asValues(stringValue());
 			checkSize(values.size(), min, max);
 			return values.toArray(new String[values.size()]);
 		}
@@ -504,9 +561,12 @@ public class Args implements Iterable<String> {
 		 * Split value into a number of strings. Splitting is done on white
 		 * space and meta characters.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables.
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @return an array of strings
+		 * @throws IllegalArgumentException
+		 *             as described in the comment
 		 */
 		public String[] stringValues() {
 			return stringValues(-1, -1);
@@ -518,6 +578,8 @@ public class Args implements Iterable<String> {
 		 * unresolved variables.
 		 * 
 		 * @return a string
+		 * @throws IllegalArgumentException
+		 *             if there is no value and no default was set
 		 */
 		public String rawValue() {
 			if (value == null) {
@@ -527,19 +589,22 @@ public class Args implements Iterable<String> {
 			}
 			return value;
 		}
-		
+
 		/**
 		 * Split value into a number of strings. Splitting is done on white
 		 * space and meta characters. An <code>IllegalArgumentException</code>
 		 * is thrown if the number of strings is too small or too large, as
-		 * specified by two parameters. Negative parameters are ignored. This
-		 * method does not check for unresolved variables.
+		 * specified by two parameters, or if the value cannot be scanned
+		 * successfully. Negative parameters are ignored. This method does not
+		 * check for unresolved variables.
 		 * 
 		 * @param min
 		 *            minimal number of strings (no limit if negative)
 		 * @param max
 		 *            maximal number of strings (no limit if negative)
 		 * @return an array of strings
+		 * @throws IllegalArgumentException
+		 *             as described in the comment
 		 */
 		public String[] rawValues(int min, int max) {
 			List<String> values = getScanner().asValues(rawValue());
@@ -553,6 +618,8 @@ public class Args implements Iterable<String> {
 		 * variables.
 		 * 
 		 * @return an array of strings
+		 * @throws IllegalArgumentException
+		 *             on invalid input
 		 */
 		public String[] rawValues() {
 			return rawValues(-1, -1);
@@ -569,20 +636,23 @@ public class Args implements Iterable<String> {
 					if (size < min)
 						throw new IllegalArgumentException(msg(U.U00110, getName(), size, min));
 				}
-			} 
+			}
 			if (max > -1) {
 				if (size > max)
-					throw new IllegalArgumentException(msg(U.U00111, getName(),	size, max));
+					throw new IllegalArgumentException(msg(U.U00111, getName(), size, max));
 			}
 		}
-			
+
 		/**
 		 * Return the value as a int. Throw an exception if the value cannot be
 		 * converted.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables.
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @return an int
+		 * @throws IllegalArgumentException
+		 *             if there is any problem with the value
 		 */
 		public int intValue() {
 			return asInt(stringValue(), -1);
@@ -594,13 +664,16 @@ public class Args implements Iterable<String> {
 		 * the number of values does not agree with the constraints. Return the
 		 * integers in an array.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables.
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @param min
 		 *            the minimum number of integers (no limit if negative)
 		 * @param max
 		 *            the maximum number of integers (no limit if negative)
 		 * @return an int array
+		 * @throws IllegalArgumentException
+		 *             if there is any problem with the value
 		 */
 		public int[] intValues(int min, int max) {
 			String[] strings = stringValues(min, max);
@@ -620,21 +693,28 @@ public class Args implements Iterable<String> {
 		 * integers. Throw an exception if a string cannot be converted. Return
 		 * the integers in an array.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables. 
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @return an int array
+		 * @throws IllegalArgumentException
+		 *             if there is any problem with the value
 		 */
 		public int[] intValues() {
 			return intValues(-1, -1);
 		}
-		
+
 		/**
 		 * Return the value as a boolean. Throw an exception if the value cannot
-		 * be converted.
+		 * be converted. The only strings which can be converted to boolean are
+		 * "true" and "false".
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables. 
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @return a boolean
+		 * @throws IllegalArgumentException
+		 *             if there is any problem with the value
 		 */
 		public boolean booleanValue() {
 			return asBoolean(stringValue(), -1);
@@ -646,13 +726,16 @@ public class Args implements Iterable<String> {
 		 * the number of values does not agree with the constraints. Return the
 		 * booleans in an array.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables. 
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @param min
 		 *            the minimum number of booleans (no limit if negative)
 		 * @param max
 		 *            the maximum number of booleans (no limit if negative)
 		 * @return a boolean array
+		 * @throws IllegalArgumentException
+		 *             if there is any problem with the value
 		 */
 		public boolean[] booleanValues(int min, int max) {
 			String[] strings = stringValues(min, max);
@@ -666,45 +749,54 @@ public class Args implements Iterable<String> {
 			}
 			return booleans;
 		}
-		
+
 		/**
 		 * Split the value into a number of strings and convert them to
 		 * booleans. Throw an exception if a string cannot be converted. Return
 		 * the booleans in an array.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables. 
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @return a boolean array
+		 * @throws IllegalArgumentException
+		 *             if there is any problem with the value
 		 */
 		public boolean[] booleanValues() {
-			return booleanValues(-1,  -1);
+			return booleanValues(-1, -1);
 		}
 
 		/**
 		 * Return the value as a double. Throw an exception if the value cannot
 		 * be converted.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables. 
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @return a double
+		 * @throws IllegalArgumentException
+		 *             if there is any problem with the value
 		 */
 		public double doubleValue() {
 			return asDouble(stringValue(), -1);
 		}
-		
+
 		/**
-		 * Split the value into a number of strings and convert them to
-		 * doubles. Throw an exception if a string cannot be converted or if
-		 * the number of values does not agree with the constraints. Return the
-		 * doubles in an array.
+		 * Split the value into a number of strings and convert them to doubles.
+		 * Throw an exception if a string cannot be converted or if the number
+		 * of values does not agree with the constraints. Return the doubles in
+		 * an array.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables. 
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @param min
 		 *            the minimum number of doubles (no limit if negative)
 		 * @param max
 		 *            the maximum number of doubles (no limit if negative)
 		 * @return a double array
+		 * @throws IllegalArgumentException
+		 *             if there is any problem with the value
 		 */
 		public double[] doubleValues(int min, int max) {
 			String[] strings = stringValues(min, max);
@@ -718,31 +810,37 @@ public class Args implements Iterable<String> {
 			}
 			return doubles;
 		}
-		
+
 		/**
 		 * Split the value into a number of strings and convert them to doubles.
 		 * Throw an exception if a string cannot be converted. Return the
 		 * doubles in an array.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables. 
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @return a double array
+		 * @throws IllegalArgumentException
+		 *             if there is any problem with the value
 		 */
 		public double[] doubleValues() {
 			return doubleValues(-1, -1);
 		}
-		
+
 		/**
 		 * Return the value as an Enum constant. Throw an exception if the value
 		 * cannot be converted.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables. 
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @param <T>
 		 *            the type of the enum value
 		 * @param enumClass
 		 *            the enum type class
 		 * @return an Enum
+		 * @throws IllegalArgumentException
+		 *             if there is any problem with the value
 		 */
 		public <T extends Enum<T>> T enumValue(Class<T> enumClass) {
 			return asEnum(enumClass, stringValue(), -1);
@@ -754,7 +852,8 @@ public class Args implements Iterable<String> {
 		 * the number of values does not agree with the constraints. Return the
 		 * enum constants in an array.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables. 
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @param <T>
 		 *            the type of the enum values
@@ -767,6 +866,8 @@ public class Args implements Iterable<String> {
 		 *            the maximum number of enum constants (no limit if
 		 *            negative)
 		 * @return an enum double array
+		 * @throws IllegalArgumentException
+		 *             if there is any problem with the value
 		 */
 		public <T extends Enum<T>> T[] enumValues(Class<T> enumClass, int min, int max) {
 			String[] strings = stringValues(min, max);
@@ -781,19 +882,22 @@ public class Args implements Iterable<String> {
 			}
 			return enums;
 		}
-		
+
 		/**
 		 * Split the value into a number of strings and convert them to enum
 		 * constants. Throw an exception if a string cannot be converted. Return
 		 * the enum constants in an array.
 		 * <p>
-		 * See {@link #stringValue} for explanations about unresolved variables.
+		 * See {@link #stringValue()} for explanations about unresolved
+		 * variables.
 		 * 
 		 * @param <T>
 		 *            the type of the enum values
 		 * @param enumClass
 		 *            the class object of the enum type
 		 * @return an enum double array
+		 * @throws IllegalArgumentException
+		 *             if there is any problem with the value
 		 */
 		public <T extends Enum<T>> T[] enumValues(Class<T> enumClass) {
 			return enumValues(enumClass, -1, -1);
@@ -809,7 +913,7 @@ public class Args implements Iterable<String> {
 			}
 			return result;
 		}
-		
+
 		protected int asInt(String value, int index) {
 			try {
 				return Integer.parseInt(value);
@@ -818,7 +922,7 @@ public class Args implements Iterable<String> {
 				throw new IllegalArgumentException(msg(U.U00114, name, value));
 			}
 		}
-		
+
 		protected double asDouble(String value, int index) {
 			try {
 				return Double.parseDouble(value);
@@ -827,7 +931,7 @@ public class Args implements Iterable<String> {
 				throw new IllegalArgumentException(msg(U.U00113, name, value));
 			}
 		}
-		
+
 		protected <T extends Enum<T>> T asEnum(Class<T> enumClass, String value, int index) {
 			try {
 				return Enum.valueOf(enumClass, value);
@@ -836,14 +940,14 @@ public class Args implements Iterable<String> {
 				throw new IllegalArgumentException(msg(U.U00115, name, value, enumClass.getSimpleName()));
 			}
 		}
-		
+
 		@Override
 		public String toString() {
 			return stringValue();
 		}
 
 	}
-	
+
 	/**
 	 * The string which is parsed as the boolean true value is "true".
 	 */
@@ -852,9 +956,9 @@ public class Args implements Iterable<String> {
 	 * The string which is parsed as the boolean false value is "false".
 	 */
 	public final static String FALSE = "false";
-	
+
 	private final static String BLANK = " ";
-	
+
 	private Map<String, Value> args;
 	private Map<String, String> variables;
 	private TextFile textFile; // use only one for duplicate detection to work
@@ -872,15 +976,15 @@ public class Args implements Iterable<String> {
 		def(INCLUDE);
 		variables = new HashMap<String, String>();
 		textFile = new TextFile();
-		argsScanner = new NameValueScanner(leftQuote, rightQuote, nameValueSeparator, escape, dollar);
+		argsScanner = new NameValueScanner(leftQuote, rightQuote, nameValueSeparator, escape);
 		symScanner = new SymbolScanner(dollar);
 		symCycleDetector = new HashMap<String, Integer>();
 	}
-	
+
 	private NameValueScanner getScanner() {
 		return argsScanner;
 	}
-	
+
 	private Args parseIncludeArgs(String input) {
 		Args a = new Args();
 		a.def(""); // mandatory file name
@@ -890,7 +994,7 @@ public class Args implements Iterable<String> {
 		a.parse(input);
 		return a;
 	}
-	
+
 	private Args parseIfArgs(String input) {
 		Args a = new Args();
 		a.def(COND_IF_NON_EMPTY);
@@ -899,7 +1003,7 @@ public class Args implements Iterable<String> {
 		a.parse(input);
 		return a;
 	}
-	
+
 	private FileIncluder getIncluder(String className) {
 		FileIncluder inc = null;
 		if (className != null) {
@@ -918,7 +1022,7 @@ public class Args implements Iterable<String> {
 		}
 		return inc;
 	}
-	
+
 	/**
 	 * Return an iterator over all parameter names. Parameter names are not
 	 * returned in any predictable order.
@@ -939,7 +1043,7 @@ public class Args implements Iterable<String> {
 	public int size() {
 		return args.size();
 	}
-	
+
 	/**
 	 * Convenience method for parsing parameters specified in an array. Elements
 	 * are joined using a space separator into a single string and passed to
@@ -947,14 +1051,16 @@ public class Args implements Iterable<String> {
 	 * 
 	 * @param args
 	 *            an array of strings
+	 * @throws IllegalArgumentException
+	 *             when parsing fails
 	 */
 	public void parse(String[] args) {
 		parse(Misc.join(BLANK, args));
 	}
 
 	/**
-	 * Parse parameter values specified as name-value pairs and isolated
-	 * values. To parse a file, pass a string naming the file, like this:
+	 * Parse parameter values specified as name-value pairs and isolated values.
+	 * To parse a file, pass a string naming the file, like this:
 	 * 
 	 * <pre>
 	 * <code>
@@ -964,6 +1070,8 @@ public class Args implements Iterable<String> {
 	 * 
 	 * @param input
 	 *            a string containing a specification
+	 * @throws IllegalArgumentException
+	 *             when parsing fails
 	 */
 	public void parse(String input) {
 		parse(scan(input), null);
@@ -978,6 +1086,8 @@ public class Args implements Iterable<String> {
 	 *            a string
 	 * @param collector
 	 *            a list taking names and values or null
+	 * @throws IllegalArgumentException
+	 *             when parsing fails
 	 */
 	public void parse(String input, List<String[]> collector) {
 		parse(scan(input), collector);
@@ -985,7 +1095,7 @@ public class Args implements Iterable<String> {
 
 	/**
 	 * Reset the state of the parser. This method must be called between calls
-	 * to {@link #parse} unless parsing multiple inputs incrementally.
+	 * to {@link #parse(String)} unless parsing multiple inputs incrementally.
 	 */
 	public void reset() {
 		for (Value v : args.values()) {
@@ -994,11 +1104,11 @@ public class Args implements Iterable<String> {
 		variables.clear();
 		textFile.setDuplicateDetection(true); // resets duplicate detection
 	}
-	
+
 	private List<String[]> scan(String string) {
 		return getScanner().asValuesAndPairs(string);
 	}
-	
+
 	/**
 	 * Parse list of name-value pairs.
 	 * 
@@ -1009,11 +1119,12 @@ public class Args implements Iterable<String> {
 		for (String[] pair : pairs) {
 			switch (pair.length) {
 			case 1:
-				// lone value changed by resolution could be name-value, parse recursively 
+				// lone value changed by resolution could be name-value, parse
+				// recursively
 				String resolved = resolve(pair[0]);
 				if (resolved != pair[0])
 					parse(scan(resolved), collector);
-				else 
+				else
 					put("", pair[0], collector);
 				break;
 			case 2:
@@ -1041,33 +1152,37 @@ public class Args implements Iterable<String> {
 	 * @param name
 	 *            the name of the parameter
 	 * @return a definition object which can be used to customize the parameter
+	 * @throws IllegalArgumentException
+	 *             as described in the comment
 	 */
 	public Definition def(String name) {
 		putValue(name, new Value(name));
 		return new Definition(this, name);
 	}
-	
+
 	/**
 	 * Set the value of a parameter or a variable. If it is a parameter it must
 	 * have been defined. If the name is prefixed with $, it names a variable,
-	 * which can be defined on the fly if
-	 * necessary. If the parameter is repeatable, the value will be appended,
-	 * else it will be set and will replace a existing value. The value of
-	 * variable cannot be changed ("first wins").
+	 * which can be defined on the fly if necessary. If the parameter is
+	 * repeatable, the value will be appended, else it will be set and will
+	 * replace a existing value. The value of variable cannot be changed
+	 * ("first wins").
 	 * <p>
 	 * Keywords and isolated values without a name are put with this method by
-	 * using the convention of giving an empty name. A keyword is the name of
-	 * a parameter defined with a default value of false. 
- 	 * 
+	 * using the convention of giving an empty name. A keyword is the name of a
+	 * parameter defined with a default value of false.
+	 * 
 	 * @param name
-	 *            the name of the parameter or variable
+	 *            the non-null name of the parameter or variable
 	 * @param value
-	 *            the value to set, replace or append
+	 *            the non-null value to set, replace or append
+	 * @throws IllegalArgumentException
+	 *             when no such parameter, unless it is a variable
 	 */
 	public void put(String name, String value) {
 		put(name, value, null);
 	}
-	
+
 	/**
 	 * Set the value of a parameter or a variable. If it is a parameter it must
 	 * have been defined. If the name is prefixed with $, it names a variable,
@@ -1080,18 +1195,21 @@ public class Args implements Iterable<String> {
 	 * using the convention of giving an empty name. A keyword is the name of a
 	 * parameter defined with a default value of false.
 	 * <p>
-	 * The collector is used by clients to keep track of the lexical sequence
-	 * of parameters.
+	 * The collector is used by clients to keep track of the lexical sequence of
+	 * parameters.
 	 * 
 	 * @param name
-	 *            the name of the parameter or variable
+	 *            the non-null name of the parameter or variable
 	 * @param value
-	 *            the value to set, replace or append
+	 *            the non-null value to set, replace or append
 	 * @param collector
 	 *            a list taking names and values or null
+	 * @throws IllegalArgumentException
+	 *             when no such parameter, unless it is a variable
 	 */
 	public void put(String name, String value, List<String[]> collector) {
 		Misc.nullIllegal(name, "name null");
+		Misc.nullIllegal(value, "name value");
 		if (!putKeyword(name, value, collector)) {
 			Value v = args.get(name);
 			if (v == null) {
@@ -1105,11 +1223,11 @@ public class Args implements Iterable<String> {
 				else
 					v.set(value);
 				if (collector != null)
-					collector.add(new String[] {name, value});
+					collector.add(new String[] { name, value });
 			}
 		}
 	}
-	
+
 	private boolean putKeyword(String name, String value, List<String[]> collector) {
 		boolean keyword = false;
 		if (name.length() == 0) {
@@ -1118,17 +1236,17 @@ public class Args implements Iterable<String> {
 				v.set(TRUE);
 				keyword = true;
 				if (collector != null)
-					collector.add(new String[] {value});
+					collector.add(new String[] { value });
 			}
 		}
 		return keyword;
 	}
-	
+
 	private String resolve(String input) {
 		symCycleDetector.clear();
 		return resolve0(input, 0, symCycleDetector);
 	}
-	
+
 	private String resolve0(String input, int level, Map<String, Integer> cycleDetector) {
 		if (input == null)
 			throw new IllegalArgumentException("input null");
@@ -1152,13 +1270,13 @@ public class Args implements Iterable<String> {
 					changed = true;
 					b.append(resolved);
 				}
-			} else 
+			} else
 				b.append(s);
 		}
 		// important! return input object if no change
 		return changed ? resolve0(b.toString(), ++level, cycleDetector) : input;
 	}
-	
+
 	private boolean checkForCycle(String symbol, int level, Map<String, Integer> cycleDetector) {
 		boolean pass = true;
 		Integer previousLevel = cycleDetector.get(symbol);
@@ -1168,26 +1286,28 @@ public class Args implements Iterable<String> {
 			cycleDetector.put(symbol, level);
 		return pass;
 	}
-	
+
 	/**
 	 * Return the value object for the parameter specified. An exception is
 	 * thrown if the name is unknown. For a nameless parameter, pass an empty
 	 * name.
 	 * 
 	 * @param name
-	 *            the name of the parameter
+	 *            the name of the parameter, not null
 	 * @return the value object
+	 * @throws IllegalArgumentException
+	 *             when no such parameter
 	 */
 	public Value getVal(String name) {
+		Misc.nullIllegal(name, "name null");
 		Value v = args.get(name);
 		if (v == null)
 			throw new IllegalArgumentException(msg(U.U00103, name));
 		return v;
 	}
-	
+
 	/**
-	 * Return the value of a parameter as a string. This method is shorthand
-	 * for
+	 * Return the value of a parameter as a string. This method is shorthand for
 	 * 
 	 * <pre>
 	 * <code>
@@ -1196,13 +1316,16 @@ public class Args implements Iterable<String> {
 	 * </pre>
 	 * 
 	 * @param name
-	 *            parameter name
+	 *            non-null parameter name
 	 * @return the string value
+	 * @throws IllegalArgumentException
+	 *             when no such parameter or when there is a problem with the
+	 *             value
 	 */
 	public String get(String name) {
 		return getVal(name).stringValue();
 	}
-	
+
 	/**
 	 * Return value of parameter as an array of strings. This method is
 	 * shorthand for
@@ -1216,6 +1339,9 @@ public class Args implements Iterable<String> {
 	 * @param name
 	 *            parameter name
 	 * @return an array of strings
+	 * @throws IllegalArgumentException
+	 *             when no such parameter or when there is a problem with the
+	 *             value
 	 */
 	public String[] split(String name) {
 		return getVal(name).stringValues();
@@ -1231,10 +1357,11 @@ public class Args implements Iterable<String> {
 		result.putAll(variables);
 		return result;
 	}
-	
+
 	/**
-	 * Set a variable. If a variable with the same name
-	 * exists nothing is done ("first wins"). 
+	 * Set a variable. If a variable with the same name exists nothing is done
+	 * ("first wins"). The name is verified by
+	 * {@link SymbolScanner#verify(String)}.
 	 * 
 	 * @param name
 	 *            the name of the variable
@@ -1242,6 +1369,8 @@ public class Args implements Iterable<String> {
 	 *            the value of the variable
 	 * @return true if the variable was added or false if a variable with the
 	 *         same name already exists
+	 * @throws IllegalArgumentException
+	 *             if the name fails verification
 	 */
 	public boolean putVariable(String name, String value) {
 		boolean done = false;
@@ -1253,7 +1382,7 @@ public class Args implements Iterable<String> {
 		}
 		return done;
 	}
-	
+
 	private boolean isVariable(String name) {
 		return name.length() > 0 && name.charAt(0) == dollar;
 	}
@@ -1265,17 +1394,19 @@ public class Args implements Iterable<String> {
 			throw new IllegalArgumentException(msg(U.U00104, name));
 		put(name, value);
 	}
-	
+
 	private void put(String name, Value value) {
+		Misc.nullIllegal(name, "name null");
+		Misc.nullIllegal(value, "value null");
 		if (isVariable(name))
 			throw new IllegalArgumentException(msg(U.U00121, name));
 		args.put(name, value);
 	}
-	
+
 	private Value internalGet(String name) {
 		return args.get(name);
 	}
-	
+
 	private String parseIf(String text) {
 		String result = "";
 		Args a = parseIfArgs(text);
@@ -1288,7 +1419,7 @@ public class Args implements Iterable<String> {
 			result = elseValue;
 		return result;
 	}
-	
+
 	private List<String[]> parseInclude(String text) {
 		FileIncluder argsIncluder = null;
 		try {
@@ -1311,9 +1442,9 @@ public class Args implements Iterable<String> {
 	private Map<String, String> asMap(List<String[]> pairs) {
 		Map<String, String> map = new HashMap<String, String>();
 		for (String[] pair : pairs) {
-			map.put(pair[0],  pair.length == 2 ? pair[1] : "");
+			map.put(pair[0], pair.length == 2 ? pair[1] : "");
 		}
 		return map;
 	}
-		
+
 }

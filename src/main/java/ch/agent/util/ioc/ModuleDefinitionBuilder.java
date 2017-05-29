@@ -30,7 +30,7 @@ import ch.agent.util.args.Args;
  *            the module type
  */
 public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends Module<?>> {
-	
+
 	public static final String MODULE_NAME = "name";
 	public static final String MODULE_CLASS = "class";
 	public static final String MODULE_REQUIREMENT = "requirement";
@@ -39,9 +39,9 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 	public static final String MODULE_PREDECESSOR_AKA = "pred";
 	public static final String MODULE_CONFIG = "configuration";
 	public static final String MODULE_CONFIG_AKA = "config";
-	
+
 	private Args parameters;
-	
+
 	public ModuleDefinitionBuilder() {
 	}
 
@@ -49,13 +49,13 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 	 * Build a module definition from a textual specification.
 	 * <p>
 	 * Note: clients with an array of specifications can concatenate elements of
-	 * the array with white space as separators.
+	 * the array with white spaces as separators.
 	 * 
 	 * @param specification
 	 *            a string containing the specification
 	 * @return a module definition
-	 * @throws ConfigurationException
-	 *             if something is wrong
+	 * @throws specification
+	 *             if there is an error with the specification
 	 */
 	public MD build(String specification) {
 		if (parameters == null) {
@@ -66,7 +66,7 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 		parameters.parse(specification);
 		return build(parameters);
 	}
-	
+
 	/**
 	 * Define the parameter syntax.
 	 * 
@@ -87,18 +87,14 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 	 * @param p
 	 *            the object taking parameters
 	 * @return a module specification
-	 * @throws ConfigurationException
-	 *             if something is wrong
+	 * @throws specification
+	 *             if there is an error with parameters
 	 */
 	@SuppressWarnings("unchecked")
 	protected MD build(Args p) {
-		// get configuration in raw mode because unresolved variables are okay at this point
-		return (MD) new ModuleDefinition<M>(
-				p.get(MODULE_NAME), 
-				p.get(MODULE_CLASS), 
-				p.split(MODULE_REQUIREMENT), 
-				p.split(MODULE_PREDECESSOR),
-				p.getVal(MODULE_CONFIG).rawValue());
+		// get configuration in raw mode because unresolved variables are okay
+		// at this point
+		return (MD) new ModuleDefinition<M>(p.get(MODULE_NAME), p.get(MODULE_CLASS), p.split(MODULE_REQUIREMENT), p.split(MODULE_PREDECESSOR), p.getVal(MODULE_CONFIG).rawValue());
 	}
 
 }

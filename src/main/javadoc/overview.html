@@ -1,7 +1,16 @@
 <body>
-Utility class providing basic services to applications.
-These utility classes help with error processing and with
+Utility classes providing basic services to applications.
+They are designed to help with error processing and with
 the handling of operating parameters and simple files.
+<p>
+In most cases, methods avoid throwing checked exceptions but 
+explicitly document exceptions. Illegal null pointers result 
+in an IllegalArgumentException and are documented implicitly 
+as part of the comment on the relevant parameter.
+<p>
+Exceptions thrown by utility classes come with a detailed message
+and a cause chain making it possible in most situations to easily 
+understand what went wrong.
 <p>
 Copyright 2013-2017 Hauser Olsson GmbH
 <p>

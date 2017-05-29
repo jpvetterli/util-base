@@ -46,12 +46,13 @@ public class DAG<T> {
 		 * @return true if it is a new link
 		 */
 		public boolean addLink(Node<T> n);
-		
+
 		/**
 		 * Set the node as being visited.
 		 * 
-		 * @param visited true or false
-		 */ 
+		 * @param visited
+		 *            true or false
+		 */
 		public void setVisited(boolean visited);
 
 		/**
@@ -63,7 +64,7 @@ public class DAG<T> {
 	}
 
 	private class DAGNode implements Node<T> {
-		
+
 		private final T payload;
 		private Set<Node<T>> links;
 		private boolean visited;
@@ -104,10 +105,13 @@ public class DAG<T> {
 			return getPayload().toString();
 		}
 	}
-	
+
 	private Map<T, Node<T>> nodes; // key is node payload
 	private int bugDetector;
-	
+
+	/**
+	 * Constructor.
+	 */
 	public DAG() {
 		nodes = new LinkedHashMap<T, Node<T>>();
 	}
@@ -117,7 +121,7 @@ public class DAG<T> {
 	 * 
 	 * @param nodes
 	 *            zero or more nodes
-	 * @throws IllegalStateException
+	 * @throws IllegalArgumentException
 	 *             if there is duplicate node in the input
 	 */
 	public void add(T... nodes) {
@@ -125,13 +129,13 @@ public class DAG<T> {
 			add(new DAGNode(node));
 		}
 	}
-	
+
 	/**
 	 * Add nodes to the DAG.
 	 * 
 	 * @param nodes
 	 *            a collection of nodes
-	 * @throws IllegalStateException
+	 * @throws IllegalArgumentException
 	 *             if there is duplicate node in the input
 	 */
 	public void add(Collection<T> nodes) {
@@ -147,7 +151,7 @@ public class DAG<T> {
 	 *            the node where the link starts
 	 * @param links
 	 *            zero or more nodes where the links end
-	 * @throws IllegalStateException
+	 * @throws IllegalArgumentException
 	 *             if a node does not exist
 	 */
 	public void addLinks(T node, T... links) {
@@ -157,18 +161,18 @@ public class DAG<T> {
 			start.addLink(end);
 		}
 	}
-	
+
 	/**
 	 * Add a node to the DAG.
 	 * 
 	 * @param n
 	 *            a node
-	 * @throws IllegalStateException
+	 * @throws IllegalArgumentException
 	 *             if there is already a node with this payload in the DAG
 	 */
 	private boolean add(Node<T> n) {
 		if (nodes.containsKey(n.getPayload()))
-			throw new IllegalStateException("duplicate: " + n);
+			throw new IllegalArgumentException("duplicate: " + n);
 		return nodes.put(n.getPayload(), n) == null;
 	}
 
@@ -178,13 +182,13 @@ public class DAG<T> {
 	 * @param payload
 	 *            the node payload
 	 * @return the node
-	 * @throws IllegalStateException
+	 * @throws IllegalArgumentException
 	 *             if there is no such node in the DAG
 	 */
 	private Node<T> get(T payload) {
 		Node<T> n = nodes.get(payload);
 		if (n == null)
-			throw new IllegalStateException("not found: " + payload);
+			throw new IllegalArgumentException("not found: " + payload);
 		return n;
 	}
 
@@ -194,7 +198,7 @@ public class DAG<T> {
 	 * on any node not yet seen on the list.
 	 * 
 	 * @return a list of nodes (node payloads, actually)
-	 * @throws IllegalStateException
+	 * @throws IllegalArgumentException
 	 *             if there is a cycle
 	 */
 	public List<T> sort() {
@@ -206,12 +210,12 @@ public class DAG<T> {
 		}
 		return result;
 	}
-	
+
 	private void visit(Node<T> n, Set<Node<T>> work, List<T> result) {
 		if (bugDetector++ > 1000000)
 			throw new RuntimeException("bug found");
 		if (n.isVisited())
-			throw new IllegalStateException("cycle: " + n);
+			throw new IllegalArgumentException("cycle: " + n);
 		if (work.contains(n)) {
 			n.setVisited(true);
 			for (Node<T> linked : n.getLinks()) {
@@ -222,11 +226,12 @@ public class DAG<T> {
 			result.add(n.getPayload());
 		}
 	}
-	
+
 	/**
 	 * Print the DAG.
 	 * 
-	 * @param out the output used for printing 
+	 * @param out
+	 *            the output used for printing
 	 */
 	public void print(PrintStream out) {
 		StringBuilder b = new StringBuilder();
@@ -242,5 +247,5 @@ public class DAG<T> {
 			out.println(n + b.toString());
 		}
 	}
-	
+
 }

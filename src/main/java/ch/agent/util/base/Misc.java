@@ -4,12 +4,16 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
-
 /**
- * Miscellaneous utility methods.
- *
+ * Miscellaneous utility methods. All methods are static and the object is never
+ * instantiated.
  */
 public class Misc {
+
+	// do not instantiate, all methods are static
+	private Misc() {
+	}
+
 	/**
 	 * Ensure a reference is not null. The description passed in the second
 	 * argument is usually very short (like "foo null"), as it should only help
@@ -27,7 +31,7 @@ public class Misc {
 		if (reference == null)
 			throw new IllegalArgumentException(description);
 	}
-	
+
 	/**
 	 * Test if a string is null or empty.
 	 * 
@@ -38,7 +42,7 @@ public class Misc {
 	public static boolean isEmpty(String string) {
 		return string == null || string.length() == 0;
 	}
-	
+
 	/**
 	 * Join elements of an array of items into a string using zero or more
 	 * separators. Elements are turned into strings using {@link #toString}.
@@ -55,7 +59,7 @@ public class Misc {
 		nullIllegal(items, "items null");
 		return join("", separator, "", Arrays.asList(items));
 	}
-	
+
 	/**
 	 * Join elements of an array of items into a string using a prefix, zero or
 	 * more separators, and a suffix. Elements are turned into strings using
@@ -77,23 +81,24 @@ public class Misc {
 		nullIllegal(items, "items null");
 		return join(prefix, separator, suffix, Arrays.asList(items));
 	}
-	
+
 	/**
 	 * Join elements of a collection of items into a string using a separator.
 	 * Elements are turned into strings using {@link #toString}.
 	 * 
-	 * @param <T> the type of collection items
+	 * @param <T>
+	 *            the type of collection items
 	 * @param separator
 	 *            a non-null separator
 	 * @param items
 	 *            an non-null collection of items
 	 * @return a string
 	 */
-	public static <T>String join(String separator, Collection<T> items) {
+	public static <T> String join(String separator, Collection<T> items) {
 		nullIllegal(items, "items null");
 		return join("", separator, "", items);
 	}
-	
+
 	/**
 	 * Join elements of a collection of items into a string using a prefix, zero
 	 * or more separators, and a suffix. Elements are turned into strings using
@@ -111,7 +116,7 @@ public class Misc {
 	 *            an non-null collection of items
 	 * @return a string
 	 */
-	public static <T>String join(String prefix, String separator, String suffix, Collection<T> items) {
+	public static <T> String join(String prefix, String separator, String suffix, Collection<T> items) {
 		nullIllegal(prefix, "prefix null");
 		nullIllegal(separator, "separator null");
 		nullIllegal(suffix, "suffix null");
@@ -121,7 +126,7 @@ public class Misc {
 		Iterator<T> it = items.iterator();
 		if (it.hasNext())
 			b.append(it.next().toString());
-		while(it.hasNext()) {
+		while (it.hasNext()) {
 			b = b.append(separator);
 			b = b.append(it.next().toString());
 		}
@@ -148,15 +153,17 @@ public class Misc {
 	 * @param count
 	 *            the number of parts
 	 * @return the array of parts split from the input
+	 * @throws IllegalArgumentException
+	 *             if required number or parts not available
 	 */
 	public static String[] split(String input, String separator, int count) {
 		Misc.nullIllegal(input, "input null");
 		Misc.nullIllegal(separator, "separator null");
-		String[] parts = null; 
+		String[] parts = null;
 		if (count == 0)
 			parts = new String[0];
 		else if (count == 1)
-			parts = new String[]{input};
+			parts = new String[] { input };
 		else {
 			parts = input.split(separator);
 			if (count > 0) {
@@ -170,7 +177,7 @@ public class Misc {
 		}
 		return parts;
 	}
-	
+
 	/**
 	 * Return a substring of the input. If the input is longer than a given
 	 * length, remove excess characters, and append an ellipsis. If the length
@@ -180,7 +187,7 @@ public class Misc {
 	 * specification.
 	 * 
 	 * @param input
-	 *            input string
+	 *            input string or null
 	 * @param length
 	 *            the total length not to be exceeded, including a 3-character
 	 *            ellipsis
@@ -197,7 +204,7 @@ public class Misc {
 		}
 		return input;
 	}
-	
+
 	/**
 	 * Convert milliseconds into string with days, hours, minutes, and seconds.
 	 * Leading days and hours are omitted if zero.
@@ -207,7 +214,7 @@ public class Misc {
 	 * @return a string representing days, hours, minutes, and seconds
 	 */
 	public static String dhms(long t) {
-		final int MPD = 24*60*60*1000;
+		final int MPD = 24 * 60 * 60 * 1000;
 		long days = (t / MPD);
 		int s = (int) (t - days * MPD) / 1000;
 		int m = s / 60;
@@ -225,27 +232,31 @@ public class Misc {
 		}
 		return result;
 	}
-	
+
 	/**
-	 * Test if the absolute difference between two numbers
-	 * is larger than 1e-10.
+	 * Test if the absolute difference between two numbers is larger than 1e-10.
 	 * 
-	 * @param d1 a number
-	 * @param d2 another number
-	 * @return true if the first two numbers are not close
+	 * @param d1
+	 *            a number
+	 * @param d2
+	 *            another number
+	 * @return true if the two numbers are not close
 	 */
 	public static boolean notClose(double d1, double d2) {
 		double EPSILON = 1e-10;
 		return notClose(d1, d2, EPSILON);
 	}
-	
+
 	/**
-	 * Test if the absolute difference between two numbers
-	 * is larger than a threshold.
+	 * Test if the absolute difference between two numbers is larger than a
+	 * threshold.
 	 * 
-	 * @param d1 a number
-	 * @param d2 another number
-	 * @param threshold a very small number
+	 * @param d1
+	 *            a number
+	 * @param d2
+	 *            another number
+	 * @param threshold
+	 *            a very small number
 	 * @return true if the first two numbers are not close
 	 */
 	public static boolean notClose(double d1, double d2, double threshold) {

@@ -32,11 +32,11 @@ import ch.agent.util.logging.LoggerManager;
  * Commands to be executed and their parameters are extracted from the
  * <em>execution</em> specification. This is a sequence of statements named
  * after the commands registered by modules during module initialization. The
- * names actually used are either given by {@link Command#getName} or, if that
+ * names actually used are either given by {@link Command#getName()} or, if that
  * name is already registered by another module, the concatenation of the module
  * name and the command name, with a period between them. The syntax of command
  * parameters is defined by the command themselves. The container passes the
- * value verbatim to the {@link Command#execute} methods.
+ * value verbatim to the {@link Command#execute(String)} methods.
  */
 public class Container {
 
@@ -49,7 +49,7 @@ public class Container {
 	 *            an array of strings passed by the run time environment
 	 */
 	public static void main(String[] args) {
-		Container c =  new Container();
+		Container c = new Container();
 		int exit = 0;
 		try {
 			c.run(args);
@@ -65,7 +65,7 @@ public class Container {
 	private long start; // start time of the #run method
 	private ConfigurationRegistry<Module<?>> registry;
 	private Configuration<ModuleDefinition<Module<?>>, Module<?>> configuration;
-	
+
 	/**
 	 * Constructor.
 	 */
@@ -77,20 +77,8 @@ public class Container {
 	 * 
 	 * @return a configuration builder
 	 */
-	public ConfigurationBuilder<
-		Configuration<ModuleDefinition<Module<?>>, Module<?>>,
-		ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>,
-		ModuleDefinition<Module<?>>,
-		Module<?>
-	> getBuilder() {
-		return new ConfigurationBuilder<
-				Configuration<ModuleDefinition<Module<?>>, Module<?>>,
-				ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>,
-				ModuleDefinition<Module<?>>, 
-				Module<?>
-			>(
-				new ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>()
-			);
+	public ConfigurationBuilder<Configuration<ModuleDefinition<Module<?>>, Module<?>>, ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, ModuleDefinition<Module<?>>, Module<?>> getBuilder() {
+		return new ConfigurationBuilder<Configuration<ModuleDefinition<Module<?>>, Module<?>>, ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, ModuleDefinition<Module<?>>, Module<?>>(new ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>());
 	}
 
 	/**
@@ -101,32 +89,35 @@ public class Container {
 	 * @return a module, non-null
 	 * @throws NoSuchElementException
 	 *             if there is no module with that name
-	 * @throws IllegalArgumentException
+	 * @throws IllegalStateException
 	 *             if method used after configuration error
 	 */
 	public Module<?> getModule(String name) {
 		if (registry == null)
-			throw new IllegalArgumentException("Bug: #getModule used after configuration error.");
+			throw new IllegalStateException("Bug: #getModule used after configuration error.");
 		return registry.getModules().get(name);
 	}
-	
+
 	/**
 	 * Configure and initialize modules, and execute commands. Any
 	 * {@link Exception} during processing is caught and thrown again, after
 	 * logging a termination message followed by all exception messages in the
 	 * cause chain. If a stack trace is wanted, it can be produced by catching
-	 * the exception thrown by {@link #run}.
+	 * the exception thrown by {@link #run(String[])}.
 	 * <p>
-	 * The method does not perform the {@link #shutdown} because some
-	 * applications or unit tests need to access module data after {@link #run}
-	 * has returned or has been interrupted by an exception. Performing the
-	 * {@link #shutdown} is therefore the responsibility of the client,
-	 * typically in a <em>finally</em> clause.
+	 * The method does not perform the {@link #shutdown()} because some
+	 * applications or unit tests need to access module data after
+	 * {@link #run(String[])} has returned or has been interrupted by an
+	 * exception. Performing the {@link #shutdown()} is therefore the
+	 * responsibility of the client, typically in a <em>finally</em> clause.
 	 * 
 	 * @param parameters
 	 *            an array of command line parameters
+	 * @throws IllegalArgumentException
+	 *             usually caused by an error in the parameters
 	 * @throws Exception
-	 *             anything can happen during execution
+	 *             any exception thrown during execution after parameters have
+	 *             been processed successfully
 	 */
 	public void run(String[] parameters) throws Exception {
 		start = System.currentTimeMillis();
@@ -150,14 +141,16 @@ public class Container {
 			throw e;
 		}
 	}
+
 	/**
-	 * Shutdown all modules in the reverse initialization sequence. The method does
-	 * nothing in case of configuration errors, except logging the termination.
+	 * Shutdown all modules in the reverse initialization sequence. The method
+	 * does nothing in case of configuration errors, except logging the
+	 * termination.
 	 */
 	public void shutdown() {
 		if (configuration != null && registry != null)
 			configuration.shutdown(registry);
 		logger.info(lazymsg(U.C21, Misc.dhms(System.currentTimeMillis() - start)));
 	}
-		
+
 }

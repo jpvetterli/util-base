@@ -23,13 +23,6 @@ import ch.agent.util.logging.LoggerManager;
 /**
  * A configuration is an immutable object encapsulating the information
  * necessary to set up and launch a system of modules.
- * <p>
- * The configuration consists of:
- * <ul>
- * <li>a list of module definitions in a sequence compatible with dependency
- * constraints,
- * <li>an <em>execution</em> specification.
- * </ul>
  * 
  * @param <D>
  *            the module definition type
@@ -37,23 +30,37 @@ import ch.agent.util.logging.LoggerManager;
  *            the module type
  */
 public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> implements Serializable {
-	
+
 	private static final long serialVersionUID = -8582798552915184875L;
 
+	/**
+	 * Callback interface for the
+	 * {@link Configuration#extract(ExtractFilter, String...)}.
+	 */
 	public static interface ExtractFilter {
+
+		/**
+		 * Test if a module definition must be included in the extraction.
+		 * 
+		 * @param def
+		 *            a module definition
+		 * @return true to include else false
+		 */
 		boolean include(ModuleDefinition<?> def);
 	}
-	
+
 	private static LoggerBridge logger = LoggerManager.getLogger(Configuration.class);
-	
+
 	private final String execution;
 	private final Map<String, D> modules;
 
 	/**
-	 * Constructor. Modules must be provided in a valid dependency sequence.
+	 * Constructor. Module definitions must be provided in a valid dependency
+	 * sequence. This can be taken care of by {@link ConfigurationBuilder}.
 	 * 
 	 * @param definitions
-	 *            the list of module definitions in valid initialization sequence
+	 *            the list of module definitions in valid initialization
+	 *            sequence
 	 * @param execution
 	 *            the execution specification or null
 	 */
@@ -64,29 +71,33 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 			this.modules.put(def.getName(), def);
 		}
 	}
-	
+
 	/**
 	 * Create all modules. The result is a registry with all modules.
 	 * 
 	 * @return configuration registry with all modules
+	 * @throws IllegalArgumentException
+	 *             if two modules have the same name
 	 */
 	public ConfigurationRegistry<M> create() {
 		ConfigurationRegistry<M> registry = new ConfigurationRegistry<M>();
 		for (D def : getModuleDefinitions()) {
 			M module = def.create();
 			if (registry.getModules().put(def.getName(), module) != null)
-				throw new IllegalStateException(msg(U.C55, def.getName()));
+				throw new IllegalArgumentException(msg(U.C55, def.getName()));
 		}
 		logger.debug(lazymsg(U.C30, Misc.join("\", \"", registry.getModules().keySet())));
 		return registry;
 	}
-	
+
 	/**
 	 * Configure all modules in the registry. See
-	 * {@link ModuleDefinition#configure}.
+	 * {@link ModuleDefinition#configure(Module, ConfigurationRegistry)}.
 	 * 
 	 * @param registry
 	 *            configuration registry
+	 * @throws IllegalArgumentException
+	 *             if there is a configuration failure
 	 */
 	public void configure(ConfigurationRegistry<M> registry) {
 		for (M module : registry.getModules().values()) {
@@ -94,12 +105,14 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 		}
 		logger.debug(lazymsg(U.C31, Misc.join("\", \"", registry.getModules().keySet())));
 	}
-	
+
 	/**
 	 * Initialize all modules.
 	 * 
-	 * @param registry a configuration registry
-	 * @throws Exception by a module initialize method
+	 * @param registry
+	 *            a configuration registry
+	 * @throws Exception
+	 *             if a module initialization method fails
 	 */
 	public void initialize(ConfigurationRegistry<M> registry) throws Exception {
 		for (M module : registry.getModules().values()) {
@@ -107,7 +120,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 		}
 		logger.debug(lazymsg(U.C32, Misc.join("\", \"", registry.getModules().keySet())));
 	}
-	
+
 	/**
 	 * Parse the execution statement of the configuration. Command
 	 * specifications must have already been initialized.
@@ -115,6 +128,8 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 	 * @param specifications
 	 *            a collection of command specifications
 	 * @return a collection of executable command specifications
+	 * @throws IllegalArgumentException
+	 *             if there is parsing failure
 	 */
 	public Collection<ExecutableCommandSpecification> parseCommands(Collection<CommandSpecification> specifications) {
 		List<ExecutableCommandSpecification> executables = new ArrayList<ExecutableCommandSpecification>();
@@ -142,15 +157,16 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 		}
 		return executables;
 	}
-	
+
 	/**
-	 * Execute commands. 
+	 * Execute commands.
 	 * 
 	 * @param registry
 	 *            the configuration registry
 	 * @param executables
 	 *            a collection of executable command specifications
-	 * @throws Exception when a command fails
+	 * @throws Exception
+	 *             when a command fails
 	 */
 	public void executeCommands(ConfigurationRegistry<M> registry, Collection<ExecutableCommandSpecification> executables) throws Exception {
 		for (ExecutableCommandSpecification spec : executables) {
@@ -163,7 +179,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 			}
 		}
 	}
-	
+
 	/**
 	 * Shutdown all modules in the registry. The shutdown sequence is the
 	 * reverse of the initialization sequence.
@@ -187,7 +203,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 	public List<String> getModuleNames() {
 		return new ArrayList<String>(modules.keySet());
 	}
-	
+
 	/**
 	 * Get a copy of all module definitions in valid initialization sequence.
 	 * 
@@ -205,7 +221,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 	public int getModuleCount() {
 		return modules.size();
 	}
-	
+
 	/**
 	 * Get a module definition.
 	 * 
@@ -216,21 +232,20 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 	public D getModuleDefinition(String name) {
 		return modules.get(name);
 	}
-	
+
 	/**
-	 * Return the <em>execution</em> specification. The execution specification
-	 * is an opaque block of text which contains instructions on module commands
-	 * to be executed after all modules have been initialized. The instruction
-	 * for a given command can be extracted using the command name. The details
-	 * of how to perform this extraction is not the responsibility of this
-	 * object.
+	 * Return the execution specification. The execution specification is an
+	 * opaque block of text which contains instructions on module commands to be
+	 * executed after all modules have been initialized. The instruction for a
+	 * given command can be extracted using the command name. The details of how
+	 * to perform this extraction is not the responsibility of this object.
 	 * 
 	 * @return the execution string or null
 	 */
 	public String getExecution() {
 		return execution;
 	}
-	
+
 	/**
 	 * Extract sub-configuration for a selection of modules. The
 	 * sub-configuration includes the modules and all their direct and indirect
@@ -239,16 +254,20 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 	 * The execution specification, which belongs to the top-level
 	 * configuration, is not included.
 	 * 
-	 * @param <T> the type of configuration returned
-	 * @param filter extraction filter or null
+	 * @param <T>
+	 *            the type of configuration returned
+	 * @param filter
+	 *            extraction filter or null
 	 * @param module
 	 *            names of zero or more top modules to include in the
 	 *            sub-configuration
 	 * @return a configuration
+	 * @throws NoSuchElementException
+	 *             when a module is unknown
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends Configuration<D,M>> T extract(ExtractFilter filter, String... module) {
-		Set<String> scope = new HashSet<String>(); 
+	public <T extends Configuration<D, M>> T extract(ExtractFilter filter, String... module) {
+		Set<String> scope = new HashSet<String>();
 		for (String name : module) {
 			D def = getModuleDefinition(name);
 			if (def == null)
@@ -260,9 +279,9 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 			if (scope.contains(def.getName()) && (filter == null || filter.include(def)))
 				extract.add(def);
 		}
-		return (T) new Configuration<D,M>(extract, null);
+		return (T) new Configuration<D, M>(extract, null);
 	}
-	
+
 	private void add(D def, Set<String> scope) {
 		// no risk of stack overflow because original configuration has no cycle
 		scope.add(def.getName());
@@ -270,6 +289,5 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 			add(getModuleDefinition(pre), scope);
 		}
 	}
-
 
 }

@@ -2,6 +2,8 @@ package ch.agent.util.ioc;
 
 import java.io.Serializable;
 
+import ch.agent.util.base.Misc;
+
 /**
  * A command specification consists of module name and a command name.
  */
@@ -9,8 +11,8 @@ public class CommandSpecification implements Serializable {
 
 	private static final long serialVersionUID = -1426998440999221081L;
 
-	public static final String NAME_SEPARATOR = "."; 
-	
+	public static final String NAME_SEPARATOR = ".";
+
 	private final String command;
 	private final String module;
 	private final boolean parmeterless; // irrelevant for equals and hashCode
@@ -21,12 +23,13 @@ public class CommandSpecification implements Serializable {
 	 * @param module
 	 *            the module name or null for a built-in command
 	 * @param command
-	 *            the command name
+	 *            the command name, not null
 	 * @param parameterless
 	 *            if true, it is a parameterless command
 	 */
 	public CommandSpecification(String module, String command, boolean parameterless) {
 		super();
+		Misc.nullIllegal(command, "command null");
 		this.module = module;
 		this.command = command;
 		this.parmeterless = parameterless;
@@ -62,7 +65,7 @@ public class CommandSpecification implements Serializable {
 	public String getCommand() {
 		return command;
 	}
-	
+
 	/**
 	 * Test if it is a parameterless command.
 	 * 

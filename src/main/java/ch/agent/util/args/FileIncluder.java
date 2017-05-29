@@ -1,24 +1,19 @@
 package ch.agent.util.args;
 
-import static ch.agent.util.STRINGS.msg;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import ch.agent.util.STRINGS.U;
 import ch.agent.util.file.TextFile;
 
 /**
- * Support for including parameters from a file. Features are:
- * <ul>
- * <li>Files can reside on the file system or on the classpath.
- * <li>Cyclical inclusion can be detected.
- * <li>Lines with a # as the first non-whitespace characters are skipped.
- * <li>There a <em>simple</em> mode, where all lines not looking like a
- * name-value pair are skipped (the separator is =).
- * </ul>
- * Subclasses can be written to support more complex requirements.
+ * The file includer reads parameters from a file in the file system or on the
+ * classpath. If an external {@link TextFile} is used for accessing files,
+ * inclusion cycles are detected. Lines with a # as the first non-whitespace
+ * characters are skipped as comments. A <em>simple</em> mode is provided, which
+ * skips all lines not containing a = character. The {@link Args}
+ * <em>include</em> operator can be instructed to use a custom file includer,
+ * which needs to extend this class.
  */
 public class FileIncluder {
 
@@ -28,10 +23,9 @@ public class FileIncluder {
 
 	private class ArgsFileVisitor implements TextFile.Visitor {
 
-		
 		private StringBuilder buffer;
 		private boolean skipIfNoEqual;
-		
+
 		public ArgsFileVisitor(boolean skipIfNoEqual) {
 			super();
 			this.skipIfNoEqual = skipIfNoEqual;
@@ -48,21 +42,21 @@ public class FileIncluder {
 			}
 			return false;
 		}
-		
+
 		public String getContent() {
 			return buffer.toString();
 		}
-		
+
 	}
-	
+
 	private TextFile textFile; // use only one for duplicate detection to work
-	
+
 	/**
 	 * Constructor.
 	 */
 	public FileIncluder() {
 	}
-	
+
 	/**
 	 * Set the text file reader to use. Using the same reader when there are
 	 * recursive includes makes it possible to detect cycles. If this method is
@@ -75,7 +69,7 @@ public class FileIncluder {
 	public void setTextFileReader(TextFile textFile) {
 		this.textFile = textFile;
 	}
-	
+
 	/**
 	 * Return the content of a file as a list of name-value pairs and isolated
 	 * values. The second parameter is a map where keys are the names to
@@ -101,7 +95,7 @@ public class FileIncluder {
 		List<String[]> scanned = include(scanner, fileName, skipIfNotEqual);
 		if (names != null) {
 			Iterator<String[]> it = scanned.iterator();
-			while(it.hasNext()) {
+			while (it.hasNext()) {
 				String[] pair = it.next();
 				String mapping = names.get(pair[0]);
 				if (mapping == null)
@@ -112,7 +106,7 @@ public class FileIncluder {
 		}
 		return scanned;
 	}
-	
+
 	/**
 	 * Return the content of a file as a list of name-value pairs and or
 	 * isolated values.
@@ -122,11 +116,13 @@ public class FileIncluder {
 	 * @param fileName
 	 *            the file to include
 	 * @return a list of String arrays of length 1 or 2
+	 * @throws IllegalArgumentException
+	 *             on failure to read the included file
 	 */
 	public List<String[]> include(NameValueScanner scanner, String fileName) {
 		return include(scanner, fileName, false);
 	}
-	
+
 	/**
 	 * Return the content of a file as a list of name-value pairs and or
 	 * isolated values.
@@ -139,16 +135,14 @@ public class FileIncluder {
 	 *            if true skip lines not containing an equal sign
 	 * 
 	 * @return a list of String arrays of length 1 or 2
+	 * @throws IllegalArgumentException
+	 *             on failure to read the included file
 	 */
 	protected List<String[]> include(NameValueScanner scanner, String fileName, boolean skipIfNotEqual) {
 		ArgsFileVisitor visitor = new ArgsFileVisitor(skipIfNotEqual);
 		if (textFile == null)
 			textFile = new TextFile();
-		try {
-			textFile.read(fileName, visitor);
-		} catch (Exception e) {
-			throw new IllegalArgumentException(msg(U.U00131, fileName), e);
-		}
+		textFile.read(fileName, visitor);
 		return scanner.asValuesAndPairs(visitor.getContent());
 	}
 

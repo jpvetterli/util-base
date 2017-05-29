@@ -15,6 +15,10 @@ import ch.agent.util.base.TestMessage.M;
 
 public class LazyStringTest {
 
+	public static LazyString lazy(String text, Object... args) {
+		return new LazyString(text, null, null, null, args);
+	}
+	
 	@Before
 	public void setUp() throws Exception {
 	}
@@ -30,17 +34,17 @@ public class LazyStringTest {
 	
 	@Test
 	public void testDouble() {
-		assertEquals("1.52", LazyString.lazy("1.52").toString());
+		assertEquals("1.52", lazy("1.52").toString());
 	}
 	
 	@Test
 	public void testDouble2() {
-		assertEquals("1.52", LazyString.lazy("{0}", 1.52).toString());
+		assertEquals("1.52", lazy("{0}", 1.52).toString());
 	}
 	@Test
 	public void testDouble3() {
 		try {
-			assertEquals("\uFFFD", LazyString.lazy("{0,number,#.##}", Double.NaN).toString());
+			assertEquals("\uFFFD", lazy("{0,number,#.##}", Double.NaN).toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("exception");
@@ -48,26 +52,26 @@ public class LazyStringTest {
 	}
 	@Test
 	public void testDouble4() {
-		assertEquals("0.33", LazyString.lazy("{0,number,#.##}", ((double)1/3)).toString());
+		assertEquals("0.33", lazy("{0,number,#.##}", ((double)1/3)).toString());
 	}
 	@Test
 	public void testDouble5() {
-		assertEquals("1.00", LazyString.lazy("{0,number,0.00}", ((double)1.000000000001)).toString());
+		assertEquals("1.00", lazy("{0,number,0.00}", ((double)1.000000000001)).toString());
 	}
 	@Test
 	public void testDouble6() {
-		assertEquals("1", LazyString.lazy("{0,number,#.##}", ((double)1.000000000001)).toString());
+		assertEquals("1", lazy("{0,number,#.##}", ((double)1.000000000001)).toString());
 	}
 
 	@Test
 	public void testStringFormatter() {
-		assertEquals("%d", LazyString.lazy("%d", 42d).toString());
+		assertEquals("%d", lazy("%d", 42d).toString());
 	}
 
 	@Test
 	public void testNull() {
 		Object x = null;
-		assertEquals("null", LazyString.lazy("{0}", x).toString());
+		assertEquals("null", lazy("{0}", x).toString());
 	}
 	
 	@Test
@@ -156,9 +160,9 @@ public class LazyStringTest {
 		for (int i = 0; i < 10; i++)
 			longArg1000 = longArg1000 + longArg100;
 		assertEquals(1000, longArg1000.length());
-		String msg = LazyString.lazy("x{0}x", longArg1000).toString();
+		String msg = lazy("x{0}x", longArg1000).toString();
 		assertEquals(1002, msg.length());
-		msg = LazyString.lazy("x{0}x", longArg1000 + longArg100).toString();
+		msg = lazy("x{0}x", longArg1000 + longArg100).toString();
 		assertEquals(1002, msg.length());
 		assertTrue(msg.endsWith("[...]x"));
 	}

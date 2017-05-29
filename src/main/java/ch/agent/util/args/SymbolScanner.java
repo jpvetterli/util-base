@@ -6,52 +6,50 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ch.agent.util.STRINGS.U;
+import ch.agent.util.base.Misc;
 
 /**
- * The symbol scanner supports splitting a string into a list to help locate
- * symbols of variables.
+ * The symbol scanner splits a string into a list to help locate symbols of
+ * substitution variables.
  * <p>
  * Symbols (or identifiers) are prefixed with characters reserved for that
  * purpose. The character is passed to the constructor. This documentation
  * assumes it is a $ sign.
  * <p>
  * When setting a variable, its symbol is prefixed with a single $, like
- * <code>$foo-bar</code>. When accessing a variable, its symbol is prefixed with $$, like
- * <code>$$foo-bar</code>; this is called a variable reference.
+ * <code>$foo-bar</code>. When accessing a variable, its symbol is prefixed with
+ * $$, like <code>$$foo-bar</code>; this is called a variable reference.
  * <p>
  * A valid identifier consists of one or more letters and digits (tested with
- * {@link Character#isLetterOrDigit}), hyphens (-) and underscores (_). The
- * character used as prefix ($) is not allowed inside the identifier.
+ * {@link Character#isLetterOrDigit Character#isLetterOrDigit(char)}), hyphens
+ * (-) and underscores (_). The character used as prefix ($) is not allowed
+ * inside the identifier.
  * <p>
  * A reference is found when $$ is directly followed by a valid identifier. When
  * a reference is found, the following elements are appended to the list:
  * <ul>
  * <li>the input since the previous reference,
  * <li>a null, signifying the string $$ in its role as symbol prefix, and
- * <li>and the symbol.
+ * <li>the symbol.
  * </ul>
- * This continues until the end of the input is reached; the string remaining
+ * This continues until the end of the input is reached. The string remaining
  * after the last reference is appended to the list.
  * <p>
  * A null part is inserted instead of $$ because $$ can appear by itself as a
- * valid part in a few corner cases ($$ at the end of input, for example). Using
- * a null removes the ambiguity.
+ * plain string in a few corner cases ($$ at the end of input, for example).
+ * Using a null removes the ambiguity.
  * <p>
  * In some cases a reference is nested inside a string, and is directly followed
  * by a valid symbol character, which makes it impossible to find the end of the
  * symbol. To handle this, the symbol must be surrounded with two $, like
  * <code>$$$foo-bar$baz</code>.
- * <p>
- * The scanner has no notion of escape characters. The client can handle them;
- * they are easy to find as they trail the part preceding the null element ($$)
- * before the symbol.
  */
 public class SymbolScanner {
 
 	private enum State {
 		INIT, DOLLAR1, DOLLAR2, DOLLAR3, SYMBOL, DOLLARSYMBOL, END
 	}
-	
+
 	private final char dollar;
 
 	private String input;
@@ -69,15 +67,18 @@ public class SymbolScanner {
 	public SymbolScanner(char dollar) {
 		this.dollar = dollar;
 	}
-	
+
 	/**
 	 * Verify the syntax of a symbol. The method throws an
 	 * <code>IllegalArgumentException</code> when something is wrong.
 	 * 
 	 * @param name
-	 *            a name with the $ prefix not removed
+	 *            a non-null name with a $ prefix
+	 * @throws IllegalArgumentException
+	 *             if verification fails
 	 */
 	public void verify(String name) {
+		Misc.nullIllegal(name, "name null");
 		if (name.length() == 0)
 			throw new IllegalArgumentException(msg(U.U00126, dollar));
 		if (name.charAt(0) != dollar)
@@ -91,11 +92,11 @@ public class SymbolScanner {
 			}
 		}
 	}
-	
+
 	private boolean isValid(char ch) {
 		return Character.isLetterOrDigit(ch) || ch == '-' || ch == '_' && ch != dollar;
 	}
-	
+
 	/**
 	 * Split the input into a list of strings to make it easy to find symbol
 	 * references.
@@ -118,7 +119,7 @@ public class SymbolScanner {
 		reset(input);
 		List<String> output = new ArrayList<String>();
 		boolean end = false;
-		while(!end) {
+		while (!end) {
 			switch (split()) {
 			case 0:
 				break;
@@ -149,7 +150,7 @@ public class SymbolScanner {
 		}
 		return output;
 	}
-	
+
 	private void reset(String input) {
 		if (input == null)
 			throw new IllegalArgumentException("input null");
@@ -180,29 +181,29 @@ public class SymbolScanner {
 			else if (ch == 0)
 				state = State.END;
 			break;
-		case DOLLAR1: 
+		case DOLLAR1:
 			if (ch == dollar)
 				state = State.DOLLAR2;
-			else 
+			else
 				state = ch == 0 ? State.END : State.INIT;
 			break;
-		case DOLLAR2: 
+		case DOLLAR2:
 			if (isValid(ch)) {
 				// symbol cannot be empty
 				symbolPosition = currentPosition;
 				state = State.SYMBOL;
 			} else if (ch == dollar)
-				state = State.DOLLAR3; 
+				state = State.DOLLAR3;
 			else
 				state = ch == 0 ? State.END : State.INIT;
 			break;
-		case DOLLAR3: 
+		case DOLLAR3:
 			if (isValid(ch)) {
 				// symbol as above + between 2 dollars
 				symbolPosition = currentPosition - 1;
 				state = State.DOLLARSYMBOL;
 			} else if (ch == dollar)
-				; // same 
+				; // same
 			else
 				state = ch == 0 ? State.END : State.INIT;
 			break;
@@ -238,6 +239,5 @@ public class SymbolScanner {
 			return 0;
 		}
 	}
-	
 
 }

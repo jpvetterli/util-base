@@ -23,14 +23,14 @@ public interface Command<T> {
 	 * @return a non-null and non-empty string
 	 */
 	String getName();
-	
+
 	/**
 	 * Test if it is a parameterless command.
 	 * 
 	 * @return true if it is a parameterless command
 	 */
 	boolean isParameterless();
-	
+
 	/**
 	 * Rename the command.
 	 * 
@@ -38,7 +38,7 @@ public interface Command<T> {
 	 *            the new name
 	 */
 	void rename(String name);
-	
+
 	/**
 	 * Execute the command with the given parameters. If there is a critical
 	 * problem, which makes further work meaningless or harmful, the method
@@ -46,8 +46,10 @@ public interface Command<T> {
 	 * 
 	 * @param parameters
 	 *            a string containing parameters
+	 * @throws IllegalArgumentException
+	 *             if there is a problem with the parameters
 	 * @throws Exception
-	 *             to signal critical problems
+	 *             if there is a critical problem during actual execution
 	 */
 	void execute(String parameters) throws Exception;
 

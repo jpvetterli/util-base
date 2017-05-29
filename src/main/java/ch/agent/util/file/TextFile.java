@@ -1,5 +1,7 @@
 package ch.agent.util.file;
 
+import static ch.agent.util.STRINGS.msg;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,25 +22,23 @@ import java.util.Set;
 
 import ch.agent.util.STRINGS;
 import ch.agent.util.STRINGS.U;
+import ch.agent.util.base.Misc;
 
 /**
  * Support for reading and writing text files.
- * 
- * @author Jean-Paul Vetterli
- * 
  */
 public class TextFile {
 
 	private Charset charset;
 	private Set<String> duplicates;
-	
+
 	/**
 	 * A visitor is used to process lines read from a text file.
 	 */
 	public interface Visitor {
-		
+
 		/**
-		 * Take one line of text. Returns true to signal intention of skipping 
+		 * Take one line of text. Returns true to signal intention of skipping
 		 * all remaining lines. Can throw a checked exception.
 		 * 
 		 * @param lineNr
@@ -46,11 +46,12 @@ public class TextFile {
 		 * @param line
 		 *            the text, with line separator already removed
 		 * @return true to request skipping remaining lines
-		 * @throws Exception checked exception from the implementation
+		 * @throws Exception
+		 *             checked exception from the implementation
 		 */
 		boolean visit(int lineNr, String line) throws Exception;
 	}
-	
+
 	private class Input {
 		private String name;
 		private InputStream stream;
@@ -69,7 +70,7 @@ public class TextFile {
 			return stream;
 		}
 	}
-	
+
 	private class Output {
 		private String name;
 		private OutputStream stream;
@@ -92,7 +93,7 @@ public class TextFile {
 	private class SimpleVisitor implements Visitor {
 
 		private List<String> lines;
-		
+
 		public SimpleVisitor() {
 			super();
 			lines = new ArrayList<String>();
@@ -103,24 +104,24 @@ public class TextFile {
 			lines.add(line);
 			return false;
 		}
-		
+
 		public List<String> getLines() {
 			return lines;
 		}
 	}
 
-	
 	/**
 	 * Construct a <code>TextFile</code> using a specific character set.
 	 * 
-	 * @param charset the character set
+	 * @param charset
+	 *            the character set
 	 */
 	public TextFile(Charset charset) {
 		super();
 		this.charset = charset;
 		setDuplicateDetection(true);
 	}
-	
+
 	/**
 	 * Construct a <code>TextFile</code> using the default character set.
 	 */
@@ -142,13 +143,13 @@ public class TextFile {
 	public void setDuplicateDetection(boolean on) {
 		if (on) {
 			if (duplicates == null)
-				duplicates = new HashSet<String>(); 
+				duplicates = new HashSet<String>();
 			else
 				duplicates.clear();
 		} else
 			duplicates = null;
 	}
-	
+
 	/**
 	 * Read a series of lines from a file. Lines are passed to the caller via a
 	 * callback mechanism. The file can reside in the file system or as a
@@ -156,36 +157,41 @@ public class TextFile {
 	 * file cannot be read or if the visitor throws an exception.
 	 * 
 	 * @param fileName
-	 *            the name of the file
+	 *            the non-null name of the file
 	 * @param visitor
 	 *            a visitor taking lines of text
-	 * @throws IOException
+	 * @throws IllegalArgumentException
+	 *             on failure to read the file
 	 */
-	public void read(String fileName, Visitor visitor) throws IOException {
-		int lineNr = 0;
-		String line = null;
-		Input fh = openInput(fileName);
+	public void read(String fileName, Visitor visitor) {
+		Misc.nullIllegal(fileName, "fileName null");
 		try {
-			BufferedReader r = new BufferedReader(
-					new InputStreamReader(fh.getStream(), charset));
-			while (true) {
-				lineNr++;
-				line = r.readLine();
-				if (line == null) {
-					lineNr--;
-					break;
+			int lineNr = 0;
+			String line = null;
+			Input fh = openInput(fileName);
+			try {
+				BufferedReader r = new BufferedReader(new InputStreamReader(fh.getStream(), charset));
+				while (true) {
+					lineNr++;
+					line = r.readLine();
+					if (line == null) {
+						lineNr--;
+						break;
+					}
+					if (visitor.visit(lineNr, line))
+						break;
 				}
-				if (visitor.visit(lineNr, line))
-					break;
+				r.close();
+			} catch (Exception e) {
+				if (lineNr > 0)
+					throw new IOException(STRINGS.msg(U.U00202, fh.getName(), lineNr), e);
+				else
+					throw new IOException(STRINGS.msg(U.U00201, fh.getName()), e);
+			} finally {
+				fh.stream.close();
 			}
-			r.close();
 		} catch (Exception e) {
-			if (lineNr > 0)
-				throw new IOException(STRINGS.msg(U.U00202, fh.getName(), lineNr), e);
-			else
-				throw new IOException(STRINGS.msg(U.U00201, fh.getName()), e);
-		} finally {
-			fh.stream.close();
+			throw new IllegalArgumentException(msg(U.U00210, fileName), e);
 		}
 	}
 
@@ -197,16 +203,17 @@ public class TextFile {
 	 * read.
 	 * 
 	 * @param fileName
-	 *            the name of the file
+	 *            the non-null name of the file
 	 * @return all lines of text from the file as a list
-	 * @throws IOException
+	 * @throws IllegalArgumentException
+	 *             on failure to read the file
 	 */
-	public List<String> read(String fileName) throws IOException {
+	public List<String> read(String fileName) {
 		SimpleVisitor v = new SimpleVisitor();
 		read(fileName, v);
 		return v.getLines();
 	}
-	
+
 	/**
 	 * Write a series of lines to a file. The file is created if it does not
 	 * exist, as is the file's directory (but not the directory's directory).
@@ -215,34 +222,40 @@ public class TextFile {
 	 * iterator is null, an empty file is created if one does not exist.
 	 * 
 	 * @param fileName
-	 *            the name of the file
+	 *            the non-null name of the file
 	 * @param append
 	 *            if true append to existing file, else overwrite
 	 * @param lines
 	 *            an iterator supplying lines of text or null
-	 * @throws IOException
+	 * @throws IllegalArgumentException
+	 *             on failure to write to the file
 	 */
-	public void write(String fileName, boolean append, Iterator<String> lines) throws IOException {
-		Output out = openOutput(fileName, append);
-		int lineNr = 0;
+	public void write(String fileName, boolean append, Iterator<String> lines) {
+		Misc.nullIllegal(fileName, "fileName null");
 		try {
-			OutputStreamWriter w = new OutputStreamWriter(out.getStream(), charset);
-			String sep = System.getProperty("line.separator");
-			if (lines != null) {
-				while (lines.hasNext()) {
-					lineNr++;
-					w.write(lines.next());
-					w.write(sep);
+			Output out = openOutput(fileName, append);
+			int lineNr = 0;
+			try {
+				OutputStreamWriter w = new OutputStreamWriter(out.getStream(), charset);
+				String sep = System.getProperty("line.separator");
+				if (lines != null) {
+					while (lines.hasNext()) {
+						lineNr++;
+						w.write(lines.next());
+						w.write(sep);
+					}
 				}
+				w.close();
+			} catch (IOException e) {
+				throw new IOException(STRINGS.msg(U.U00207, out.getName(), lineNr), e);
+			} finally {
+				out.stream.close();
 			}
-			w.close();
-		} catch (IOException e) {
-			throw new IOException(STRINGS.msg(U.U00207, out.getName(), lineNr), e);
-		} finally {
-			out.stream.close();
+		} catch (Exception e) {
+			throw new IllegalArgumentException(msg(U.U00212, fileName), e);
 		}
 	}
-	
+
 	/**
 	 * Write an array of strings to a file. The file is created if it does not
 	 * exist, as is the file's directory (but not the directory's directory).
@@ -251,17 +264,18 @@ public class TextFile {
 	 * array is null, an empty file is created if one does not exist.
 	 * 
 	 * @param fileName
-	 *            the name of the file
+	 *            the non-null name of the file
 	 * @param append
 	 *            if true append to existing file
 	 * @param lines
 	 *            an array of strings or null
-	 * @throws IOException
+	 * @throws IllegalArgumentException
+	 *             on failure to write to the file
 	 */
-	public void write(String fileName, boolean append, String[] lines) throws IOException {
+	public void write(String fileName, boolean append, String[] lines) {
 		write(fileName, append, lines == null ? null : Arrays.asList(lines).iterator());
 	}
-	
+
 	/**
 	 * Write a string to a file. The file is created if it does not exist, as is
 	 * the file's directory (but not the directory's directory). Lines are
@@ -275,10 +289,11 @@ public class TextFile {
 	 *            if true append to existing file
 	 * @param string
 	 *            the string to write
-	 * @throws IOException when writing to the file fails
+	 * @throws IllegalArgumentException
+	 *             on failure to write to the file
 	 */
-	public void write(String fileName, boolean append, String string) throws IOException {
-		write(fileName, append, string == null ? null : new String[]{string});
+	public void write(String fileName, boolean append, String string) {
+		write(fileName, append, string == null ? null : new String[] { string });
 	}
 
 	/**
@@ -311,14 +326,14 @@ public class TextFile {
 		}
 		return in;
 	}
-	
+
 	/**
 	 * Prepares an output object. If the file does not exist, it is created. If
 	 * the directory does not exist, it is created. A
 	 * <code>FileNotFoundException</code> is thrown when the file cannot be
 	 * created.
 	 * <p>
-	 * The method will not open a file specified with a relative path. 
+	 * The method will not open a file specified with a relative path.
 	 * <p>
 	 * 
 	 * @param fileName
@@ -335,8 +350,7 @@ public class TextFile {
 		}
 		File dir = file.getParentFile();
 		dir.mkdirs();
-		return new Output(file.getAbsolutePath(), 
-				new FileOutputStream(file.getAbsolutePath(), append));
+		return new Output(file.getAbsolutePath(), new FileOutputStream(file.getAbsolutePath(), append));
 	}
 
 }

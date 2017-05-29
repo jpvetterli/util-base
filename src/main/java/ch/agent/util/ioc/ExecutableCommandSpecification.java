@@ -16,7 +16,7 @@ public class ExecutableCommandSpecification extends CommandSpecification {
 	 * Constructor for an executable command definition. The command is only
 	 * executable if the parameters argument is not null.
 	 * 
-	 * @param spec 
+	 * @param spec
 	 *            a command specification
 	 * @param parameters
 	 *            command parameters
@@ -63,9 +63,7 @@ public class ExecutableCommandSpecification extends CommandSpecification {
 
 	@Override
 	public String toString() {
-		return parameters.length() < 50 ? 
-			String.format("%s %s", getName(), parameters) :
-			String.format("%s %s...", getName(), parameters.substring(0,  50));
+		return parameters.length() < 50 ? String.format("%s %s", getName(), parameters) : String.format("%s %s...", getName(), parameters.substring(0, 50));
 	}
-	
+
 }

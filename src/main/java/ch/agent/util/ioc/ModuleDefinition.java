@@ -15,35 +15,28 @@ import ch.agent.util.base.Misc;
 
 /**
  * A module definition is an immutable object which encapsulates the information
- * needed to create and configure a module. The definition consists of:
- * <ul>
- * <li>a name, used to identify the module within a system of modules,
- * <li>a class name, used to create the module,
- * <li>zero or more requirements,
- * <li>zero or more predecessors, and
- * <li>a configuration string.
- * </ul>
- * The module class must have a constructor taking the module name as parameter.
- * Requirements and predecessors are names of other modules in the system. Such
- * modules are prerequisites and must be initialized before the module itself.
- * Requirements are added to the module using {@link Module#add} but
- * predecessors are not.
+ * needed to create and configure a module. The module class must have a
+ * constructor taking the module name as parameter. Requirements and
+ * predecessors are names of other modules in the system. Such modules are
+ * prerequisites and must be initialized before the module itself. Requirements
+ * are added to the module using {@link Module#add(Module)} but predecessors are
+ * not.
  * 
  * @param <M>
  *            the module type
  */
 public class ModuleDefinition<M extends Module<?>> implements Serializable {
-	
+
 	private static final long serialVersionUID = -7103451839673077227L;
 
 	int review_javadoc; // configuration string
-	
+
 	private final String name;
 	private final String className;
 	private final String[] req; // module names required by this module
 	private final String[] pred; // module names preceding but not required
 	private final String configuration;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -57,7 +50,7 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	 *            array of predecessor modules
 	 * @param configuration
 	 *            a configuration string or null
-	 * @throws ConfigurationException
+	 * @throws IllegalArgumentException
 	 *             if something is wrong
 	 */
 	public ModuleDefinition(String name, String className, String[] required, String[] predecessors, String configuration) {
@@ -76,18 +69,19 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 			if (!duplicates.add(prec))
 				throw new ConfigurationException(msg(U.C13, name, prec));
 		}
-		
+
 		this.name = name;
 		this.className = className;
 		this.req = required;
 		this.pred = predecessors;
 		this.configuration = Misc.isEmpty(configuration) ? null : configuration;
 	}
-	
+
 	/**
-	 * Constructor.
+	 * Constructor taking an existing definition as template. It is meant for
+	 * use by subclasses.
 	 * 
-	 * @param original name
+	 * @param original
 	 *            an existing module definition
 	 */
 	public ModuleDefinition(ModuleDefinition<M> original) {
@@ -103,7 +97,8 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	 * single argument: the module name.
 	 * 
 	 * @return a module object
-	 * @throws ConfigurationException if creation fails
+	 * @throws IllegalArgumentException
+	 *             if creation fails
 	 */
 	public M create() {
 		try {
@@ -115,10 +110,10 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 			throw new ConfigurationException(msg(U.C03, getName(), getClassName()), e);
 		}
 	}
-	
+
 	/**
-	 * Configure the module using this definition. The registry
-	 * provides all required modules. The steps performed are:
+	 * Configure the module using this definition. The registry provides all
+	 * required modules. The steps performed are:
 	 * <ul>
 	 * <li>all required modules are added to the module
 	 * <li>the module is configured using the configuration string
@@ -131,18 +126,18 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	 *            the module to configure
 	 * @param registry
 	 *            configuration registry
-	 * @throws ConfigurationException
+	 * @throws IllegalArgumentException
 	 *             in case of configuration failure
 	 */
 	public void configure(M module, ConfigurationRegistry<M> registry) {
 		addRequiredModules(module, registry.getModules());
 		if (getConfiguration() != null)
 			module.configure(getConfiguration());
-		for(Command<?> command : module.getCommands()) {
+		for (Command<?> command : module.getCommands()) {
 			registry.addUnique(new CommandSpecification(module.getName(), command.getName(), command.isParameterless()));
 		}
 	}
-	
+
 	/**
 	 * Get the module name.
 	 * 
@@ -151,9 +146,10 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	public String getName() {
 		return name;
 	}
-	
+
 	/**
 	 * Get the name of the module class.
+	 * 
 	 * @return a non-null string
 	 */
 	public String getClassName() {
@@ -164,7 +160,7 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	 * Return the <em>configuration</em> specification. The configuration
 	 * specification is an opaque block of text which contains instructions
 	 * understood by the module. The configuration is used by the
-	 * {@link #configure} method.
+	 * {@link #configure(Module, ConfigurationRegistry)} method.
 	 * 
 	 * @return the configuration string or null
 	 */
@@ -182,7 +178,7 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 		System.arraycopy(req, 0, copy, 0, req.length);
 		return copy;
 	}
-	
+
 	/**
 	 * Get a copy of the names of predecessor modules.
 	 * 
@@ -193,18 +189,18 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 		System.arraycopy(pred, 0, copy, 0, pred.length);
 		return copy;
 	}
-	
+
 	/**
 	 * Return the array of all requirements and predecessors. The result is the
-	 * concatenation of the results of {@link #getRequirements} and
-	 * {@link #getPredecessors}
+	 * concatenation of the results of {@link #getRequirements()} and
+	 * {@link #getPredecessors()}
 	 * 
 	 * @return an array of names
 	 */
 	public String[] getPrerequisites() {
-		return concat(req,  pred);
+		return concat(req, pred);
 	}
-	
+
 	/**
 	 * Add all modules required. Required modules must be available in the map.
 	 * The map can contain other modules, it is not used to decide if a module
@@ -214,7 +210,7 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	 *            the requiring module
 	 * @param modules
 	 *            map with at least the required modules
-	 * @throws ConfigurationException
+	 * @throws IllegalArgumentException
 	 *             if required modules are missing or are rejected
 	 */
 	protected void addRequiredModules(M requiring, Map<String, M> modules) {
@@ -235,7 +231,7 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 				message = msg(U.C52, requiring.getName(), Misc.join("\", \"", rejected));
 			else if (rejected.size() == 0)
 				message = msg(U.C53, requiring.getName(), Misc.join("\", \"", missing));
-			else	
+			else
 				message = msg(U.C54, requiring.getName(), Misc.join("\", \"", rejected), Misc.join("\", \"", missing));
 			throw new ConfigurationException(message);
 		}
@@ -247,10 +243,10 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 		System.arraycopy(arr2, 0, c, arr1.length, arr2.length);
 		return c;
 	}
-	
+
 	@Override
 	public String toString() {
 		return getName();
 	}
-	
+
 }
