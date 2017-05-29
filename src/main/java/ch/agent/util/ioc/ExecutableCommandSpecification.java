@@ -17,9 +17,9 @@ public class ExecutableCommandSpecification extends CommandSpecification {
 	 * executable if the parameters argument is not null.
 	 * 
 	 * @param spec
-	 *            a command specification
+	 *            a command specification, not null
 	 * @param parameters
-	 *            command parameters
+	 *            command parameters, not null
 	 */
 	public ExecutableCommandSpecification(CommandSpecification spec, String parameters) {
 		super(spec.getModule(), spec.getCommand(), spec.isParameterless());
