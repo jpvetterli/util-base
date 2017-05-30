@@ -41,7 +41,7 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	 * Constructor.
 	 * 
 	 * @param name
-	 *            the module name, not null
+	 *            the non-empty module name
 	 * @param className
 	 *            the module class, not null
 	 * @param required
@@ -54,7 +54,8 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	 *             if something is wrong
 	 */
 	public ModuleDefinition(String name, String className, String[] required, String[] predecessors, String configuration) {
-		Misc.nullIllegal(name, "name null");
+		if (Misc.isEmpty(name))
+			throw new IllegalArgumentException(msg(U.C51));
 		Misc.nullIllegal(className, "className null");
 		Set<String> duplicates = new HashSet<String>();
 		for (String req : required) {
@@ -75,21 +76,6 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 		this.req = required;
 		this.pred = predecessors;
 		this.configuration = Misc.isEmpty(configuration) ? null : configuration;
-	}
-
-	/**
-	 * Constructor taking an existing definition as template. It is meant for
-	 * use by subclasses.
-	 * 
-	 * @param original
-	 *            an existing module definition
-	 */
-	public ModuleDefinition(ModuleDefinition<M> original) {
-		this.name = original.name;
-		this.className = original.className;
-		this.req = original.req;
-		this.pred = original.pred;
-		this.configuration = original.configuration;
 	}
 
 	/**
