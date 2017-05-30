@@ -104,10 +104,10 @@ public class LazyStringTest {
 	@Test
 	public void testSimpleMessageWithTwoArgsNotReversed() {
 		try {
-			TestMessage.msg(M.M4, "foo", Double.NaN);
-			fail("expected an exception");
+			String text = TestMessage.msg(M.M4, "foo", Double.NaN);
+			assertEquals("FAILURE (LazyString) key=M4 text=null bundle=ch.agent.util.base.TestMessage", text); 
 		} catch (Exception e) {
-			assertTrue(e.getCause().getMessage().startsWith("can't parse argument number")); 
+			fail("unexpected exception");
 		}
 	}
 	
@@ -117,17 +117,17 @@ public class LazyStringTest {
 			new TestMessage(null, null).toString();
 			fail("exception expected");
 		} catch (Exception e) {
-			assertEquals("key=null bundle=ch.agent.util.base.TestMessage", e.getMessage());
+			assertEquals("key null", e.getMessage());
 		}
 	}
 	
 	@Test
 	public void testNonExistentKey() {
 		try {
-			new TestMessage("KEY42", null).toString();
-			fail("exception expected");
+			String text = new TestMessage("KEY42", null).toString();
+			assertEquals("FAILURE (LazyString) key=KEY42 text=null bundle=ch.agent.util.base.TestMessage", text); 
 		} catch (Exception e) {
-			assertEquals("key=KEY42 bundle=ch.agent.util.base.TestMessage", e.getMessage());
+			fail("unexpected exception");
 		}
 	}
 

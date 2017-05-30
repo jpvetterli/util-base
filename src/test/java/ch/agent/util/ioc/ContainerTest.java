@@ -363,7 +363,7 @@ public class ContainerTest {
 		Container c = new Container();
 		try {
 			c.run(new String[]{
-					String.format("module=[name = [] class=%s]", DModule.class.getName())
+					String.format("module=[name = [x] class=%s]", DModule.class.getName())
 			});
 			c.shutdown();
 			log.cleanup();
@@ -371,6 +371,23 @@ public class ContainerTest {
 		} catch (Exception e) {
 			LogBuffer.stopLogging(log, DEBUG);
 			assertTrue("message C03 ?",  e.getMessage().startsWith("C03"));
+		}
+	}
+	
+	@Test
+	public void test14b() {
+		LogBuffer log = LogBuffer.startLogging();
+		Container c = new Container();
+		try {
+			c.run(new String[]{
+					String.format("module=[name = [] class=%s]", DModule.class.getName())
+			});
+			c.shutdown();
+			log.cleanup();
+			fail("exception expected");
+		} catch (Exception e) {
+			LogBuffer.stopLogging(log, DEBUG);
+			assertTrue("message C51 ?",  e.getMessage().startsWith("C15"));
 		}
 	}
 
