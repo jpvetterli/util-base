@@ -29,7 +29,7 @@ public class RandomNumbers {
 		 * @param max
 		 *            the maximal value to generate, cannot be smaller than min
 		 * @throws IllegalArgumentException
-		 *             if max < min
+		 *             if max &lt; min
 		 */
 		public Uniform(int min, int max) {
 			if (max < min)
@@ -196,7 +196,7 @@ public class RandomNumbers {
 		 * @param max
 		 *            the maximum number of events, not smaller than min
 		 * @throws IllegalArgumentException
-		 *             if max < min
+		 *             if max &lt; min
 		 */
 		public void setBurstSize(int min, int max) {
 			randomBurstSize = max == 0 ? null : new Uniform(min, max);
@@ -214,7 +214,7 @@ public class RandomNumbers {
 		 * @param max
 		 *            the maximum increment, not smaller than min
 		 * @throws IllegalArgumentException
-		 *             if max < min
+		 *             if max &lt; min
 		 */
 		public void setSmallIncrement(int min, int max) {
 			randomSmallIncrement = max == 0 ? null : new Uniform(min, max);
@@ -231,7 +231,7 @@ public class RandomNumbers {
 		 * @param max
 		 *            the maximum increment
 		 * @throws IllegalArgumentException
-		 *             if max < min
+		 *             if max &lt; min
 		 */
 		public void setLargeIncrement(int min, int max) {
 			randomLargeIncrement = new Uniform(min, max);

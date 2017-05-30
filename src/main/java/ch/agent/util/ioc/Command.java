@@ -29,6 +29,8 @@ public interface Command<T> {
 	 * problem, which makes further work meaningless or harmful, the method
 	 * should throw an exception, checked or unchecked.
 	 * 
+	 * @param name
+	 *            the non-empty name used to address the command
 	 * @param parameters
 	 *            a string containing parameters
 	 * @throws IllegalArgumentException
@@ -36,6 +38,6 @@ public interface Command<T> {
 	 * @throws Exception
 	 *             if there is a critical problem during actual execution
 	 */
-	void execute(String parameters) throws Exception;
+	void execute(String name, String parameters) throws Exception;
 
 }

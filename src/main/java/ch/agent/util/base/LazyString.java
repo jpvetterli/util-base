@@ -112,7 +112,7 @@ public class LazyString {
 	 * parameter is interpreted as the message text.
 	 * 
 	 * @param key
-	 *            a String identifying the message
+	 *            a non-null string identifying the message
 	 * @param bundleName
 	 *            the name of the bundle (used in meta exception messages)
 	 * @param bundle
@@ -123,6 +123,7 @@ public class LazyString {
 	 *            zero of more arguments
 	 */
 	public LazyString(String key, String bundleName, ResourceBundle bundle, String keyBodyFormat, Object... args) {
+		Misc.nullIllegal(key, "key null");
 		this.bundle = bundle;
 		this.bundleName = bundleName;
 		this.key = key;
@@ -161,14 +162,12 @@ public class LazyString {
 	 * Resolve and format the message into a string. The method retrieves the
 	 * text from the resource bundle using the key, formats and replaces
 	 * arguments, and inserts the key into the message if requested. Null
-	 * arguments are supported. If anything gets in the way, making it
-	 * impossible to prepare the message, a runtime exception is thrown with the
-	 * relevant cause and with a message displaying the key and the base name of
-	 * the resource bundle.
-	 * <p>
+	 * arguments are supported. If the bundle is null or if the key is not found
+	 * in the bundle, the key itself is used as the message text. If an
+	 * exception is thrown during message preparation it is caught and a message
+	 * starting with "FAILURE (LazyString)" is returned.
 	 * 
 	 * @return the formatted message text
-	 * @throws RuntimeException
 	 */
 	@Override
 	public String toString() {
@@ -177,8 +176,8 @@ public class LazyString {
 				text = format(getText(), args);
 				if (keyBodyFormat != null)
 					text = String.format(keyBodyFormat, key, text);
-			} catch (Exception e) {
-				throw new RuntimeException(String.format("key=%s bundle=%s", key, bundleName), e);
+			} catch (Throwable e) {
+				return String.format("FAILURE (LazyString) key=%s text=%s bundle=%s", key, text, bundleName);
 			}
 		}
 		return text;

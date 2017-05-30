@@ -54,7 +54,7 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 	 * @param specification
 	 *            a string containing the specification
 	 * @return a module definition
-	 * @throws specification
+	 * @throws IllegalArgumentException
 	 *             if there is an error with the specification
 	 */
 	public MD build(String specification) {
@@ -87,7 +87,7 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 	 * @param p
 	 *            the object taking parameters
 	 * @return a module specification
-	 * @throws specification
+	 * @throws IllegalArgumentException
 	 *             if there is an error with parameters
 	 */
 	@SuppressWarnings("unchecked")

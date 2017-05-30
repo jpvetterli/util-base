@@ -100,7 +100,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 		Command<?> command = commandTable.get(name);
 		if (command == null)
 			throw new IllegalArgumentException(msg(U.C17, name, getName()));
-		command.execute(parameters);
+		command.execute(name, parameters);
 	}
 
 	@Override

@@ -17,8 +17,8 @@ import java.util.Map;
  * <li>commands, zero or more times
  * <li>{@link #shutdown()}, exactly once
  * </ul>
- * Commands are added with {@link #add(Command)}. Commands are typically created
- * and added in the module constructor or during configuration.
+ * Commands are added with {@link #add(String, Command)}. Commands are typically
+ * created and added in the module constructor or during configuration.
  * <p>
  * An actual module should carefully document in the comment of its
  * {@link #add(Module)} method the module types that it requires and whether
@@ -86,7 +86,7 @@ public interface Module<T> {
 
 	/**
 	 * Return all commands. Once this method has been used, adding more commands
-	 * with {@link #add(Command)} is forbidden.
+	 * with {@link #add(String, Command)} is forbidden.
 	 * 
 	 * @return a collection of commands, possibly empty but never null
 	 */

@@ -85,7 +85,7 @@ public class ContainerTest {
 					return false;
 				}
 				@Override
-				public void execute(String parameters) {
+				public void execute(String name, String parameters) {
 					b.changeTag(parameters);
 				}
 			});
@@ -95,7 +95,7 @@ public class ContainerTest {
 					return false;
 				}
 				@Override
-				public void execute(String parameters) {
+				public void execute(String name, String parameters) {
 					b.set(parameters);
 				}
 			});
@@ -122,7 +122,7 @@ public class ContainerTest {
 					return false;
 				}
 				@Override
-				public void execute(String parameters) {}
+				public void execute(String name, String parameters) {}
 			});
 			add("command", new Command<Object>() {
 				@Override
@@ -130,7 +130,7 @@ public class ContainerTest {
 					return false;
 				}
 				@Override
-					public void execute(String parameters) {}
+					public void execute(String name, String parameters) {}
 				});
 		}
 		
@@ -188,8 +188,8 @@ public class ContainerTest {
 					return false;
 				}
 				@Override
-				public void execute(String parameters) {
-					logger.debug("* (this is command echo in module " + m.getName() + ")");
+				public void execute(String name, String parameters) {
+					logger.debug("* (this is command " + name + " in module " + m.getName() + ")");
 					logger.info("* " + parameters);
 				}
 			});
@@ -199,8 +199,8 @@ public class ContainerTest {
 					return true;
 				}
 				@Override
-				public void execute(String parameters) {
-					logger.debug("* (this is command demo-keyword in module " + m.getName() + ")");
+				public void execute(String name, String parameters) {
+					logger.debug("* (this is command " + name + " in module " + m.getName() + ")");
 					logger.info("* (parameters=" + parameters + ")");
 				}
 		});
@@ -321,11 +321,12 @@ public class ContainerTest {
 					String.format("module=[name = a class=%s require=b require=c]", AModule.class.getName()),
 					String.format("module=[name = b class=%s config=[tag=[This tag was modified.]]]", BModule.class.getName()),
 					String.format("module=[name = c class=%s]", CModule.class.getName()),
-					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3] c.demo-keyword]"
+					"exec=[a.set=[exec1] a.changeTag=[exec2] a.set=[exec3] c.demo-keyword a.c.demo-keyword]"
 			});
 			c.shutdown();
 			String logged = LogBuffer.stopLogging(log, DEBUG);
-			assertTrue("keyword command missing", logged.indexOf("* (this is command demo-keyword in module c)") > 0);
+			assertTrue("demo-keyword command missing", logged.indexOf("* (this is command demo-keyword in module c)") > 0);
+			assertTrue("demo-keyword command missing (addressed as a.c.demo-keyword) ", logged.indexOf("* (this is command c.demo-keyword in module c)") > 0);
 			assertTrue("keyword command parameters missing", logged.indexOf("* (parameters=)") > 0);
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
 			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));

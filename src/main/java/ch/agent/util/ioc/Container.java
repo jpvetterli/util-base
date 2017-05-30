@@ -31,12 +31,11 @@ import ch.agent.util.logging.LoggerManager;
  * <p>
  * Commands to be executed and their parameters are extracted from the
  * <em>execution</em> specification. This is a sequence of statements named
- * after the commands registered by modules during module initialization. The
- * names actually used are either given by {@link Command#getName()} or, if that
- * name is already registered by another module, the concatenation of the module
- * name and the command name, with a period between them. The syntax of command
- * parameters is defined by the command themselves. The container passes the
- * value verbatim to the {@link Command#execute(String)} methods.
+ * after the modules and the command names used by modules when registering
+ * commands during module initialization. Module and command names are separated
+ * by a period. The syntax of command parameters is defined by the command
+ * themselves. The container passes the command name and the verbatim value to
+ * the {@link Command#execute(String, String)} methods.
  */
 public class Container {
 

@@ -4,10 +4,10 @@ import ch.agent.util.args.Args;
 
 /**
  * A minimal abstract implementation of the {@link Command} interface. It
- * provides a useful implementation of {@link #getName()},
- * {@link #rename(String)}, and {@link #execute(String)}. It adds two methods to
- * be overridden by actual commands: {@link #defineParameters(Args)}, which is
- * called only once and {@link #execute(Args)}.
+ * provides a useful implementation of {@link #execute(String, String)}. It adds
+ * two methods to be overridden by actual commands:
+ * {@link #defineParameters(Args)}, which is called only once and
+ * {@link #execute(String, Args)}.
  * 
  * @param <T>
  *            the type of the underlying object
@@ -48,6 +48,8 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	 * Execute the command using an Args object.
 	 * <p>
 	 * 
+	 * @param name
+	 *            the non-empty name used to address the command
 	 * @param parameters
 	 *            the parameters object
 	 * @throws IllegalArgumentException
@@ -55,18 +57,18 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	 * @throws Exception
 	 *             to signal a critical problem during actual execution
 	 */
-	public void execute(Args parameters) throws Exception {
+	public void execute(String name, Args parameters) throws Exception {
 	}
 
 	@Override
-	public void execute(String parameters) throws Exception {
+	public void execute(String name, String parameters) throws Exception {
 		if (args == null) {
 			args = new Args();
 			defineParameters(args);
 		} else
 			args.reset();
 		args.parse(parameters);
-		execute(args);
+		execute(name, args);
 	}
 
 }

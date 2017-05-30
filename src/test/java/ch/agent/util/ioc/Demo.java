@@ -52,7 +52,7 @@ public class Demo {
 					parameters.def("").repeatable();
 				}
 				@Override
-				public void execute(Args parameters) throws Exception {
+				public void execute(String name, Args parameters) throws Exception {
 					for (String any : parameters.split("")) {
 						System.out.println(String.format("%s %s [%s]", greet, any, time.datetime()));
 					}
