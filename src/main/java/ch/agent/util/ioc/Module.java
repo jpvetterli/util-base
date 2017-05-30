@@ -1,6 +1,6 @@
 package ch.agent.util.ioc;
 
-import java.util.Collection;
+import java.util.Map;
 
 /**
  * A module is an adapter allowing an underlying object to be manipulated in a
@@ -72,6 +72,9 @@ public interface Module<T> {
 	 * executed by calling {@link #execute(String, String)} with the command
 	 * name and an opaque parameter string.
 	 * 
+	 * @param name
+	 *            non-null name to use for the command
+	 * 
 	 * @param command
 	 *            a command
 	 * @throws IllegalArgumentException
@@ -79,7 +82,7 @@ public interface Module<T> {
 	 * @throws IllegalStateException
 	 *             if it is too late to add commands
 	 */
-	void add(Command<?> command);
+	void add(String name, Command<?> command);
 
 	/**
 	 * Return all commands. Once this method has been used, adding more commands
@@ -87,7 +90,7 @@ public interface Module<T> {
 	 * 
 	 * @return a collection of commands, possibly empty but never null
 	 */
-	Collection<Command<?>> getCommands();
+	Map<String, Command<?>> getCommands();
 
 	/**
 	 * Add a required module. This method is used to add any prerequisite

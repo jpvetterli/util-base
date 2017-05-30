@@ -2,7 +2,6 @@ package ch.agent.util.ioc;
 
 import static ch.agent.util.STRINGS.msg;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -105,18 +104,25 @@ public abstract class AbstractModule<T> implements Module<T> {
 	}
 
 	@Override
-	public void add(Command<?> command) {
+	public void add(String name, Command<?> command) {
+		add(name, false, command);
+	}
+	
+	private void add(String name, boolean composite, Command<?> command) {
+		if (Misc.isEmpty(name))
+			throw new IllegalArgumentException(msg(U.C51));
+		if (!composite && name.indexOf(CommandSpecification.NAME_SEPARATOR) > 0)
+			throw new IllegalArgumentException(msg(U.C50, name));
 		if (commandsLocked)
-			throw new IllegalStateException(msg(U.C56, command.getName(), getName()));
-		if (commandTable.put(command.getName(), command) != null)
-			throw new IllegalArgumentException(msg(U.C14, command.getName(), getName()));
-
+			throw new IllegalStateException(msg(U.C56, name, getName()));
+		if (commandTable.put(name, command) != null)
+			throw new IllegalArgumentException(msg(U.C14, name, getName()));
 	}
 
 	@Override
-	public Collection<Command<?>> getCommands() {
+	public Map<String, Command<?>> getCommands() {
 		commandsLocked = true;
-		return commandTable.values();
+		return commandTable;
 	}
 
 	/**
@@ -137,9 +143,9 @@ public abstract class AbstractModule<T> implements Module<T> {
 	 */
 	@Override
 	public boolean add(Module<?> module) {
-		for (Command<?> command : module.getCommands()) {
-			command.rename(module.getName() + CommandSpecification.NAME_SEPARATOR + command.getName());
-			add(command);
+		for (Map.Entry<String, Command<?>> entry : module.getCommands().entrySet()) {
+			String compositeName = module.getName() + CommandSpecification.NAME_SEPARATOR + entry.getKey();
+			add(compositeName, true, entry.getValue());
 		}
 		return true;
 	}

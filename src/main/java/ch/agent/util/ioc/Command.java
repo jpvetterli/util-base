@@ -18,26 +18,11 @@ package ch.agent.util.ioc;
 public interface Command<T> {
 
 	/**
-	 * Get the command name. The command name is unique within a module.
-	 * 
-	 * @return a non-null and non-empty string
-	 */
-	String getName();
-
-	/**
 	 * Test if it is a parameterless command.
 	 * 
 	 * @return true if it is a parameterless command
 	 */
 	boolean isParameterless();
-
-	/**
-	 * Rename the command.
-	 * 
-	 * @param name
-	 *            the new name
-	 */
-	void rename(String name);
 
 	/**
 	 * Execute the command with the given parameters. If there is a critical

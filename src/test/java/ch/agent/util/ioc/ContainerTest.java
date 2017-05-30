@@ -79,38 +79,20 @@ public class ContainerTest {
 		}
 
 		private void addCommands() {
-			add(new Command<A>() {
-				private String name = "changeTag";
-				@Override
-				public String getName() {
-					return name;
-				}
+			add("changeTag", new Command<A>() {
 				@Override
 				public boolean isParameterless() {
 					return false;
-				}
-				@Override
-				public void rename(String name) {
-					this.name = name;
 				}
 				@Override
 				public void execute(String parameters) {
 					b.changeTag(parameters);
 				}
 			});
-			add(new Command<A>() {
-				private String name = "set";
-				@Override
-				public String getName() {
-					return name;
-				}
+			add("set", new Command<A>() {
 				@Override
 				public boolean isParameterless() {
 					return false;
-				}
-				@Override
-				public void rename(String name) {
-					this.name = name;
 				}
 				@Override
 				public void execute(String parameters) {
@@ -134,36 +116,18 @@ public class ContainerTest {
 		}
 
 		private void addCommands() {
-			add(new Command<Object>() {
-				private String name = "command";
-				@Override
-				public String getName() {
-					return name;
-				}
+			add("command", new Command<Object>() {
 				@Override
 				public boolean isParameterless() {
 					return false;
-				}
-				@Override
-				public void rename(String name) {
-					this.name = name;
 				}
 				@Override
 				public void execute(String parameters) {}
 			});
-			add(new Command<Object>() {
-				private String name = "command";
-				@Override
-				public String getName() {
-					return name;
-				}
+			add("command", new Command<Object>() {
 				@Override
 				public boolean isParameterless() {
 					return false;
-				}
-				@Override
-				public void rename(String name) {
-					this.name = name;
 				}
 				@Override
 					public void execute(String parameters) {}
@@ -218,38 +182,25 @@ public class ContainerTest {
 		
 		private void addCommands() {
 			final Module<Object> m = this;
-			add(
-				new Command<Object>() {
-					private String name = "echo";
-				@Override
-				public String getName() {
-					return name;
-				}
+			add("echo",	new Command<Object>() {
 				@Override
 				public boolean isParameterless() {
 					return false;
 				}
 				@Override
-				public void rename(String name) {
-					this.name = name;
-				}
-				@Override
 				public void execute(String parameters) {
-					logger.debug("* (this is command " + getName() + " in module " + m.getName() + ")");
+					logger.debug("* (this is command echo in module " + m.getName() + ")");
 					logger.info("* " + parameters);
 				}
 			});
-			add(
-			new AbstractCommand<Object>("demo-keyword") {
-				
+			add("demo-keyword", new AbstractCommand<Object>() {
 				@Override
 				public boolean isParameterless() {
 					return true;
 				}
-
 				@Override
 				public void execute(String parameters) {
-					logger.debug("* (this is command " + getName() + " in module " + m.getName() + ")");
+					logger.debug("* (this is command demo-keyword in module " + m.getName() + ")");
 					logger.info("* (parameters=" + parameters + ")");
 				}
 		});
@@ -374,7 +325,7 @@ public class ContainerTest {
 			});
 			c.shutdown();
 			String logged = LogBuffer.stopLogging(log, DEBUG);
-			assertTrue("keyword command missing", logged.indexOf("* (this is command c.demo-keyword in module c)") > 0);
+			assertTrue("keyword command missing", logged.indexOf("* (this is command demo-keyword in module c)") > 0);
 			assertTrue("keyword command parameters missing", logged.indexOf("* (parameters=)") > 0);
 			List<String> texts = ((B) c.getModule("b").getObject()).getRecords();
 			assertEquals("B#set This is module \"a\" starting and tag=This tag was modified.", texts.get(0));

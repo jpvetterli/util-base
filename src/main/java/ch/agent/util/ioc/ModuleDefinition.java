@@ -133,8 +133,8 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 		addRequiredModules(module, registry.getModules());
 		if (getConfiguration() != null)
 			module.configure(getConfiguration());
-		for (Command<?> command : module.getCommands()) {
-			registry.addUnique(new CommandSpecification(module.getName(), command.getName(), command.isParameterless()));
+		for (Map.Entry<String, Command<?>> entry : module.getCommands().entrySet()) {
+			registry.addUnique(new CommandSpecification(module.getName(), entry.getKey(), entry.getValue().isParameterless()));
 		}
 	}
 

@@ -46,22 +46,18 @@ public class Demo {
 		}
 
 		private void addCommands() {
-			add(new AbstractCommand<Object>("say") {
-
+			add("say", new AbstractCommand<Object>() {
 				@Override
 				public void defineParameters(Args parameters) {
 					parameters.def("").repeatable();
 				}
-
 				@Override
 				public void execute(Args parameters) throws Exception {
 					for (String any : parameters.split("")) {
 						System.out.println(String.format("%s %s [%s]", greet, any, time.datetime()));
 					}
 				}
-
 			});
-
 		}
 	}
 
