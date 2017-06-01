@@ -10,6 +10,8 @@ public final class DefaultLoggerBridgeFactory implements LoggerBridgeFactory {
 	private static DefaultLoggerBridgeFactory factory = new DefaultLoggerBridgeFactory();
 	
 	/**
+	 * Get the factory singleton.
+	 * 
 	 * @return the DefaultLoggerBridgeFactory instance
 	 */
 	public static DefaultLoggerBridgeFactory getInstance() {
