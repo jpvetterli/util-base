@@ -7,14 +7,15 @@ import java.util.Map;
 
 import ch.agent.util.STRINGS.U;
 import ch.agent.util.args.Args;
+import ch.agent.util.args.Args.Definition;
 import ch.agent.util.base.Misc;
 
 /**
  * A useful abstract implementation of the {@link Module} interface. It provides
- * implementations of most methods. Most subclasses probably need to provide
- * implementations {@link #getObject()}, {@link #add(Module)},
- * {@link #defineParameters(Args)} and {@link #configure(Args)} with either a
- * complete override or by extending the functionality.
+ * implementations of many methods. Most subclasses probably need to implement
+ * {@link #getObject()}, {@link #add(Module)}, {@link #defineParameters(Args)}
+ * and {@link #configure(Args)} as either a complete override or by extending
+ * the base functionality.
  * 
  * @param <T>
  *            the type of the underlying object
@@ -60,7 +61,7 @@ public abstract class AbstractModule<T> implements Module<T> {
 	 * their own definitions. They should throw an
 	 * {@link IllegalArgumentException} when something is wrong; this is usually
 	 * achieved by not catching exceptions when using {@link Args} or
-	 * {@link Args.Definition} methods.
+	 * {@link Definition} methods.
 	 * 
 	 * @param config
 	 *            the configuration object
@@ -132,12 +133,12 @@ public abstract class AbstractModule<T> implements Module<T> {
 	 * true, which means the module is accepted as a requirement.
 	 * <p>
 	 * As a consequence, when a subclass does not provide an implementation for
-	 * {@link #add(Module)} all requirements are accepted and all their commands
+	 * {@link #add(Module)} all required modules are accepted and all their commands
 	 * become available. If this is not the intention, the subclass must
-	 * override the method to return false.
+	 * override this base method.
 	 * <p>
-	 * All commands of the required module are added to this module with the
-	 * name of the required module prefixed to the command names. For example
+	 * All commands of the required module are added with a composite name made
+	 * of the required module name prefixed to the command names. For example
 	 * after adding module <em>foo</em> with command <em>bar,</em> this module
 	 * will have a command named <em>foo.bar.</em>
 	 */

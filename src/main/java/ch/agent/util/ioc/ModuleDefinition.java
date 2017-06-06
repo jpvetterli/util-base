@@ -51,7 +51,7 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	 * @param configuration
 	 *            a configuration string or null
 	 * @throws IllegalArgumentException
-	 *             if something is wrong
+	 *             if something is wrong with the arguments
 	 */
 	public ModuleDefinition(String name, String className, String[] required, String[] predecessors, String configuration) {
 		if (Misc.isEmpty(name))
@@ -79,8 +79,8 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	}
 
 	/**
-	 * Create the module. The module is created using a constructor taking a
-	 * single argument: the module name.
+	 * Create the module. The module is created using a constructor taking 
+	 * the module name as argument.
 	 * 
 	 * @return a module object
 	 * @throws IllegalArgumentException
@@ -143,9 +143,9 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	}
 
 	/**
-	 * Return the <em>configuration</em> specification. The configuration
-	 * specification is an opaque block of text which contains instructions
-	 * understood by the module. The configuration is used by the
+	 * Return the configuration specification. The configuration specification
+	 * is an opaque block of text which contains instructions understood by the
+	 * module. The configuration is used by the
 	 * {@link #configure(Module, ConfigurationRegistry)} method.
 	 * 
 	 * @return the configuration string or null
@@ -177,7 +177,7 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	}
 
 	/**
-	 * Return the array of all requirements and predecessors. The result is the
+	 * Return the names of all requirements and predecessors. The result is the
 	 * concatenation of the results of {@link #getRequirements()} and
 	 * {@link #getPredecessors()}
 	 * 
@@ -188,9 +188,8 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	}
 
 	/**
-	 * Add all modules required. Required modules must be available in the map.
-	 * The map can contain other modules, it is not used to decide if a module
-	 * is required.
+	 * Add all modules required. Required modules must be available in the map
+	 * (the map can contain more modules than those required).
 	 * 
 	 * @param requiring
 	 *            the requiring module
@@ -223,7 +222,7 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 		}
 	}
 
-	protected String[] concat(String[] arr1, String[] arr2) {
+	private String[] concat(String[] arr1, String[] arr2) {
 		String[] c = new String[arr1.length + arr2.length];
 		System.arraycopy(arr1, 0, c, 0, arr1.length);
 		System.arraycopy(arr2, 0, c, arr1.length, arr2.length);

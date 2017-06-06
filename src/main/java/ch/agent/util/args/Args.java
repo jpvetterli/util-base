@@ -28,7 +28,7 @@ import ch.agent.util.file.TextFile;
  * </code>
  * </pre>
  * 
- * Put the example in file {@code hello.config} and run an hypothetical
+ * Put the example in file <code>hello.config</code> and run an hypothetical
  * application, coded with Args, from the command line (\ indicates continuation
  * on next line):
  * 
@@ -81,13 +81,13 @@ import ch.agent.util.file.TextFile;
  * with a default value of "false". The occurrence of the parameter name as an
  * isolated value sets the value of the parameter to "true".
  * <p>
- * A parameter can only be used if it has been defined. Sometimes it is useful
- * to define parameters on the fly and this is possible with <em>variables</em>.
+ * A parameter can only be used if it has been defined, but sometimes it is 
+ * useful to define parameters on the fly. This is possible with <em>variables</em>.
  * Variables have a name with a $ sign in front. They are referenced by
- * prefixing them with $$. When a variable reference is seen in the text it is
- * replaced by the value of the variable if available, else it is left as is.
- * This is called an unresolved variable. When accessing a parameter value which
- * contains unresolved variables, an error occurs, unless using a raw getter.
+ * prefixing them with $$. When a variable reference is seen in the text, it is
+ * replaced by the value of the variable if available, else it is left as an
+ * unresolved variable. When accessing a parameter value which contains unresolved 
+ * variables, an error occurs, unless using a <em>raw</em> getter.
  * <p>
  * One difference between parameters and variables is their behavior with
  * respect to repeated values. With a (non-repeatable) parameter, the last value
@@ -235,7 +235,7 @@ public class Args implements Iterable<String> {
 	 * <li>variable prefix ($).
 	 * </ol>
 	 * The characters are returned in an array in that sequence. If the input is
-	 * null default meta characters are returned.
+	 * null, default meta characters are returned.
 	 * 
 	 * @param metaChars
 	 *            a string of length 5
@@ -309,7 +309,7 @@ public class Args implements Iterable<String> {
 	 * 
 	 * The object is returned by method {@link Args#def(String)}.
 	 */
-	public class Definition {
+	public static class Definition {
 		private Args args;
 		private String name;
 
@@ -435,8 +435,8 @@ public class Args implements Iterable<String> {
 
 		/**
 		 * Append a value to the current value of the parameter. Appending is
-		 * done in a way that allows to access the element as an array element
-		 * with for example {@link #stringValues()}.
+		 * done in a way that allows to access the element as an array element,
+		 * using for example {@link #stringValues()}.
 		 * 
 		 * @param value
 		 *            a string
@@ -1165,7 +1165,7 @@ public class Args implements Iterable<String> {
 	 * have been defined. If the name is prefixed with $, it names a variable,
 	 * which can be defined on the fly if necessary. If the parameter is
 	 * repeatable, the value will be appended, else it will be set and will
-	 * replace a existing value. The value of variable cannot be changed
+	 * replace an existing value. The value of a variable cannot be changed
 	 * ("first wins").
 	 * <p>
 	 * Keywords and isolated values without a name are put with this method by
@@ -1359,7 +1359,7 @@ public class Args implements Iterable<String> {
 	}
 
 	/**
-	 * Set a variable. If a variable with the same name exists nothing is done
+	 * Set a variable. If a variable with the same name exists, nothing is done
 	 * ("first wins"). The name is verified by
 	 * {@link SymbolScanner#verify(String)}.
 	 * 

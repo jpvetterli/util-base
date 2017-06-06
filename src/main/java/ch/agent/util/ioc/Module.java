@@ -8,20 +8,23 @@ import java.util.Map;
  * container expects a module constructor to have a single parameter: the module
  * name.
  * <p>
- * In the life-cycle of the module the following methods are called in sequence:
+ * The life-cycle events of a module are, in sequence:
  * <ul>
- * <li>The constructor.
- * <li>{@link #configure(String)}, exactly once
- * <li>{@link #add(Module)}, zero or more times
- * <li>{@link #initialize()}, exactly once
- * <li>commands, zero or more times
- * <li>{@link #shutdown()}, exactly once
+ * <li>Creation, with the constructor.
+ * <li>Configuration, with {@link #configure(String)} invoked exactly once.
+ * <li>Setting of prerequisites, with {@link #add(Module)} invoked zero or more
+ * times.
+ * <li>Initialization, with {@link #initialize()} invoked exactly once.
+ * <li>Execution of commands, with {@link #execute(String, String)} invoked a
+ * number of times.
+ * <li>Shutdown, with {@link #shutdown()} invoked exactly once.
  * </ul>
- * Commands are added with {@link #add(String, Command)}. Commands are typically
- * created and added in the module constructor or during configuration.
  * <p>
- * An actual module should carefully document in the comment of its
- * {@link #add(Module)} method the module types that it requires and whether
+ * Commands are created by the module constructor or during configuration. 
+ * They are added with {@link #add(String, Command)}. 
+ * <p>
+ * A concrete module should document in the comment of its
+ * {@link #add(Module)} method the module types it requires and whether
  * they are mandatory or optional.
  * 
  * @param <T>
@@ -70,7 +73,8 @@ public interface Module<T> {
 	/**
 	 * Add a command. Command names are unique within a module. Commands are
 	 * executed by calling {@link #execute(String, String)} with the command
-	 * name and an opaque parameter string.
+	 * name and an opaque parameter string. This method cannot be used after
+	 * {@link #getCommands()} has been called.
 	 * 
 	 * @param name
 	 *            non-null name to use for the command
@@ -85,10 +89,10 @@ public interface Module<T> {
 	void add(String name, Command<?> command);
 
 	/**
-	 * Return all commands. Once this method has been used, adding more commands
+	 * Get all commands. Once this method has been used, adding more commands
 	 * with {@link #add(String, Command)} is forbidden.
 	 * 
-	 * @return a collection of commands, possibly empty but never null
+	 * @return a map of commands keyed by name, possibly empty but never null
 	 */
 	Map<String, Command<?>> getCommands();
 
@@ -103,12 +107,12 @@ public interface Module<T> {
 	boolean add(Module<?> module);
 
 	/**
-	 * Get the underlying object implementing the module. Some modules don't
-	 * have an underlying object distinct from themselves and return null. In
-	 * many implementations, calling this method before the module has been
-	 * initialized throws an <code>IllegalStateException</code>. To avoid this
-	 * problem, get the object from the required module in {@link #initialize()}
-	 * and not in {@link #add(Module)}.
+	 * Get the underlying module object. Some modules don't have an underlying
+	 * object distinct from themselves and return null. In many implementations,
+	 * calling this method before the module has been initialized throws an
+	 * <code>IllegalStateException</code>. To avoid this problem, get the object
+	 * from the required module in {@link #initialize()} and not in
+	 * {@link #add(Module)}.
 	 * 
 	 * @return the underlying object or null
 	 * @throws IllegalStateException
@@ -138,8 +142,7 @@ public interface Module<T> {
 	 * This method may be called only once. The method will not be called if
 	 * {@link #initialize} was never called, or was called, but threw an
 	 * exception. However, the method will be called, if possible, when the
-	 * module or underlying object throw an exception at a later point than
-	 * initialization.
+	 * module throws an exception at a later point than initialization.
 	 * 
 	 * @throws IllegalStateException
 	 *             if called more than once

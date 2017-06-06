@@ -4,7 +4,7 @@ import ch.agent.util.base.LazyString;
 
 /**
  * Default logger bridge. Always prints all messages to standard error.
- * Messages are prefix with a capital letter indicating the logging level.
+ * Messages are prefixed with a capital letter indicating the logging level.
  */
 public class DefaultLoggerBridge implements LoggerBridge {
 

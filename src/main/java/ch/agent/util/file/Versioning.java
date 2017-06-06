@@ -19,7 +19,7 @@ public class Versioning {
 	private int limit;
 
 	/**
-	 * Constructor for a versioning object.
+	 * Constructor.
 	 * 
 	 * @param pattern
 	 *            the pattern to use when renaming
@@ -33,7 +33,7 @@ public class Versioning {
 	}
 
 	/**
-	 * Constructor for a versioning object with pattern "%s.%02d" and a most 99
+	 * Constructor for a versioning object with pattern "%s.%02d" and at most 99
 	 * versions. File "foo.bar" will be renamed using the first available name
 	 * in the sequence foo.bar.01, ..., foo.bar.99.
 	 */

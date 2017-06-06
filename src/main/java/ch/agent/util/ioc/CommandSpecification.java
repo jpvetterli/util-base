@@ -5,12 +5,15 @@ import java.io.Serializable;
 import ch.agent.util.base.Misc;
 
 /**
- * A command specification consists of module name and a command name.
+ * A command specification consists of a module name and a command name.
  */
 public class CommandSpecification implements Serializable {
 
 	private static final long serialVersionUID = -1426998440999221081L;
 
+	/**
+	 * The separator between module and command names is a period (.).
+	 */
 	public static final String NAME_SEPARATOR = ".";
 
 	private final String command;
@@ -36,10 +39,10 @@ public class CommandSpecification implements Serializable {
 	}
 
 	/**
-	 * Get the name of the command. The name combines the module name and the
-	 * command name with a separating period, to achieve uniqueness in a system
-	 * where module names are unique. Command {@code foo.bar} is the full name
-	 * of command {@code bar} in module {@code foo}. For built-in commands the
+	 * Get the complete name of the command. Module and command names are joined
+	 * with a period to achieve uniqueness in a system where module names are
+	 * unique. Command <code>foo.bar</code> is the full name of command
+	 * <code>bar</code> in module <code>foo</code>. For built-in commands the
 	 * method returns only the command name because there is no module name.
 	 * 
 	 * @return a non-null and non-empty string

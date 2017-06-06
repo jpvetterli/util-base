@@ -8,13 +8,10 @@ inversion-of-control framework for composing and launching
 applications as a container system with modules and commands.
 <p>
 In most cases, methods avoid throwing checked exceptions but 
-explicitly document exceptions. Illegal null pointers result 
-in an IllegalArgumentException and are documented implicitly 
-as part of the comment on the relevant parameter.
-<p>
-Exceptions thrown by utility classes come with a detailed message
-and a cause chain making it possible in most situations to easily 
-understand what went wrong.
+use IllegalArgumentException or IllegalStateException.
+Illegal null parameters result in an IllegalArgumentException.
+Exceptions thrown in the utility classes come with an explanatory 
+message and a cause chain, where applicable.
 <p>
 Copyright 2013-2017 Hauser Olsson GmbH
 <p>

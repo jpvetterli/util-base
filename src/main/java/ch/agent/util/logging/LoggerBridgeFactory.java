@@ -2,7 +2,7 @@ package ch.agent.util.logging;
 
 /**
  * Interface for all logger bridge factories. For the motivation, read the class
- * comments {@link LoggerBridge}.
+ * comment of {@link LoggerBridge}.
  * 
  */
 public interface LoggerBridgeFactory {

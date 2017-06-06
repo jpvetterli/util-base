@@ -1,16 +1,15 @@
 package ch.agent.util.ioc;
 
 /**
- * A command is an adapter allowing to perform operations with the underlying
- * object of a module in a standard way. A command belongs to a module and a
- * module can have zero or more commands. A module and all its commands have the
- * same underlying object.
+ * A command is an adapter allowing to perform operations on a module's
+ * underlying object. A command belongs to a {@link Module} and a module can
+ * have zero or more commands. A module and all its commands have the same
+ * underlying object.
  * <p>
  * It is important that a command behaves in <em>non-modal</em> fashion. For
- * this it should directly support all its relevant parameters and should not
- * rely on parameters set with other commands. On the other hand it can rely on
- * parameters set during configuration, if these cannot be modified by another
- * command.
+ * this it should provide all relevant parameters and should not
+ * rely on parameters set with other commands. On the other hand, it can rely on
+ * those parameters which can only be set during module configuration.
  * 
  * @param <T>
  *            the type of the underlying module object

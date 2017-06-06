@@ -25,7 +25,7 @@ import ch.agent.util.base.LazyString;
  * <p>
  * The <em>lazy string</em> version of the logging methods are provided for
  * dealing with expensive messages. The performance cost of a lazy string is
- * assumed only when {@code #toString} is used on it, which occurs only
+ * assumed only when {@link Object#toString} is used on it, which occurs only
  * when (if) the message is actually logged, depending on the logging level.
  */
 public interface LoggerBridge {

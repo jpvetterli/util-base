@@ -72,7 +72,7 @@ import java.util.ResourceBundle;
  * 
  * To Eclipse users:
  * <p>
- * Assuming the resource file is on the source class path, leaving the mouse
+ * Assuming the resource file is on the source classpath, leaving the mouse
  * pointer on a message symbol (like M.M00102 in the last code snippet above)
  * will display the message text in a tooltip.
  * <p>

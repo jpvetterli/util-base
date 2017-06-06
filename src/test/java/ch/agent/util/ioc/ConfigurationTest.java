@@ -162,8 +162,7 @@ public class ConfigurationTest {
 				"module=[name=b class=b require=a] " + 
 				"module=[name=c class=c require=b] " + 
 				"";
-			Container c = new Container();
-			c.getBuilder().build(spec);
+			new Container().build(spec);
 			fail("exception expected");
 		} catch (Exception e) {
 			assertTrue("message C09 missing", e.getMessage().indexOf("no valid sequence") > 0);
@@ -183,8 +182,7 @@ public class ConfigurationTest {
 				"module=[name=g class=g require=f require=c] " + 
 				"module=[name=h class=h require=c] " + 
 				"";
-			Container c = new Container();
-			Configuration<ModuleDefinition<Module<?>>, Module<?>> config = c.getBuilder().build(spec);
+			Configuration<ModuleDefinition<Module<?>>, Module<?>> config = new Container().build(spec);
 			StringBuilder b = new StringBuilder();
 			for(ModuleDefinition<Module<?>> def : config.getModuleDefinitions()) {
 				b.append(def.getName());
@@ -226,8 +224,7 @@ public class ConfigurationTest {
 				"module=[name=g class=g require=f require=c] " + 
 				"module=[name=h class=h require=c] " + 
 				"";
-			Container c = new Container();
-			Configuration<ModuleDefinition<Module<?>>, Module<?>> config = c.getBuilder().build(spec);
+			Configuration<ModuleDefinition<Module<?>>, Module<?>> config = new Container().build(spec);
 			config = config.extract(null, "ah");
 			fail("exception expected");
 		} catch (Exception e) {

@@ -41,7 +41,7 @@ import ch.agent.util.base.Misc;
  * <p>
  * In some cases a reference is nested inside a string, and is directly followed
  * by a valid symbol character, which makes it impossible to find the end of the
- * symbol. To handle this, the symbol must be surrounded with two $, like
+ * symbol. To handle this, the symbol must be surrounded with two more $, like
  * <code>$$$foo-bar$baz</code>.
  */
 public class SymbolScanner {
@@ -75,7 +75,7 @@ public class SymbolScanner {
 	 * @param name
 	 *            a non-null name with a $ prefix
 	 * @throws IllegalArgumentException
-	 *             if verification fails
+	 *             as described in the comment
 	 */
 	public void verify(String name) {
 		Misc.nullIllegal(name, "name null");

@@ -12,13 +12,15 @@ import ch.agent.util.STRINGS.U;
  * minimal implementation writing to {@link System#err}. To override the
  * default, the name of an alternative factory class must be passed as a system
  * property with the key <code>LoggerBridgeFactory</code>. For example logging
- * to SLF4J is achieved with the factory class
- * <code>ch.agent.util.logging.SLF4JLoggerBridgeFactory</code> available when
- * version <code>x.y.z</code> of the library
- * <code>util-base-slf4j-x.y.z.jar</code> is on the classpath.
+ * to SLF4J is achieved with the <code>ch.agent.util.logging.SLF4JLoggerBridgeFactory</code>, 
+ * which must be on the classpath.
  */
 public class LoggerManager {
 
+	/**
+	 * The System property key for naming the class of a non-default logger
+	 * bridge factory.
+	 */
 	public static final String LOGGER_BRIDGE_FACTORY = "LoggerBridgeFactory";
 	private static final String INSTANCE_METHOD = "getInstance";
 	

@@ -38,7 +38,7 @@ public class TextFile {
 	public interface Visitor {
 
 		/**
-		 * Take one line of text. Returns true to signal intention of skipping
+		 * Takes one line of text. Returns true to signal intention of skipping
 		 * all remaining lines. Can throw a checked exception.
 		 * 
 		 * @param lineNr
@@ -153,15 +153,15 @@ public class TextFile {
 	/**
 	 * Read a series of lines from a file. Lines are passed to the caller via a
 	 * callback mechanism. The file can reside in the file system or as a
-	 * resource on the class path. An <code>IOException</code> is thrown if the
-	 * file cannot be read or if the visitor throws an exception.
+	 * resource on the classpath. An exception is thrown if the file cannot be
+	 * read or if the visitor throws an exception.
 	 * 
 	 * @param fileName
 	 *            the non-null name of the file
 	 * @param visitor
 	 *            a visitor taking lines of text
 	 * @throws IllegalArgumentException
-	 *             on failure to read the file
+	 *             as described in the comment
 	 */
 	public void read(String fileName, Visitor visitor) {
 		Misc.nullIllegal(fileName, "fileName null");
@@ -199,14 +199,13 @@ public class TextFile {
 	 * Read a series of lines from a file. Lines are returned to the caller as a
 	 * list containing of lines of text from the file. Line terminators are
 	 * removed. The file can reside in the file system or as a resource on the
-	 * class path. An <code>IOException</code> is thrown if the file cannot be
-	 * read.
+	 * classpath. An exception is thrown if the file cannot be read.
 	 * 
 	 * @param fileName
 	 *            the non-null name of the file
 	 * @return all lines of text from the file as a list
 	 * @throws IllegalArgumentException
-	 *             on failure to read the file
+	 *             as described in the comment
 	 */
 	public List<String> read(String fileName) {
 		SimpleVisitor v = new SimpleVisitor();
@@ -217,9 +216,9 @@ public class TextFile {
 	/**
 	 * Write a series of lines to a file. The file is created if it does not
 	 * exist, as is the file's directory (but not the directory's directory).
-	 * Lines are terminated by the platform's line separator. An
-	 * <code>IOException</code> is thrown if the file cannot be written. If the
-	 * iterator is null, an empty file is created if one does not exist.
+	 * Lines are terminated by the platform's line separator. An exception is
+	 * thrown if the file cannot be written. If the iterator is null, an empty
+	 * file is created if one does not exist.
 	 * 
 	 * @param fileName
 	 *            the non-null name of the file
@@ -228,7 +227,7 @@ public class TextFile {
 	 * @param lines
 	 *            an iterator supplying lines of text or null
 	 * @throws IllegalArgumentException
-	 *             on failure to write to the file
+	 *             as described in the comment
 	 */
 	public void write(String fileName, boolean append, Iterator<String> lines) {
 		Misc.nullIllegal(fileName, "fileName null");
@@ -259,9 +258,9 @@ public class TextFile {
 	/**
 	 * Write an array of strings to a file. The file is created if it does not
 	 * exist, as is the file's directory (but not the directory's directory).
-	 * Lines are terminated by the platform's line separator. An
-	 * <code>IOException</code> is thrown if the file cannot be written. If the
-	 * array is null, an empty file is created if one does not exist.
+	 * Lines are terminated by the platform's line separator. An exception is
+	 * thrown if the file cannot be written. If the array is null, an empty file
+	 * is created if one does not exist.
 	 * 
 	 * @param fileName
 	 *            the non-null name of the file
@@ -270,7 +269,7 @@ public class TextFile {
 	 * @param lines
 	 *            an array of strings or null
 	 * @throws IllegalArgumentException
-	 *             on failure to write to the file
+	 *             as described in the comment
 	 */
 	public void write(String fileName, boolean append, String[] lines) {
 		write(fileName, append, lines == null ? null : Arrays.asList(lines).iterator());
@@ -279,9 +278,9 @@ public class TextFile {
 	/**
 	 * Write a string to a file. The file is created if it does not exist, as is
 	 * the file's directory (but not the directory's directory). Lines are
-	 * terminated by the platform's line separator. An <code>IOException</code>
-	 * is thrown if the file cannot be written. If the string is null, an empty
-	 * file is created if one does not exist.
+	 * terminated by the platform's line separator. An exception is thrown if
+	 * the file cannot be written. If the string is null, an empty file is
+	 * created if one does not exist.
 	 * 
 	 * @param fileName
 	 *            the name of the file
@@ -290,7 +289,7 @@ public class TextFile {
 	 * @param string
 	 *            the string to write
 	 * @throws IllegalArgumentException
-	 *             on failure to write to the file
+	 *             as described in the comment
 	 */
 	public void write(String fileName, boolean append, String string) {
 		write(fileName, append, string == null ? null : new String[] { string });
@@ -298,7 +297,7 @@ public class TextFile {
 
 	/**
 	 * Prepares an input object. If found neither in the file system nor on the
-	 * class path a <code>FileNotFoundException</code> is thrown. If duplicate
+	 * classpath a <code>FileNotFoundException</code> is thrown. If duplicate
 	 * detection mode is active and the file has already been seen a
 	 * <code>FileNotFoundException</code> is thrown.
 	 * 

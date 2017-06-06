@@ -34,7 +34,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 	private static final long serialVersionUID = -8582798552915184875L;
 
 	/**
-	 * Callback interface for the
+	 * Callback interface for method
 	 * {@link Configuration#extract(ExtractFilter, String...)}.
 	 */
 	public static interface ExtractFilter {
@@ -55,8 +55,9 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 	private final Map<String, D> modules;
 
 	/**
-	 * Constructor. Module definitions must be provided in a valid dependency
-	 * sequence. This can be taken care of by {@link ConfigurationBuilder}.
+	 * Constructor. Module definitions must be in a valid dependency
+	 * sequence. A valid sequence is guaranteed when using 
+	 * {@link ConfigurationBuilder}.
 	 * 
 	 * @param definitions
 	 *            the list of module definitions in valid initialization
@@ -92,7 +93,8 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 
 	/**
 	 * Configure all modules in the registry. See
-	 * {@link ModuleDefinition#configure(Module, ConfigurationRegistry)}.
+	 * {@link ModuleDefinition#configure(Module, ConfigurationRegistry)}
+	 * and {@link Module#configure(String)}.
 	 * 
 	 * @param registry
 	 *            configuration registry
@@ -107,7 +109,8 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 	}
 
 	/**
-	 * Initialize all modules.
+	 * Initialize all modules in the registry.
+	 * See {@link Module#initialize()}.
 	 * 
 	 * @param registry
 	 *            a configuration registry
@@ -122,8 +125,9 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 	}
 
 	/**
-	 * Parse the execution statement of the configuration. Command
-	 * specifications must have already been initialized.
+	 * Parse the execution statement of the configuration in the context of
+	 * command specifications. On the execution statement, see
+	 * {@link #getExecution()}.
 	 * 
 	 * @param specifications
 	 *            a collection of command specifications
@@ -159,7 +163,8 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 	}
 
 	/**
-	 * Execute commands.
+	 * Execute commands. Executable command specifications are provided by
+	 * {@link #parseCommands(Collection)}.
 	 * 
 	 * @param registry
 	 *            the configuration registry
@@ -180,7 +185,7 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 
 	/**
 	 * Shutdown all modules in the registry. The shutdown sequence is the
-	 * reverse of the initialization sequence.
+	 * reverse of the initialization sequence. See {@link Module#shutdown()}.
 	 * 
 	 * @param registry
 	 *            a configuration registry

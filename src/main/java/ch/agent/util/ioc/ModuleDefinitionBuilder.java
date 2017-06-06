@@ -68,7 +68,7 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 	}
 
 	/**
-	 * Define the parameter syntax.
+	 * Define the parameter syntax using an <code>Args</code> object.
 	 * 
 	 * @param p
 	 *            the object taking parameters
@@ -82,7 +82,7 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 	}
 
 	/**
-	 * Build a module definition from an object encapsulating parameter values.
+	 * Build a module definition from an <code>Args</code> object.
 	 * 
 	 * @param p
 	 *            the object taking parameters
@@ -92,8 +92,7 @@ public class ModuleDefinitionBuilder<MD extends ModuleDefinition<M>, M extends M
 	 */
 	@SuppressWarnings("unchecked")
 	protected MD build(Args p) {
-		// get configuration in raw mode because unresolved variables are okay
-		// at this point
+		// get configuration in raw mode to avoid resolution errors
 		return (MD) new ModuleDefinition<M>(p.get(MODULE_NAME), p.get(MODULE_CLASS), p.split(MODULE_REQUIREMENT), p.split(MODULE_PREDECESSOR), p.getVal(MODULE_CONFIG).rawValue());
 	}
 

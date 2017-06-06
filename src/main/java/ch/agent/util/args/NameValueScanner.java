@@ -12,7 +12,7 @@ import ch.agent.util.STRINGS.U;
  * name-value pairs and length 1 for isolated values.
  * <p>
  * The scanner understands four special characters which can be configured using
- * the constructor. When using the no-args constructor provides defaults. These
+ * the constructor. A no-args constructor provides defaults. These
  * characters are (defaults in parentheses):
  * <ul>
  * <li>the name-value separator (=),
@@ -20,7 +20,7 @@ import ch.agent.util.STRINGS.U;
  * <li>the closing quote (]), and
  * <li>the escape (\).
  * </ul>
- * For brevity the documentation assumes defaults are used. White space, as
+ * For brevity, the documentation assumes defaults are used. White space, as
  * defined by {@link Character#isWhitespace(char)}, is either significant or
  * ignored, depending on where it is used.
  * <p>
@@ -295,8 +295,8 @@ public class NameValueScanner {
 	private String eq;
 
 	/**
-	 * Constructor for a scanner with custom meta characters. If is illegal for
-	 * any two meta characters to be equal.
+	 * Constructor for a scanner with custom meta characters. An exception is thrown
+	 * if any two meta characters are equal.
 	 * 
 	 * @param lq
 	 *            left quote
@@ -307,7 +307,7 @@ public class NameValueScanner {
 	 * @param esc
 	 *            escape
 	 * @throws IllegalArgumentException
-	 *             if any two metacharacters are equal
+	 *             as described in the comment
 	 */
 	public NameValueScanner(char lq, char rq, char nvs, char esc) {
 		if (lq == rq || lq == nvs || lq == esc || rq == nvs || rq == esc || nvs == esc)

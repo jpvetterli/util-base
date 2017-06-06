@@ -34,7 +34,7 @@ import ch.agent.util.logging.LoggerManager;
  * after the modules and the command names used by modules when registering
  * commands during module initialization. Module and command names are separated
  * by a period. The syntax of command parameters is defined by the command
- * themselves. The container passes the command name and the verbatim value to
+ * themselves. The container passes the command name and the parameter verbatim to
  * the {@link Command#execute(String, String)} methods.
  */
 public class Container {
@@ -76,10 +76,24 @@ public class Container {
 	 * 
 	 * @return a configuration builder
 	 */
-	public ConfigurationBuilder<Configuration<ModuleDefinition<Module<?>>, Module<?>>, ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, ModuleDefinition<Module<?>>, Module<?>> getBuilder() {
+	private ConfigurationBuilder<Configuration<ModuleDefinition<Module<?>>, Module<?>>, ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, ModuleDefinition<Module<?>>, Module<?>> getBuilder() {
 		return new ConfigurationBuilder<Configuration<ModuleDefinition<Module<?>>, Module<?>>, ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>, ModuleDefinition<Module<?>>, Module<?>>(new ModuleDefinitionBuilder<ModuleDefinition<Module<?>>, Module<?>>());
 	}
 
+	/**
+	 * Build a configuration from a string of parameters. The method creates a
+	 * throw-away builder and uses it to build a configuration from the
+	 * parameters in the string.
+	 * 
+	 * @param parameters
+	 *            a non-null string
+	 * @return a configuration
+	 * @throws IllegalArgumentException if there is an error in the parameters
+	 */
+	protected Configuration<ModuleDefinition<Module<?>>, Module<?>> build(String parameters) {
+		return getBuilder().build(parameters);
+	}
+	
 	/**
 	 * Get a module by name.
 	 * 
@@ -122,7 +136,7 @@ public class Container {
 		start = System.currentTimeMillis();
 		logger.info(lazymsg(U.C20, Misc.truncate(Arrays.toString((String[]) parameters), 60, " (etc.)")));
 		try {
-			configuration = getBuilder().build(Misc.join(" ", parameters));
+			configuration = build(Misc.join(" ", parameters));
 			registry = configuration.create();
 			configuration.configure(registry);
 			configuration.initialize(registry);

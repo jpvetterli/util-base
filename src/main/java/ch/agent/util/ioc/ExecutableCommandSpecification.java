@@ -28,7 +28,7 @@ public class ExecutableCommandSpecification extends CommandSpecification {
 	}
 
 	/**
-	 * Get the parameter string.
+	 * Get the string of parameters.
 	 * 
 	 * @return an opaque string with command parameters
 	 */

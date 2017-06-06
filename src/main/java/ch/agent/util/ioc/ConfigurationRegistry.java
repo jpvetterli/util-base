@@ -10,16 +10,15 @@ import java.util.Map;
 import ch.agent.util.STRINGS.U;
 
 /**
- * The configuration registry is produced by the configuration procedure. It is
+ * The configuration registry is a product of the configuration process. It is
  * created by {@link Configuration#create()} to provide a map of all modules
  * configured and a map of all commands registered by the modules. The module
  * map can be iterated in the original insertion sequence of its elements.
  * <p>
  * Modules and commands are added directly to the maps returned by
- * {@link ConfigurationRegistry#getModules()} and {@link #getCommands()}. The
- * {@link #addUnique(CommandSpecification)} method can be used to attempt to add
- * command with an exception thrown if the command already exists.
- * 
+ * {@link ConfigurationRegistry#getModules()} and {@link #getCommands()}. 
+ * Alternatively, method {@link #addUnique(CommandSpecification)} can be used to add
+ * a command; it throws an exception if the command already exists.
  * 
  * @param <M>
  *            the module type

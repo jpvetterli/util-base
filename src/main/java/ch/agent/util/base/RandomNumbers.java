@@ -57,10 +57,10 @@ public class RandomNumbers {
 
 	/**
 	 * A random number generator combining two uniforms. The generator uses two
-	 * uniforms, a low limit and a high limit. To generate a random number, a
-	 * value is selected from the first range, if the value is larger than the
-	 * low limit and smaller than the high limit, it is the result, else the
-	 * result is selected from the second range.
+	 * uniforms, plus a low and a high limit within the range of the first
+	 * uniform. To generate a random number, a value is selected from the first
+	 * uniform. If the value is within the limits, it is used as the result, else 
+	 * a value is selected from the second uniform and used as the result.
 	 */
 	public static class Uniform2 {
 		private Uniform uni1;

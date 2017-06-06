@@ -71,7 +71,7 @@ public class FileIncluder {
 	}
 
 	/**
-	 * Return the content of a file as a list of name-value pairs and isolated
+	 * Return the content of a file as a list of name-value pairs or isolated
 	 * values. The second parameter is a map where keys are the names to
 	 * include. If the corresponding value is an non-empty string it is used to
 	 * translate the name. Only names present in the map will be returned.
@@ -108,7 +108,7 @@ public class FileIncluder {
 	}
 
 	/**
-	 * Return the content of a file as a list of name-value pairs and or
+	 * Return the content of a file as a list of name-value pairs or
 	 * isolated values.
 	 * 
 	 * @param scanner
@@ -124,7 +124,7 @@ public class FileIncluder {
 	}
 
 	/**
-	 * Return the content of a file as a list of name-value pairs and or
+	 * Return the content of a file as a list of name-value pairs or
 	 * isolated values.
 	 * 
 	 * @param scanner

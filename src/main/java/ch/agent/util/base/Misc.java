@@ -17,8 +17,7 @@ public class Misc {
 	/**
 	 * Ensure a reference is not null. The description passed in the second
 	 * argument is usually very short (like "foo null"), as it should only help
-	 * the developer identify the object which was null, in case more than one
-	 * object could be involved.
+	 * the developer identify the object when there are many.
 	 * 
 	 * @param reference
 	 *            an object
@@ -135,13 +134,14 @@ public class Misc {
 	}
 
 	/**
-	 * Split a string into a given number of parts. If {@code count} is negative
-	 * there is no restriction on the number of parts. If it is zero, the method
-	 * returns an empty array. If it is 1 the method returns an array with the
-	 * input as single element. If it is larger than 1, it must be possible to
-	 * split the input into exactly {@code count} parts. When this is not the
-	 * case the method throws an {@link IllegalArgumentException} with a terse
-	 * message indicating the actual number of parts and the count.
+	 * Split a string into a given number of parts. If <code>count</code> is
+	 * negative there is no restriction on the number of parts. If it is zero,
+	 * the method returns an empty array. If it is 1 the method returns an array
+	 * with the input as single element. If it is larger than 1, it must be
+	 * possible to split the input into exactly <code>count</code> parts. When
+	 * this is not the case the method throws an
+	 * {@link IllegalArgumentException} with a terse message indicating the
+	 * actual number of parts and the count.
 	 * <p>
 	 * To make usage easier, when the input is empty and count is negative, the
 	 * result is an empty array.
@@ -154,7 +154,7 @@ public class Misc {
 	 *            the number of parts
 	 * @return the array of parts split from the input
 	 * @throws IllegalArgumentException
-	 *             if required number or parts not available
+	 *             as described in the comment
 	 */
 	public static String[] split(String input, String separator, int count) {
 		Misc.nullIllegal(input, "input null");

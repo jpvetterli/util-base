@@ -2,7 +2,7 @@ package ch.agent.util.logging;
 
 
 /**
- * The default logger factory provides access to the SLF4J logger factory.
+ * The default logger factory provides access to the default logger bridge.
  */
 public final class DefaultLoggerBridgeFactory implements LoggerBridgeFactory {
 	// final class because nothing to subclass

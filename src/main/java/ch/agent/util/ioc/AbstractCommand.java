@@ -1,6 +1,7 @@
 package ch.agent.util.ioc;
 
 import ch.agent.util.args.Args;
+import ch.agent.util.args.Args.Definition;
 
 /**
  * A minimal abstract implementation of the {@link Command} interface. It
@@ -34,7 +35,7 @@ public abstract class AbstractCommand<T> implements Command<T> {
 	 * called only once in the life time of the command. Subclasses should throw
 	 * an {@link IllegalArgumentException} when something is wrong; this is
 	 * usually achieved by not catching exceptions when using {@link Args} or
-	 * {@link Args.Definition} methods.
+	 * {@link Definition} methods.
 	 * 
 	 * @param parameters
 	 *            the parameters object
