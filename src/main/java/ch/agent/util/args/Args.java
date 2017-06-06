@@ -1382,6 +1382,23 @@ public class Args implements Iterable<String> {
 		}
 		return done;
 	}
+	
+	/**
+	 * Import all variables from an another <code>Args</code> into this one. The
+	 * "first wins" rule applies.
+	 * 
+	 * @param args
+	 *            an <code>Args</code> or null
+	 */
+	public void putVariables(Args args) {
+		if (args != null) {
+			for (Map.Entry<String, String> entry : args.getVariables().entrySet()) {
+				if (variables.get(entry.getKey()) == null) {
+					variables.put(entry.getKey(), entry.getValue());
+				}
+			}
+		}
+	}
 
 	private boolean isVariable(String name) {
 		return name.length() > 0 && name.charAt(0) == dollar;

@@ -238,6 +238,24 @@ public class ArgsVariablesTest {
 	}
 
 	@Test
+	public void testVars15() {
+		try {
+			args.parse("$a=a $b=b $c = c");
+			Args args2 = new Args();
+			args2.def("foo").repeatable();
+			args2.putVariables(args);
+			args2.parse("$c=x $d=d foo=$$a foo=$$b foo=$$c foo=$$d");
+			assertEquals("a", args2.split("foo")[0]);
+			assertEquals("b", args2.split("foo")[1]);
+			assertEquals("c", args2.split("foo")[2]);
+			assertEquals("d", args2.split("foo")[3]);
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
 	public void testVariables1() {
 		try {
 			args.def("foo");
