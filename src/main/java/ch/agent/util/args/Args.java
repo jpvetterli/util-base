@@ -15,12 +15,11 @@ import ch.agent.util.file.TextFile;
 /**
  * Args defines parameters and parses strings and configuration files. It
  * provides a simple language and a small set of built-in operators. Here is a
- * short example, intentionally ugly:
+ * short example:
  * 
  * <pre>
  * <code>
- * $greeting = hello $subject 
- *   = world
+ * $greeting = hello $subject = world
  * config = [
  *   greet=$$greeting
  * ]
@@ -35,10 +34,9 @@ import ch.agent.util.file.TextFile;
  * <pre>
  * <code>
  * prompt&gt; java -jar example.jar $subject= "zäme [you all]" \
- *      $subject = "you too" $greeting = Hoi include=hello.config
+ *      $greeting = Hoi include=hello.config
  * Hoi zäme
  * Hoi you all
- * Hoi you too
  * </code>
  * </pre>
  * 
@@ -73,21 +71,30 @@ import ch.agent.util.file.TextFile;
  * <h3>The specification language</h3>
  * 
  * A specification consists of a series of <em>name-value pairs</em> and
- * isolated values and keywords. In a name-value pair, the name corresponds to a
- * parameter definition. An isolated value is the value of a nameless parameter
- * (a parameter with an empty name). To have multiple isolated values, the
- * nameless parameter must have been defined as repeatable. Some isolated values
- * are known as <em>keywords</em>; a keyword corresponds to a parameter defined
- * with a default value of "false". The occurrence of the parameter name as an
- * isolated value sets the value of the parameter to "true".
+ * isolated values and keywords. In a name-value pair, the name identifies an
+ * existing parameter definition. An isolated value is the value of a nameless
+ * parameter (a parameter with an empty name). Some isolated values are known as
+ * <em>keywords</em>; a keyword corresponds to a parameter defined with a
+ * default value of "false". The occurrence of the parameter name as an isolated
+ * value sets the value of the parameter to "true".
  * <p>
- * A parameter can only be used if it has been defined, but sometimes it is 
- * useful to define parameters on the fly. This is possible with <em>variables</em>.
- * Variables have a name with a $ sign in front. They are referenced by
- * prefixing them with $$. When a variable reference is seen in the text, it is
- * replaced by the value of the variable if available, else it is left as an
- * unresolved variable. When accessing a parameter value which contains unresolved 
- * variables, an error occurs, unless using a <em>raw</em> getter.
+ * There are two different approaches for parameters to have multiple values. The
+ * first approach is to define the parameter as <em>repeatable</em>. In this case, multiple
+ * name-value pairs with the same name can be specified. The second approach is
+ * to use a standard parameter and to specify all values between quotes (brackets) and 
+ * separated by white space. In both cases, all values are accessed with a single 
+ * invocation of an array getter. The two approaches cannot be mixed. If a parameter
+ * is defined as repeatable, specifying multiple values between quotes and separated
+ * by white space will be accessed as a single value with blanks inside.
+ * <p>
+ * A parameter can only be used if it has been defined, but sometimes it is
+ * useful to define parameters on the fly. This is possible with
+ * <em>variables</em>. Variables have a name with a $ sign in front. They are
+ * referenced by prefixing them with $$. When a variable reference is seen in
+ * the text, it is replaced by the value of the variable if available, else it
+ * is left as an unresolved variable. When accessing a parameter value which
+ * contains unresolved variables, an error occurs, unless using a <em>raw</em>
+ * getter.
  * <p>
  * One difference between parameters and variables is their behavior with
  * respect to repeated values. With a (non-repeatable) parameter, the last value
