@@ -5,6 +5,7 @@ import static ch.agent.util.STRINGS.msg;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -28,8 +29,6 @@ import ch.agent.util.base.Misc;
 public class ModuleDefinition<M extends Module<?>> implements Serializable {
 
 	private static final long serialVersionUID = -7103451839673077227L;
-
-	int review_javadoc; // configuration string
 
 	private final String name;
 	private final String className;
@@ -233,5 +232,51 @@ public class ModuleDefinition<M extends Module<?>> implements Serializable {
 	public String toString() {
 		return getName();
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((className == null) ? 0 : className.hashCode());
+		result = prime * result + ((configuration == null) ? 0 : configuration.hashCode());
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + Arrays.hashCode(pred);
+		result = prime * result + Arrays.hashCode(req);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		@SuppressWarnings("rawtypes")
+		ModuleDefinition other = (ModuleDefinition) obj;
+		if (className == null) {
+			if (other.className != null)
+				return false;
+		} else if (!className.equals(other.className))
+			return false;
+		if (configuration == null) {
+			if (other.configuration != null)
+				return false;
+		} else if (!configuration.equals(other.configuration))
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		if (!Arrays.equals(pred, other.pred))
+			return false;
+		if (!Arrays.equals(req, other.req))
+			return false;
+		return true;
+	}
+	
+	
 
 }

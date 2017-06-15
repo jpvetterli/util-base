@@ -293,4 +293,36 @@ public class Configuration<D extends ModuleDefinition<M>, M extends Module<?>> i
 		}
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((execution == null) ? 0 : execution.hashCode());
+		result = prime * result + ((modules == null) ? 0 : modules.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		@SuppressWarnings("rawtypes")
+		Configuration other = (Configuration) obj;
+		if (execution == null) {
+			if (other.execution != null)
+				return false;
+		} else if (!execution.equals(other.execution))
+			return false;
+		if (modules == null) {
+			if (other.modules != null)
+				return false;
+		} else if (!modules.equals(other.modules))
+			return false;
+		return true;
+	}
+
 }
