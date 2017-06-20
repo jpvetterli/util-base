@@ -259,7 +259,7 @@ public class TextFileTest {
 			textFile.write("/a.txt", false, text.iterator());
 			fail("expected an exception");
 		} catch (IllegalArgumentException e) {
-			assertTrue(e.getCause().getMessage().equals("/a.txt (Permission denied)"));
+			assertTrue(e.getCause().getMessage().startsWith("U00206"));
 		} catch (Exception e) {
 			fail("unexpected exception");
 		}

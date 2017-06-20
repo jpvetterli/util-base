@@ -343,13 +343,36 @@ public class TextFile {
 	 * @throws FileNotFoundException
 	 */
 	private Output openOutput(String fileName, boolean append) throws FileNotFoundException {
+		File file = forOutput(fileName);
+		return new Output(file.getAbsolutePath(), new FileOutputStream(file.getAbsolutePath(), append));
+	}
+	
+	/**
+	 * Ensure the file name corresponds to an absolute file which can be used
+	 * for writing. Intermediary directories are created if necessary.
+	 * 
+	 * @param fileName
+	 *            a file name
+	 * @return a file
+	 * @throws FileNotFoundException
+	 */
+	public static File forOutput(String fileName) throws FileNotFoundException {
 		File file = new File(fileName);
 		if (!file.isAbsolute()) {
 			throw new FileNotFoundException(STRINGS.msg(U.U00205, fileName));
 		}
-		File dir = file.getParentFile();
-		dir.mkdirs();
-		return new Output(file.getAbsolutePath(), new FileOutputStream(file.getAbsolutePath(), append));
+		File dir = null;
+		try {
+			dir = file.getParentFile();
+			dir.mkdirs();
+		} catch (Exception e) {
+			FileNotFoundException fnfe = new FileNotFoundException(fileName);
+			fnfe.initCause(e);
+			throw fnfe;
+		}
+		if (!dir.canWrite())
+			throw new FileNotFoundException(STRINGS.msg(U.U00206, fileName));
+		return file;
 	}
 
 }
