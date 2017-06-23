@@ -354,7 +354,7 @@ public class TextFile {
 	 * @param fileName
 	 *            a file name
 	 * @return a file
-	 * @throws FileNotFoundException
+	 * @throws FileNotFoundException when the file may not be opened for output
 	 */
 	public static File forOutput(String fileName) throws FileNotFoundException {
 		File file = new File(fileName);

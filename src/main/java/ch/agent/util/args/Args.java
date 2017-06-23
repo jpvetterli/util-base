@@ -1238,12 +1238,18 @@ public class Args implements Iterable<String> {
 	private boolean putKeyword(String name, String value, List<String[]> collector) {
 		boolean keyword = false;
 		if (name.length() == 0) {
+			if (value.length() == 0)
+				throw new IllegalArgumentException(msg(U.U00101));
 			Value v = args.get(value); // value, not name
-			if (v != null && v.getDefault().equals(FALSE)) {
-				v.set(TRUE);
-				keyword = true;
-				if (collector != null)
-					collector.add(new String[] { value });
+			if (v != null) {
+				if (v.getDefault() != null && v.getDefault().equals(FALSE)) {
+					v.set(TRUE);
+					keyword = true;
+					if (collector != null)
+						collector.add(new String[] { value });
+				} else {
+					throw new IllegalArgumentException(msg(U.U00102, value));
+				}
 			}
 		}
 		return keyword;

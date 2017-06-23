@@ -412,16 +412,10 @@ public class ArgsTest {
 			args.def("name").init("default");
 			args.def("").repeatable();
 			args.parse("exit name=value bar baf");
-			String[] values = args.split("");
-			assertEquals(3, values.length);
-			assertEquals("value", args.get("name"));
-			assertEquals("exit", values[0]);
-			assertEquals("bar", values[1]);
-			assertEquals("baf", values[2]);
-			assertEquals("faltse", args.get("exit"));
+			fail("exception expected");
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
-			fail("unexpected exception");
+			assertTrue(e.getMessage().startsWith("U00102"));
 		}
 	}
 	
@@ -1171,6 +1165,18 @@ public class ArgsTest {
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
 			assertTrue(e.getMessage().startsWith("U00108"));
+		}
+	}
+	
+	@Test
+	public void testForNPE20170623() {
+		try {
+			args.def("from"); // no default
+			args.parse("from");
+			fail("exception expected");
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			assertTrue(e.getMessage().startsWith("U00102"));
 		}
 	}
 
