@@ -134,7 +134,7 @@ import ch.agent.util.file.TextFile;
  * Quote parsing is done one nesting level at a time, but variable resolution is
  * done on the full input, irrespective of quotes. This separation is useful in
  * practice but there are some caveats, like the fact that the $ and $$ prefixes
- * of variables cannot be escaped with \, as mentionned below. Variables can
+ * of variables cannot be escaped with \, as mentioned below. Variables can
  * remain unresolved until accessed by a non-raw getter. Raw getters are used to
  * get values passed to the next parsing level. Non-raw getters are used when
  * values are actually required.
@@ -1274,9 +1274,12 @@ public class Args implements Iterable<String> {
 				String symbol = it.next();
 				String resolved = variables.get(symbol);
 				if (resolved == null) {
+					// rebuild the symbol using triple dollar notation (just in case)
+					b.append(dollar);
 					b.append(dollar);
 					b.append(dollar);
 					b.append(symbol);
+					b.append(dollar);
 				} else {
 					if (!checkForCycle(symbol, level, cycleDetector))
 						throw new IllegalArgumentException(msg(U.U00123, input, symbol));

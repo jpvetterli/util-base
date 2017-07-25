@@ -354,7 +354,7 @@ public class ArgsVariablesTest {
 			
 			// this loops:
 			args.parse("$RESOLVED=resolved x=[a=$$UNRESOLVED b=$$RESOLVED]"); 
-			assertEquals("a=$$UNRESOLVED b=resolved", args.getVal("x").rawValue());
+			assertEquals("a=$$$UNRESOLVED$ b=resolved", args.getVal("x").rawValue());
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
@@ -374,7 +374,7 @@ public class ArgsVariablesTest {
 			
 			args.def("module").repeatable();
 			args.parse(spec);
-			String expect = "$SVC-NAME=CCS1 $SVC-REQ=[require=FOO] name = $$SVC-NAME $$SVC-REQ actor-class=CaseChangerServiceActor";
+			String expect = "$SVC-NAME=CCS1 $SVC-REQ=[require=FOO] name = $$$SVC-NAME$ $$$SVC-REQ$ actor-class=CaseChangerServiceActor";
 			assertEquals(expect, args.getVal("module").rawValues()[0]);
 
 			Args args2 = new Args();
@@ -403,7 +403,7 @@ public class ArgsVariablesTest {
 			
 			args.def("module").repeatable();
 			args.parse(spec);
-			String expect = "$SVC-NAME=CCS1 $SVC-REQ=[] name = $$SVC-NAME $$SVC-REQ actor-class=CaseChangerServiceActor";
+			String expect = "$SVC-NAME=CCS1 $SVC-REQ=[] name = $$$SVC-NAME$ $$$SVC-REQ$ actor-class=CaseChangerServiceActor";
 			assertEquals(expect, args.getVal("module").rawValues()[0]);
 
 			Args args2 = new Args();

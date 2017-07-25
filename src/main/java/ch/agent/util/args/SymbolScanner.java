@@ -161,7 +161,7 @@ public class SymbolScanner {
 		state = State.INIT;
 	}
 
-/**
+	/**
 	 * Process the next char. Return 0 to indicate to continue,
 	 * 1 to indicate that a part is available, and -1 to indicate
 	 * the end of the input. The method modifies 
