@@ -1441,8 +1441,8 @@ public class Args implements Iterable<String> {
 		String result = "";
 		Args a = parseIfArgs(text);
 		String ifValue = a.get(COND_IF_NON_EMPTY);
-		String thenValue = a.get(COND_THEN);
-		String elseValue = a.get(COND_ELSE);
+		String thenValue = a.getVal(COND_THEN).rawValue();
+		String elseValue = a.getVal(COND_ELSE).rawValue();
 		if (ifValue.length() > 0)
 			result = thenValue;
 		else if (!Misc.isEmpty(elseValue))
