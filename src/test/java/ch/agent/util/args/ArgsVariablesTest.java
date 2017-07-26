@@ -5,10 +5,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
+import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import ch.agent.util.STRINGS.U;
+import ch.agent.util.base.Misc;
 
 public class ArgsVariablesTest {
 
@@ -301,6 +305,23 @@ public class ArgsVariablesTest {
 			args.parse("foo = [$$HOP la boum]");
 			assertEquals("hop la boum", args.get("foo"));
 			assertFalse(result);
+		} catch (Exception e) {
+			if (DEBUG) e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testVariables3() {
+		try {
+			// last wins: use reset
+			args.putVariable("$HOP", "hop");
+			args.parse("reset=$HOP");
+			boolean result = args.putVariable("$HOP", "hophop");
+			args.def("foo");
+			args.parse("foo = [$$HOP la boum]");
+			assertEquals("hophop la boum", args.get("foo"));
+			assertTrue(result);
 		} catch (Exception e) {
 			if (DEBUG) e.printStackTrace();
 			fail("unexpected exception");
@@ -602,5 +623,220 @@ public class ArgsVariablesTest {
 			fail("unexpected exception");
 		}
 	}
+	
+	@Test
+	public void testSubroutines3() {
+		try {
+			args.def("foox");
+			args.def("fooa");
+			args.parse(
+				"$BODY = [arg1=$$ARG1 arg2=$$ARG2] " + 
+				"foox=[$ARG1=x $ARG2=y $$BODY] " + 
+				"fooa=[$ARG1=a $ARG2=b $$BODY]");
+			assertEquals("$ARG1=x $ARG2=y arg1=$$ARG1 arg2=$$ARG2", args.getVal("foox").rawValue());
+			assertEquals("$ARG1=a $ARG2=b arg1=$$ARG1 arg2=$$ARG2", args.getVal("fooa").rawValue());
 
+			Args args2 = new Args();
+			args2.def("arg1");
+			args2.def("arg2");
+			args2.parse(args.getVal("foox").rawValue());
+			assertEquals("x", args2.get("arg1"));
+			assertEquals("y", args2.get("arg2"));
+			
+			// instead of general reset, reset only where necessary
+			args2.parse("reset=[$ARG1 $ARG2]");
+			
+			args2.parse(args.getVal("fooa").rawValue());
+			assertEquals("a", args2.get("arg1"));
+			assertEquals("b", args2.get("arg2"));
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	private void print (String comment, Map<String, String> dict) {
+		System.out.println(Misc.isEmpty(comment) ? "(no comment)" : comment);
+		for (String key : dict.keySet())
+			System.out.println(key + " : " + dict.get(key));
+	}
+	
+	@Test
+	public void testSubroutines4a() {
+		try {
+			args.parse("$MACRO=[$TEXT=[<<<$$SYMBOL>>>]]"); 
+			args.parse("$SYMBOL=1 $$MACRO");
+			assertEquals("<<<1>>>", args.getVariables().get("TEXT"));
+			// reset relevant variables before modifying
+			args.parse("reset=[$SYMBOL $TEXT] $SYMBOL=2 $$MACRO");
+			assertEquals("<<<2>>>", args.getVariables().get("TEXT"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testSubroutines4b() {
+		try {
+			// yes, $TEXT must be reset too
+			args.parse("$MACRO=[$TEXT=[<<<$$SYMBOL>>>]]"); 
+			args.parse("$SYMBOL=1 $$MACRO");
+			assertEquals("<<<1>>>", args.getVariables().get("TEXT"));
+			args.parse("reset=[$SYMBOL] $SYMBOL=2 $$MACRO");
+			assertEquals("<<<1>>>", args.getVariables().get("TEXT"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testSubroutines5a() {
+		try {
+			args.parse("$MACRO=[a=[b=x+$$SYMBOL+y] $TEXT=[<<<$$SYMBOL>>>]]"); 
+			args.def("a");
+			args.parse("$SYMBOL=1 $$MACRO");
+			if (DEBUG) {
+				print("*** after parsing \"$SYMBOL=1 $$MACRO\" ***", args.getVariables());
+				System.out.println("a : " + args.getVal("a").rawValue());
+			}
+			assertEquals("<<<1>>>", args.getVariables().get("TEXT"));
+			assertEquals("b=x+1+y", args.getVal("a").rawValue());
+			assertEquals("b=x+1+y", args.get("a"));
+			args.parse("reset=[$SYMBOL $TEXT] $SYMBOL=2 $$MACRO");
+			if (DEBUG) {
+				print("*** after parsing \"$SYMBOL=2 $$MACRO\" ***", args.getVariables());
+				System.out.println("a : " + args.getVal("a").rawValue());
+			}
+			assertEquals("<<<2>>>", args.getVariables().get("TEXT"));
+			assertEquals("b=x+2+y", args.getVal("a").rawValue());
+			assertEquals("b=x+2+y", args.get("a"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testSubroutines5b() {
+		try {
+			args.parse("$MACRO=[a=[b=x+$$SYMBOL+y] $TEXT=[<<<$$SYMBOL>>>]]"); 
+			args.def("a").repeatable();
+			args.parse("$SYMBOL=1 $$MACRO");
+			if (DEBUG) {
+				print("*** after parsing \"$SYMBOL=1 $$MACRO\" ***", args.getVariables());
+				System.out.println("a : " + args.getVal("a").rawValue());
+			}
+			assertEquals("<<<1>>>", args.getVariables().get("TEXT"));
+			assertEquals("[b=x+1+y]", args.getVal("a").rawValue());
+			assertEquals("[b=x+1+y]", args.get("a"));
+			args.parse("reset=[$SYMBOL $TEXT] $SYMBOL=2 $$MACRO");
+			if (DEBUG) {
+				print("*** after parsing \"$SYMBOL=2 $$MACRO\" ***", args.getVariables());
+				System.out.println("a : " + args.getVal("a").rawValue());
+			}
+			assertEquals("<<<2>>>", args.getVariables().get("TEXT"));
+			assertEquals("[b=x+1+y] [b=x+2+y]", args.getVal("a").rawValue());
+			assertEquals("[b=x+1+y] [b=x+2+y]", args.get("a"));
+			
+			// nota bene: when a is repeatable, previous value is not replaced but appended to...
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testSubroutines5c() {
+		try {
+			args.parse("$MACRO=[reset=a a=[b=x+$$SYMBOL+y] $TEXT=[<<<$$SYMBOL>>>]]"); 
+			args.def("a").repeatable();
+			args.parse("$SYMBOL=1 $$MACRO");
+			if (DEBUG) {
+				print("*** after parsing \"$SYMBOL=1 $$MACRO\" ***", args.getVariables());
+				System.out.println("a : " + args.getVal("a").rawValue());
+			}
+			assertEquals("<<<1>>>", args.getVariables().get("TEXT"));
+			assertEquals("[b=x+1+y]", args.getVal("a").rawValue());
+			assertEquals("[b=x+1+y]", args.get("a"));
+			args.parse("reset=[$SYMBOL $TEXT] $SYMBOL=2 $$MACRO");
+			if (DEBUG) {
+				print("*** after parsing \"$SYMBOL=2 $$MACRO\" ***", args.getVariables());
+				System.out.println("a : " + args.getVal("a").rawValue());
+			}
+			assertEquals("<<<2>>>", args.getVariables().get("TEXT"));
+			assertEquals("[b=x+2+y]", args.getVal("a").rawValue());
+			assertEquals("[b=x+2+y]", args.get("a"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testSubroutines5d() {
+		try {
+			args.parse("$MACRO=[reset=a a=[b=x+$$SYMBOL+y] $TEXT=[<<<$$SYMBOL>>>]]"); 
+			args.def("a").repeatable();
+			args.parse("$SYMBOL=1 $$MACRO");
+			if (DEBUG) {
+				print("*** after parsing \"$SYMBOL=1 $$MACRO\" ***", args.getVariables());
+				System.out.println("a : " + args.getVal("a").rawValue());
+			}
+			assertEquals("<<<1>>>", args.getVariables().get("TEXT"));
+			assertEquals("[b=x+1+y]", args.getVal("a").rawValue());
+			assertEquals("[b=x+1+y]", args.get("a"));
+			args.parse("reset=[$SYMBOL $TEXT] $SYMBOL=2 $$MACRO");
+			if (DEBUG) {
+				print("*** after parsing \"$SYMBOL=2 $$MACRO\" ***", args.getVariables());
+				System.out.println("a : " + args.getVal("a").rawValue());
+			}
+			assertEquals("<<<2>>>", args.getVariables().get("TEXT"));
+			assertEquals("[b=x+2+y]", args.getVal("a").rawValue());
+			assertEquals("[b=x+2+y]", args.get("a"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
+	@Test
+	public void testSubroutinesSPECIAL_1() {
+		try {
+			args.def("a").repeatable();
+			args.def("module").repeatable();
+			args.parse(
+					"$MAVS-MACRO=[ reset=[a module] " + 
+					"  a=[b1=x+$$SYMBOL+y] " + 
+					"  a=[b2=x+$$SYMBOL+y] " + 
+					"  $LOCAL-MAVS-URL = [chart-$$$SYMBOL$MAVS.svg] " + 
+					"  $$MAVS-URL = $$LOCAL-MAVS-URL " + 
+					"  $$MAVS-TEXT = [<b style=\"font-size: 150%\">$$SYMBOL</b><br/>" + 
+					"  <span style=\"color: $$COLOR-1\">&bullet;</span>$$$MAVS-WINDOW-XS$,]" +  
+					"  module = [name=MAVS-XS+$$SYMBOL $MEAN=MAVS-XS $WINDOW=$$MAVS-WINDOW-XS $$MEAN-MACRO]" + 
+					"  module = [name=MAVS-L+$$SYMBOL $MEAN=MAVS-L $WINDOW=$$MAVS-WINDOW-L $$MEAN-MACRO]" + 
+					"]"
+			); 
+			if (DEBUG) print("*** after parsing $MAVS-MACRO ***", args.getVariables());
+			args.parse("$MAVS-URL=$MAVS-URL-1 $MAVS-TEXT=$MAVS-TEXT-1 $SYMBOL=XX1 $$MAVS-MACRO");
+			if (DEBUG) print("*** call 1 ... ***", args.getVariables());
+			System.out.println("a : " + Arrays.toString(args.getVal("a").rawValues()));
+			System.out.println("module : " + Arrays.toString(args.getVal("module").rawValues()));
+			
+			args.parse("reset=[$SYMBOL $LOCAL-MAVS-URL $MAVS-URL $MAVS-TEXT] $MAVS-URL=$MAVS-URL-2 $MAVS-TEXT=$MAVS-TEXT-2 $SYMBOL=ZZ2 $$MAVS-MACRO");
+			if (DEBUG) print("*** call 2 ... ***", args.getVariables());
+			System.out.println("a : " + Arrays.toString(args.getVal("a").rawValues()));
+			System.out.println("module : " + Arrays.toString(args.getVal("module").rawValues()));
+			assertEquals("[name=MAVS-XS+ZZ2 $MEAN=MAVS-XS $WINDOW=$$$MAVS-WINDOW-XS$ $$$MEAN-MACRO$] [name=MAVS-L+ZZ2 $MEAN=MAVS-L $WINDOW=$$$MAVS-WINDOW-L$ $$$MEAN-MACRO$]", args.getVal("module").rawValue());
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
+	
 }

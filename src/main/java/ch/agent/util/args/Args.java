@@ -78,14 +78,15 @@ import ch.agent.util.file.TextFile;
  * default value of "false". The occurrence of the parameter name as an isolated
  * value sets the value of the parameter to "true".
  * <p>
- * There are two different approaches for parameters to have multiple values. The
- * first approach is to define the parameter as <em>repeatable</em>. In this case, multiple
- * name-value pairs with the same name can be specified. The second approach is
- * to use a standard parameter and to specify all values between quotes (brackets) and 
- * separated by white space. In both cases, all values are accessed with a single 
- * invocation of an array getter. The two approaches cannot be mixed. If a parameter
- * is defined as repeatable, specifying multiple values between quotes and separated
- * by white space will be accessed as a single value with blanks inside.
+ * There are two different approaches for parameters to have multiple values.
+ * The first approach is to define the parameter as <em>repeatable</em>. In this
+ * case, multiple name-value pairs with the same name can be specified. The
+ * second approach is to use a standard parameter and to specify all values
+ * between quotes (brackets) and separated by white space. In both cases, all
+ * values are accessed with a single invocation of an array getter. The two
+ * approaches cannot be mixed. If a parameter is defined as repeatable,
+ * specifying multiple values between quotes and separated by white space will
+ * be accessed as a single value with blanks inside.
  * <p>
  * A parameter can only be used if it has been defined, but sometimes it is
  * useful to define parameters on the fly. This is possible with
@@ -100,7 +101,9 @@ import ch.agent.util.file.TextFile;
  * respect to repeated values. With a (non-repeatable) parameter, the last value
  * wins. For variables, the first wins. This allows to override default values
  * of variables in configuration files (see the <em>include</em> operator,
- * below) with values specified before the file is included.
+ * below) with values specified before the file is included. It is still possible
+ * to modify a variable if necessary, using the reset built-in operator
+ * (explained below).
  * <p>
  * The language syntax supports names and values with arbitrary content using a
  * <em>nested</em> quoting notation. A value with blanks can be passed as
@@ -171,9 +174,20 @@ import ch.agent.util.file.TextFile;
  * 
  * <h3>Built-in operators</h3>
  * 
- * Args provides two built-in operators, <em>condition</em> for conditional
- * parsing and <em>include</em> for file inclusion. Syntactically, these
- * operators are parameter names.
+ * Args provides three built-in operators, <em>reset</em> which resets the value
+ * of parameters or variables to null (if a parameter is repeatable, all its
+ * values are removed), <em>condition</em> for conditional parsing, and
+ * <em>include</em> for file inclusion. Syntactically, these operators are
+ * parameter names.
+ * <p>
+ * The syntax of the reset operator is simply
+ * 
+ * <pre>
+ * <code>
+ * reset = [name ...]
+ * </code>
+ * </pre>
+ * Names are either parameter names or variable names (starting with $).
  * <p>
  * The complete syntax of the condition operator is
  * 
@@ -293,6 +307,8 @@ public class Args implements Iterable<String> {
 	private final static char escape;
 	private final static char dollar;
 
+	private final static String RESET = "reset";
+	
 	private final static String COND = "condition";
 	private final static String COND_IF_NON_EMPTY = "if";
 	private final static String COND_THEN = "then";
@@ -979,6 +995,7 @@ public class Args implements Iterable<String> {
 	 */
 	public Args() {
 		args = new HashMap<String, Args.Value>();
+		def(RESET);
 		def(COND);
 		def(INCLUDE);
 		variables = new HashMap<String, String>();
@@ -1137,7 +1154,9 @@ public class Args implements Iterable<String> {
 			case 2:
 				pair[0] = resolve(pair[0]);
 				pair[1] = resolve(pair[1]);
-				if (pair[0].equals(COND))
+				if (pair[0].equals(RESET))
+					reset(getScanner().asValues(pair[1]));
+				else if (pair[0].equals(COND))
 					parse(scan(parseIf(pair[1])), collector);
 				else if (pair[0].equals(INCLUDE))
 					parse(parseInclude(pair[1]), collector);
@@ -1195,7 +1214,7 @@ public class Args implements Iterable<String> {
 	 * have been defined. If the name is prefixed with $, it names a variable,
 	 * which can be defined on the fly if necessary. If the parameter is
 	 * repeatable, the value will be appended, else it will be set and will
-	 * replace a existing value. The value of variable cannot be changed
+	 * replace a existing value. The value of a variable cannot be changed
 	 * ("first wins").
 	 * <p>
 	 * Keywords and isolated values without a name are put with this method by
@@ -1303,6 +1322,33 @@ public class Args implements Iterable<String> {
 		return pass;
 	}
 
+	/**
+	 * Reset a number of parameters and variables. Variable names must be
+	 * prefixed with a $. An exception is thrown if a parameter or variable does
+	 * not exist.
+	 * 
+	 * @param names
+	 *            a list of names of parameters and variables
+	 */
+	public void reset(List<String> names) {
+		Misc.nullIllegal(names, "names null");
+		for (String name : names) {
+			if (isVariable(name)) {
+				String symbol = name.substring(1);
+				if (variables.containsKey(symbol)) {
+					variables.remove(symbol);
+				} else 
+					throw new IllegalArgumentException(msg(U.U00127, symbol));
+			} else {
+				Value v = args.get(name);
+				if (v == null)
+					throw new IllegalArgumentException(msg(U.U00103, name));
+				else
+					v.set(null);
+			}
+		}
+	}
+	
 	/**
 	 * Return the value object for the parameter specified. An exception is
 	 * thrown if the name is unknown. For a nameless parameter, pass an empty
