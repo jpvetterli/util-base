@@ -835,7 +835,39 @@ public class ArgsVariablesTest {
 			fail("unexpected exception");
 		}
 	}
-
+	
+	@Test
+	public void testCondition2() {
+		try {
+			args.parse("$MACRO=[$TEXT=[<$$SYMBOL>]]"); 
+			
+			args.parse("$SYMBOL=1 $$MACRO");
+			if (DEBUG) {
+				System.err.println("*** $SYMBOL=1 ***");
+				args.parse("dump=[$SYMBOL $TEXT]");
+			}
+			assertEquals("<1>", args.getVariables().get("TEXT"));
+			
+			// something was wrong with conditional, final TEXT was <1>, not <2>
+			
+			args.parse( ""
+				+ "dump=[] " 
+				+ "condition=[if=[$$MISSING] then=[] else=[" 
+				+ "  reset=[$SYMBOL $TEXT] " 
+				+ "  $SYMBOL=2 $$MACRO " 
+				+ "]]"
+			);
+			if (DEBUG) {
+				System.err.println("*** $SYMBOL=2 ***");
+				args.parse("dump=[$SYMBOL $TEXT]");
+			}
+			assertEquals("<2>", args.getVariables().get("TEXT"));
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
 	
 	@Test
 	public void testSubroutinesSPECIAL_1() {

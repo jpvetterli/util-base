@@ -201,8 +201,9 @@ import ch.agent.util.file.TextFile;
  * </pre>
  * 
  * When the value of "if" is non-empty, the value of "then" is used, else the
- * value of "else" is used. The "else" part is the only one which can be
- * omitted.
+ * value of "else" is used. An undefined variable is considered empty here,
+ * instead of throwing an exception. The "else" part is the only one which can
+ * be omitted.
  * 
  * <p>
  * The complete syntax of the include operator is
@@ -316,7 +317,7 @@ public class Args implements Iterable<String> {
 	private final static String DUMP_FORMAT_MISSING = "[MISS] %s";
 	
 	private final static String COND = "condition";
-	private final static String COND_IF_NON_EMPTY = "if";
+	private final static String COND_IF = "if";
 	private final static String COND_THEN = "then";
 	private final static String COND_ELSE = "else";
 
@@ -1028,7 +1029,7 @@ public class Args implements Iterable<String> {
 
 	private Args parseIfArgs(String input) {
 		Args a = new Args();
-		a.def(COND_IF_NON_EMPTY);
+		a.def(COND_IF);
 		a.def(COND_THEN);
 		a.def(COND_ELSE).init("");
 		a.parse(input);
@@ -1535,10 +1536,17 @@ public class Args implements Iterable<String> {
 		String result = "";
 		Args a = parseIfArgs(text);
 		// parseIf text is not resolved, so resolve 'if' parameter now
-		String ifValue = resolve(a.getVal(COND_IF_NON_EMPTY).rawValue());
+		String ifValue = resolve(a.getVal(COND_IF).rawValue());
+		// undefined variable would be $$FOO here, must "get" it
+		a.put(COND_IF, ifValue);
+		try {
+			ifValue = a.get(COND_IF);
+		} catch (IllegalArgumentException e) {
+			ifValue = null;
+		}
 		String thenValue = a.getVal(COND_THEN).rawValue();
 		String elseValue = a.getVal(COND_ELSE).rawValue();
-		if (ifValue.length() > 0)
+		if (!Misc.isEmpty(ifValue))
 			result = thenValue;
 		else if (!Misc.isEmpty(elseValue))
 			result = elseValue;
