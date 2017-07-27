@@ -230,7 +230,7 @@ import ch.agent.util.file.TextFile;
  * using "extractor-parameters".
  * 
  */
-public class Args implements Iterable<String> {
+public class ArgsORIG implements Iterable<String> {
 
 	/**
 	 * It is possible to configure the meta characters with a system property
@@ -336,20 +336,20 @@ public class Args implements Iterable<String> {
 	 * </code>
 	 * </pre>
 	 * 
-	 * The object is returned by method {@link Args#def(String)}.
+	 * The object is returned by method {@link ArgsORIG#def(String)}.
 	 */
 	public static class Definition {
-		private Args args;
+		private ArgsORIG args;
 		private String name;
 
-		private Definition(Args args, String name) {
+		private Definition(ArgsORIG args, String name) {
 			Misc.nullIllegal(args, "args null");
 			Misc.nullIllegal(name, "name null");
 			this.args = args;
 			this.name = name;
 		}
 
-		private Args args() {
+		private ArgsORIG args() {
 			return args;
 		}
 
@@ -999,8 +999,8 @@ public class Args implements Iterable<String> {
 	/**
 	 * Constructor.
 	 */
-	public Args() {
-		args = new HashMap<String, Args.Value>();
+	public ArgsORIG() {
+		args = new HashMap<String, ArgsORIG.Value>();
 		def(DUMP);
 		def(RESET);
 		def(COND);
@@ -1016,8 +1016,8 @@ public class Args implements Iterable<String> {
 		return argsScanner;
 	}
 
-	private Args parseIncludeArgs(String input) {
-		Args a = new Args();
+	private ArgsORIG parseIncludeArgs(String input) {
+		ArgsORIG a = new ArgsORIG();
 		a.def(""); // mandatory file name
 		a.def(INC_NAMES).init("");
 		a.def(INC_CLASS).init("");
@@ -1026,8 +1026,8 @@ public class Args implements Iterable<String> {
 		return a;
 	}
 
-	private Args parseIfArgs(String input) {
-		Args a = new Args();
+	private ArgsORIG parseIfArgs(String input) {
+		ArgsORIG a = new ArgsORIG();
 		a.def(COND_IF_NON_EMPTY);
 		a.def(COND_THEN);
 		a.def(COND_ELSE).init("");
@@ -1160,20 +1160,18 @@ public class Args implements Iterable<String> {
 				break;
 			case 2:
 				pair[0] = resolve(pair[0]);
-				if (pair[0].equals(COND)) {
-					// leave parameters unresolved because of possible 'reset'
+				pair[1] = resolve(pair[1]);
+				if (pair[0].equals(RESET))
+					reset(getScanner().asValues(pair[1]));
+				else if (pair[0].equals(DUMP))
+					dump(getScanner().asValues(pair[1]));
+				else if (pair[0].equals(COND)) {
+					int something; // must be wrong here
 					parse(scan(parseIf(pair[1])), collector);
-				} else {
-					pair[1] = resolve(pair[1]);
-					if (pair[0].equals(RESET))
-						reset(getScanner().asValues(pair[1]));
-					else if (pair[0].equals(DUMP))
-						dump(getScanner().asValues(pair[1]));
-					else if (pair[0].equals(INCLUDE))
-						parse(parseInclude(pair[1]), collector);
-					else
-						put(pair[0], pair[1], collector);
-				}
+				} else if (pair[0].equals(INCLUDE))
+					parse(parseInclude(pair[1]), collector);
+				else
+					put(pair[0], pair[1], collector);
 				break;
 			default:
 				throw new RuntimeException("bug: " + pair.length);
@@ -1497,7 +1495,7 @@ public class Args implements Iterable<String> {
 	 * @param args
 	 *            an <code>Args</code> or null
 	 */
-	public void putVariables(Args args) {
+	public void putVariables(ArgsORIG args) {
 		if (args != null) {
 			for (Map.Entry<String, String> entry : args.getVariables().entrySet()) {
 				if (variables.get(entry.getKey()) == null) {
@@ -1533,9 +1531,8 @@ public class Args implements Iterable<String> {
 
 	private String parseIf(String text) {
 		String result = "";
-		Args a = parseIfArgs(text);
-		// parseIf text is not resolved, so resolve 'if' parameter now
-		String ifValue = resolve(a.getVal(COND_IF_NON_EMPTY).rawValue());
+		ArgsORIG a = parseIfArgs(text);
+		String ifValue = a.get(COND_IF_NON_EMPTY);
 		String thenValue = a.getVal(COND_THEN).rawValue();
 		String elseValue = a.getVal(COND_ELSE).rawValue();
 		if (ifValue.length() > 0)
@@ -1548,7 +1545,7 @@ public class Args implements Iterable<String> {
 	private List<String[]> parseInclude(String text) {
 		FileIncluder argsIncluder = null;
 		try {
-			Args a = parseIncludeArgs(text);
+			ArgsORIG a = parseIncludeArgs(text);
 			String fileName = a.get("");
 			String names = a.get(INC_NAMES);
 			String classe = a.get(INC_CLASS);

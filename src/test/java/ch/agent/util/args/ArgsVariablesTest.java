@@ -726,16 +726,16 @@ public class ArgsVariablesTest {
 			args.def("a").repeatable();
 			args.parse("$SYMBOL=1 $$MACRO");
 			if (DEBUG) {
-				print("*** after parsing \"$SYMBOL=1 $$MACRO\" ***", args.getVariables());
-				System.out.println("a : " + args.getVal("a").rawValue());
+				System.err.println("*** after parsing \"$SYMBOL=1 $$MACRO\" ***");
+				args.parse("dump=[$SYMBOL $TEXT $MACRO a]");
 			}
 			assertEquals("<<<1>>>", args.getVariables().get("TEXT"));
 			assertEquals("[b=x+1+y]", args.getVal("a").rawValue());
 			assertEquals("[b=x+1+y]", args.get("a"));
 			args.parse("reset=[$SYMBOL $TEXT] $SYMBOL=2 $$MACRO");
 			if (DEBUG) {
-				print("*** after parsing \"$SYMBOL=2 $$MACRO\" ***", args.getVariables());
-				System.out.println("a : " + args.getVal("a").rawValue());
+				System.err.println("*** after parsing \"$SYMBOL=2 $$MACRO\" ***");
+				args.parse("dump=[$SYMBOL $TEXT $MACRO a]");
 			}
 			assertEquals("<<<2>>>", args.getVariables().get("TEXT"));
 			assertEquals("[b=x+1+y] [b=x+2+y]", args.getVal("a").rawValue());
@@ -804,6 +804,40 @@ public class ArgsVariablesTest {
 	}
 
 	@Test
+	public void testConditionBug1() {
+		try {
+			args.parse("$MACRO=[$TEXT=[<$$SYMBOL>]]"); 
+			
+			args.parse("$SYMBOL=1 $$MACRO");
+			if (DEBUG) {
+				System.err.println("*** $SYMBOL=1 ***");
+				args.parse("dump=[$SYMBOL $TEXT]");
+			}
+			assertEquals("<1>", args.getVariables().get("TEXT"));
+			
+			// something was wrong with conditional, final TEXT was <1>, not <2>
+			
+			args.parse( ""
+				+ "dump=[] " 
+				+ "$TRUE=42 condition=[if=[$$TRUE] then=[" 
+				+ "  reset=[$SYMBOL $TEXT] " 
+				+ "  $SYMBOL=2 $$MACRO " 
+				+ "]]"
+			);
+			if (DEBUG) {
+				System.err.println("*** $SYMBOL=2 ***");
+				args.parse("dump=[$SYMBOL $TEXT]");
+			}
+			assertEquals("<2>", args.getVariables().get("TEXT"));
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+
+	
+	@Test
 	public void testSubroutinesSPECIAL_1() {
 		try {
 			args.def("a").repeatable();
@@ -822,14 +856,18 @@ public class ArgsVariablesTest {
 			); 
 			if (DEBUG) print("*** after parsing $MAVS-MACRO ***", args.getVariables());
 			args.parse("$MAVS-URL=$MAVS-URL-1 $MAVS-TEXT=$MAVS-TEXT-1 $SYMBOL=XX1 $$MAVS-MACRO");
-			if (DEBUG) print("*** call 1 ... ***", args.getVariables());
-			System.out.println("a : " + Arrays.toString(args.getVal("a").rawValues()));
-			System.out.println("module : " + Arrays.toString(args.getVal("module").rawValues()));
+			if (DEBUG) {
+				print("*** call 1 ... ***", args.getVariables());
+				System.out.println("a : " + Arrays.toString(args.getVal("a").rawValues()));
+				System.out.println("module : " + Arrays.toString(args.getVal("module").rawValues()));
+			}
 			
 			args.parse("reset=[$SYMBOL $LOCAL-MAVS-URL $MAVS-URL $MAVS-TEXT] $MAVS-URL=$MAVS-URL-2 $MAVS-TEXT=$MAVS-TEXT-2 $SYMBOL=ZZ2 $$MAVS-MACRO");
-			if (DEBUG) print("*** call 2 ... ***", args.getVariables());
-			System.out.println("a : " + Arrays.toString(args.getVal("a").rawValues()));
-			System.out.println("module : " + Arrays.toString(args.getVal("module").rawValues()));
+			if (DEBUG) {
+				print("*** call 2 ... ***", args.getVariables());
+				System.out.println("a : " + Arrays.toString(args.getVal("a").rawValues()));
+				System.out.println("module : " + Arrays.toString(args.getVal("module").rawValues()));
+			}
 			assertEquals("[name=MAVS-XS+ZZ2 $MEAN=MAVS-XS $WINDOW=$$$MAVS-WINDOW-XS$ $$$MEAN-MACRO$] [name=MAVS-L+ZZ2 $MEAN=MAVS-L $WINDOW=$$$MAVS-WINDOW-L$ $$$MEAN-MACRO$]", args.getVal("module").rawValue());
 			
 		} catch (Exception e) {
