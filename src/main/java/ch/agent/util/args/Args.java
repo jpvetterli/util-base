@@ -1337,8 +1337,7 @@ public class Args implements Iterable<String> {
 
 	/**
 	 * Reset a number of parameters and variables. Variable names must be
-	 * prefixed with a $. An exception is thrown if a parameter or variable does
-	 * not exist.
+	 * prefixed with a $. Undefined parameters and variables are ignored.
 	 * 
 	 * @param names
 	 *            a list of names of parameters and variables
@@ -1348,15 +1347,11 @@ public class Args implements Iterable<String> {
 		for (String name : names) {
 			if (isVariable(name)) {
 				String symbol = name.substring(1);
-				if (variables.containsKey(symbol)) {
+				if (variables.containsKey(symbol))
 					variables.remove(symbol);
-				} else 
-					throw new IllegalArgumentException(msg(U.U00127, symbol));
 			} else {
 				Value v = args.get(name);
-				if (v == null)
-					throw new IllegalArgumentException(msg(U.U00103, name));
-				else
+				if (v != null)
 					v.set(null);
 			}
 		}
