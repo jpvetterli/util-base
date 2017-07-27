@@ -101,8 +101,8 @@ import ch.agent.util.file.TextFile;
  * respect to repeated values. With a (non-repeatable) parameter, the last value
  * wins. For variables, the first wins. This allows to override default values
  * of variables in configuration files (see the <em>include</em> operator,
- * below) with values specified before the file is included. It is still possible
- * to modify a variable if necessary, using the reset built-in operator
+ * below) with values specified before the file is included. It is still
+ * possible to modify a variable if necessary, using the reset built-in operator
  * (explained below).
  * <p>
  * The language syntax supports names and values with arbitrary content using a
@@ -174,20 +174,23 @@ import ch.agent.util.file.TextFile;
  * 
  * <h3>Built-in operators</h3>
  * 
- * Args provides three built-in operators, <em>reset</em> which resets the value
+ * Args provides four built-in operators, <em>reset</em> which resets the value
  * of parameters or variables to null (if a parameter is repeatable, all its
- * values are removed), <em>condition</em> for conditional parsing, and
- * <em>include</em> for file inclusion. Syntactically, these operators are
- * parameter names.
+ * values are removed), <em>condition</em> for conditional parsing,
+ * <em>include</em> for file inclusion, and <em>dump</em> as a debugging aid to
+ * print values of parameters and variables to standard error. Syntactically,
+ * these operators are parameter names.
  * <p>
- * The syntax of the reset operator is simply
+ * The syntax of the reset operator is
  * 
  * <pre>
  * <code>
  * reset = [name ...]
  * </code>
  * </pre>
- * Names are either parameter names or variable names (starting with $).
+ * 
+ * Names are either parameter names or variable names (starting with $). The
+ * dump operator has the same syntax as the reset operator.
  * <p>
  * The complete syntax of the condition operator is
  * 
@@ -308,6 +311,9 @@ public class Args implements Iterable<String> {
 	private final static char dollar;
 
 	private final static String RESET = "reset";
+	private final static String DUMP = "dump";
+	private final static String DUMP_FORMAT = "[DUMP] %s : %s";
+	private final static String DUMP_FORMAT_MISSING = "[MISS] %s";
 	
 	private final static String COND = "condition";
 	private final static String COND_IF_NON_EMPTY = "if";
@@ -995,6 +1001,7 @@ public class Args implements Iterable<String> {
 	 */
 	public Args() {
 		args = new HashMap<String, Args.Value>();
+		def(DUMP);
 		def(RESET);
 		def(COND);
 		def(INCLUDE);
@@ -1156,6 +1163,8 @@ public class Args implements Iterable<String> {
 				pair[1] = resolve(pair[1]);
 				if (pair[0].equals(RESET))
 					reset(getScanner().asValues(pair[1]));
+				else if (pair[0].equals(DUMP))
+					dump(getScanner().asValues(pair[1]));
 				else if (pair[0].equals(COND))
 					parse(scan(parseIf(pair[1])), collector);
 				else if (pair[0].equals(INCLUDE))
@@ -1349,6 +1358,39 @@ public class Args implements Iterable<String> {
 		}
 	}
 	
+	/**
+	 * Print the value of a number of parameters and variables. Variable names must be
+	 * prefixed with a $. 
+	 * 
+	 * @param names
+	 *            a list of names of parameters and variables
+	 */
+	public void dump(List<String> names) {
+		Misc.nullIllegal(names, "names null");
+		for (String name : names) {
+			if (isVariable(name)) {
+				String symbol = name.substring(1);
+				if (variables.containsKey(symbol))
+					System.err.println(String.format(DUMP_FORMAT, name, variables.get(symbol)));
+				else 
+					System.err.println(String.format(DUMP_FORMAT_MISSING, name));
+			} else {
+				Value v = args.get(name);
+				if (v == null)
+					System.err.println(String.format(DUMP_FORMAT_MISSING, name));
+				else {
+					if (v.isRepeatable()) {
+						for (String value : v.rawValues()) {
+							System.err.println(String.format(DUMP_FORMAT, name, value));
+						}
+					} else {
+						System.err.println(String.format(DUMP_FORMAT, name, v.rawValue()));
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * Return the value object for the parameter specified. An exception is
 	 * thrown if the name is unknown. For a nameless parameter, pass an empty
