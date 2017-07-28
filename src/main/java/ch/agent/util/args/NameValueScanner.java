@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ch.agent.util.STRINGS.U;
+import ch.agent.util.base.Misc;
 
 /**
  * The name-value scanner splits a string into a list of arrays of length 2 for
@@ -135,7 +136,8 @@ public class NameValueScanner {
 
 		private void setTokenString(boolean emptyOk) {
 			if (depth != 0)
-				throw new IllegalArgumentException(msg(U.U00155, closing, getPosition(), input));
+				throw new IllegalArgumentException(msg(U.U00155, closing, getPosition(), 
+						Misc.mark(input, getPosition() - 1, 100)));
 			if (emptyOk || buffer.length() > 0) {
 				tokenString = buffer.toString();
 				buffer.setLength(0);
@@ -181,7 +183,7 @@ public class NameValueScanner {
 				break;
 			case ESCAPE:
 				if (ch == 0) {
-					throw new IllegalArgumentException(msg(U.U00153, esc, getPosition(), input));
+					throw new IllegalArgumentException(msg(U.U00153, esc, getPosition(), Misc.mark(input, getPosition() - 1,  100)));
 				} else {
 					if (!isMeta(ch) && ch != esc && !Character.isWhitespace(ch))
 						buffer.append(esc);
@@ -204,7 +206,7 @@ public class NameValueScanner {
 					state = State.BRACKET;
 					depth = 1;
 				} else if (ch == closing) {
-					throw new IllegalArgumentException(msg(U.U00154, closing, getPosition(), input));
+					throw new IllegalArgumentException(msg(U.U00154, closing, getPosition(), Misc.mark(input, getPosition() - 1, 100)));
 				} else if (Character.isWhitespace(ch)) {
 				} else {
 					buffer.append(ch);
@@ -222,7 +224,7 @@ public class NameValueScanner {
 					if (ch == closing) {
 						// must do this test here to support
 						// ArgsScanner#immediate
-						throw new IllegalArgumentException(msg(U.U00154, closing, getPosition(), input));
+						throw new IllegalArgumentException(msg(U.U00154, closing, getPosition(), Misc.mark(input, getPosition() - 1, 100)));
 					}
 					setTokenString(false);
 					backtrack();
@@ -243,7 +245,7 @@ public class NameValueScanner {
 					buffer.append(ch);
 				} else if (ch == closing) {
 					if (depth == 0)
-						throw new IllegalArgumentException(msg(U.U00154, closing, input, getPosition()));
+						throw new IllegalArgumentException(msg(U.U00154, closing, getPosition(), Misc.mark(input, getPosition() - 1, 100)));
 					--depth;
 					if (depth == 0)
 						setTokenString(true);
@@ -375,7 +377,7 @@ public class NameValueScanner {
 					break;
 				case EQUAL_TOKEN:
 					if (!valuesOnly)
-						throw new IllegalArgumentException(msg(U.U00156, eq, tokenizer.getPosition(), string));
+						throw new IllegalArgumentException(msg(U.U00156, eq, tokenizer.getPosition(), Misc.mark(string, tokenizer.getPosition() - 1, 100)));
 					else
 						state = NameValueState.NAME;
 					break;

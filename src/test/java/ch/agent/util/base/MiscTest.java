@@ -308,6 +308,108 @@ public class MiscTest {
 		}
 	}
 	
+	private static final String SENTENCE = "As an example, this sentence would be returned as (position=35, length=50):";
+	@Test
+	public void testMark01() {
+		try {
+			String marked = Misc.mark(SENTENCE, 35,  81); 
+			assertEquals("As an example, this sentence would [-->]be returned as (position=35, length=50):", marked);
+			assertEquals(80, marked.length()); 
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testMark01a() {
+		try {
+			String marked = Misc.mark(SENTENCE, 74,  80); 
+			assertEquals("As an example, this sentence would be returned as (position=35, length=50)[-->]:", marked);
+			assertEquals(80, marked.length()); 
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testMark02() {
+		try {
+			String marked = Misc.mark(SENTENCE, 35,  80); 
+			assertEquals("As an example, this sentence would [-->]be returned as (position=35, length=50):", marked);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testMark03() {
+		try {
+			String marked = Misc.mark(SENTENCE, 35,  79); 
+			assertEquals("As an example, this sentence would [-->]be returned as (position=35, lengt[...]", marked);
+			assertEquals(79, marked.length()); 
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testMark04() {
+		try {
+			String marked = Misc.mark(SENTENCE, 35,  75); 
+			assertEquals("As an example, this sentence would [-->]be returned as (position=35, l[...]", marked);
+			assertEquals(75, marked.length()); 
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testMark04a() {
+		try {
+			String marked = Misc.mark(SENTENCE, 51,  75); 
+			assertEquals("As an example, this [...]ould be returned as ([-->]position=35, length=50):", marked);
+			assertEquals(75, marked.length()); 
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testMark05() {
+		try {
+			String marked = Misc.mark(SENTENCE, 35,  65); 
+			assertEquals("As an example, t[...] sentence would [-->]be returned as (po[...]", marked);
+			assertEquals(65, marked.length()); 
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	@Test
+	public void testMark05a() {
+		try {
+			String marked = Misc.mark(SENTENCE, 75,  65); 
+			assertEquals("As an example, this sentenc[...]as (position=35, length=50):[-->]", marked);
+			assertEquals(65, marked.length()); 
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
+	@Test
+	public void testMark06() {
+		try {
+			String marked = Misc.mark(SENTENCE+SENTENCE+SENTENCE+SENTENCE, 155,  65); 
+			assertEquals("As an example, t[...]length=50):As an[-->] example, this sen[...]", marked);
+			assertEquals(65, marked.length()); 
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("unexpected exception");
+		}
+	}
+	
 	@Test
 	public void testNotClose01() {
 		try {

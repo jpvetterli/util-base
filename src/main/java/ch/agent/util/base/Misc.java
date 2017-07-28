@@ -204,7 +204,99 @@ public class Misc {
 		}
 		return input;
 	}
-
+	
+	/**
+	 * Mark a position in a string. The method inserts » in front of the
+	 * position. It returns a portion of input of the requested length with the
+	 * position and marker visible. When the input is truncated, ellipsis are
+	 * inserted where appropriate. A null input or a position outside the input
+	 * produce an exception (last valid position = length of input). A length
+	 * less than 30 is ignored and the minimum of 30 is used instead.
+	 * <p>
+	 * As an example, this sentence would be returned as (position=35,
+	 * length=50):
+	 * 
+	 * <pre>
+	 * <code>
+	 * As an exampl[...]tence would [--&gt;]be returned[...]
+	 * </code>
+	 * </pre>
+	 * 
+	 * @param input
+	 *            a string
+	 * @param position
+	 *            a position within the string, first position is 0
+	 * @param length
+	 *            the length of the result
+	 * @return the truncated input with a marker and one or two ellipsis added
+	 */
+	public static String mark(String input, int position, int length) {
+		final String MARK = "[-->]"; 
+		final String ELLIPSIS = "[...]"; 
+		final int MARK_LEN = MARK.length();
+		final int ELLIPSIS_LEN = ELLIPSIS.length();
+		
+		if (input == null)
+			throw new IllegalArgumentException("input null");
+		if (position < 0 || position > input.length())
+			throw new IllegalArgumentException("position outside input");
+		
+		String half1 = input.substring(0,  position);
+		String half2 = input.substring(position);
+		length = length < 30 ? 30 : length;
+		int currentLength = input.length() + MARK_LEN;
+		StringBuilder b = new StringBuilder();
+		int excess = currentLength - length;
+		if (excess <= 0) {
+			b.append(half1);
+			b.append(MARK);
+			b.append(half2);
+		} else if (excess <= ELLIPSIS_LEN) {
+			if (position > currentLength/2) {
+				// ellipsis in the middle of first half
+				int effectiveLength = half1.length() - ELLIPSIS_LEN - MARK_LEN;
+				int mid = effectiveLength / 2;
+				int remainder = effectiveLength - mid;
+				b.append(half1.substring(0,  mid));
+				b.append(ELLIPSIS);
+				b.append(half1.substring(half1.length() - remainder));
+				b.append(MARK);
+				b.append(half2);
+			} else {
+				// ellipsis at end
+				b.append(half1);
+				b.append(MARK);
+				b.append(half2);
+				b.setLength(length - ELLIPSIS_LEN);
+				b.append(ELLIPSIS);
+			}
+		} else {
+			int effectiveLength = length - 2 * ELLIPSIS_LEN - MARK_LEN;
+			int chunkLength = effectiveLength / 3;
+			if (chunkLength >= half2.length()) {
+				// ellipsis in the first half 
+				effectiveLength = length - ELLIPSIS_LEN - MARK_LEN - half2.length();
+				chunkLength = effectiveLength / 2;
+				int remainder = effectiveLength - chunkLength;
+				b.append(half1.substring(0, chunkLength));
+				b.append(ELLIPSIS);
+				b.append(half1.substring(half1.length() - remainder));
+				b.append(MARK);
+				b.append(half2);
+			} else {
+				// ellipsis in the first half and at end of second half
+				int remainder = effectiveLength - 2 * chunkLength;
+				b.append(half1.substring(0, chunkLength));
+				b.append(ELLIPSIS);
+				b.append(half1.substring(half1.length() - chunkLength));
+				b.append(MARK);
+				b.append(half2.substring(0, remainder));
+				b.append(ELLIPSIS);
+			}
+		}
+		return b.toString();
+	}
+	
 	/**
 	 * Convert milliseconds into string with days, hours, minutes, and seconds.
 	 * Leading days and hours are omitted if zero.
