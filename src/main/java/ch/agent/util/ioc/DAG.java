@@ -124,7 +124,7 @@ public class DAG<T> {
 	 * @throws IllegalArgumentException
 	 *             if there is duplicate node in the input
 	 */
-	public void add(T... nodes) {
+	public void add(T[] nodes) {
 		for (T node : nodes) {
 			add(new DAGNode(node));
 		}
@@ -154,7 +154,7 @@ public class DAG<T> {
 	 * @throws IllegalArgumentException
 	 *             if a node does not exist
 	 */
-	public void addLinks(T node, T... links) {
+	public void addLinks(T node, T[] links) {
 		Node<T> start = get(node);
 		for (T link : links) {
 			Node<T> end = get(link);

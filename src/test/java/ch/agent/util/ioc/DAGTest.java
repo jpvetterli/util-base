@@ -18,20 +18,20 @@ public class DAGTest {
 	public void setUp() throws Exception {
 		// this is the example in https://en.wikipedia.org/wiki/Topological_sorting
 		sdag = new DAG<String>();
-		sdag.add("5", "7", "3", "11", "8", "2", "9", "10");
-		sdag.addLinks("5", "11");
-		sdag.addLinks("7", "11", "8");
-		sdag.addLinks("3", "8", "10");
-		sdag.addLinks("11", "2", "9", "10");
-		sdag.addLinks("8", "9");
+		sdag.add(new String[] {"5", "7", "3", "11", "8", "2", "9", "10"});
+		sdag.addLinks("5", new String[] {"11"});
+		sdag.addLinks("7", new String[] {"11", "8"});
+		sdag.addLinks("3", new String[] {"8", "10"});
+		sdag.addLinks("11", new String[] {"2", "9", "10"});
+		sdag.addLinks("8", new String[] {"9"});
 		
 		idag = new DAG<Integer>();
-		idag.add(5, 7, 3, 11, 8, 2, 9, 10);
-		idag.addLinks(5, 11);
-		idag.addLinks(7, 11, 8);
-		idag.addLinks(3, 8, 10);
-		idag.addLinks(11, 2, 9, 10);
-		idag.addLinks(8, 9);
+		idag.add(new Integer[] {5, 7, 3, 11, 8, 2, 9, 10});
+		idag.addLinks(5, new Integer[] {11});
+		idag.addLinks(7, new Integer[] {11, 8});
+		idag.addLinks(3, new Integer[] {8, 10});
+		idag.addLinks(11, new Integer[] {2, 9, 10});
+		idag.addLinks(8, new Integer[] {9});
 
 	}
 
@@ -49,7 +49,7 @@ public class DAGTest {
 	@Test
 	public void test20() {
 		try {
-			sdag.addLinks("9", "3");
+			sdag.addLinks("9", new String[] {"3"});
 			sdag.sort();
 			fail("exception expected");
 		} catch (Exception e) {
@@ -88,7 +88,7 @@ public class DAGTest {
 	@Test
 	public void test120() {
 		try {
-			idag.addLinks(9, 3);
+			idag.addLinks(9, new Integer[] {3});
 			idag.sort();
 			fail("exception expected");
 		} catch (Exception e) {
