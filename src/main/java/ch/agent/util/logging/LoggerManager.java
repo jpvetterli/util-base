@@ -24,31 +24,31 @@ public class LoggerManager {
 	public static final String LOGGER_BRIDGE_FACTORY = "LoggerBridgeFactory";
 	private static final String INSTANCE_METHOD = "getInstance";
 	
-	private static LoggerBridgeFactory factory;
+	private final static LoggerBridgeFactory factory = factory(); 
+	
+	private static LoggerBridgeFactory factory() {
+		String className = null;
+		try {
+			className = System.getProperty(LOGGER_BRIDGE_FACTORY);
+			if (className == null)
+				return DefaultLoggerBridgeFactory.getInstance();
+			else {
+				Class<?> c = Class.forName(className);
+				Method getI = c.getMethod(INSTANCE_METHOD);
+				return (LoggerBridgeFactory) getI.invoke(null);
+			}
+		} catch (Exception e) {
+			throw new IllegalArgumentException(msg(U.U00300, LOGGER_BRIDGE_FACTORY, className), e);
+		}
+	}
 	
 	/**
 	 * Return the LoggerBridgeFactory instance.
-	 * This method is synchronized.
 	 * 
 	 * @return the LoggerBridgeFactory instance
 	 * @throws IllegalArgumentException in case of failure to load a logger factory
 	 */
-	private static synchronized LoggerBridgeFactory getFactory() {
-		if (factory == null) {
-			String className = null;
-			try {
-				className = System.getProperty(LOGGER_BRIDGE_FACTORY);
-				if (className == null)
-					factory = DefaultLoggerBridgeFactory.getInstance();
-				else {
-					Class<?> c = Class.forName(className);
-					Method getI = c.getMethod(INSTANCE_METHOD);
-					factory = (LoggerBridgeFactory) getI.invoke(null);
-				}
-			} catch (Exception e) {
-				throw new IllegalArgumentException(msg(U.U00300, LOGGER_BRIDGE_FACTORY, className), e);
-			}
-		}
+	private static LoggerBridgeFactory getFactory() {
 		return factory;
 	}
 	
