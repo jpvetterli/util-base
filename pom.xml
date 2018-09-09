@@ -33,13 +33,11 @@
     </license>
   </licenses>
 
-  <!--
   <scm>
     <connection>scm:git:git@github.com:jpvetterli/util-base.git</connection>
     <developerConnection>scm:git:git@github.com:jpvetterli/util-base.git</developerConnection>
     <url>https://github.com/jpvetterli/util-base.git</url>
   </scm>
-  -->
 
   <developers>
     <developer>
